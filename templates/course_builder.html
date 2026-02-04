@@ -1,0 +1,1279 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Course Builder - Wealth Agent{% endblock %}
+
+{% block page_title %}Course Builder Wizard{% endblock %}
+
+{% block content %}
+<div class="course-builder-page">
+    <!-- Progress Header -->
+    <div class="wizard-header">
+        <div class="wizard-progress">
+            <div class="progress-step active" data-step="1">
+                <span class="step-number">1</span>
+                <span class="step-label">Ide</span>
+            </div>
+            <div class="progress-line"></div>
+            <div class="progress-step" data-step="2">
+                <span class="step-number">2</span>
+                <span class="step-label">Struktur</span>
+            </div>
+            <div class="progress-line"></div>
+            <div class="progress-step" data-step="3">
+                <span class="step-number">3</span>
+                <span class="step-label">Prissattning</span>
+            </div>
+            <div class="progress-line"></div>
+            <div class="progress-step" data-step="4">
+                <span class="step-number">4</span>
+                <span class="step-label">Lansering</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wizard Steps -->
+    <div class="wizard-content">
+        <!-- Step 1: Course Idea -->
+        <div class="wizard-step active" id="wizardStep1">
+            <div class="step-card">
+                <h2><i class="fas fa-lightbulb"></i> Steg 1: Definiera din kursidé</h2>
+                <p class="step-intro">En bra kurs loser ett specifikt problem for en specifik malgrupp.</p>
+
+                <div class="form-section">
+                    <div class="form-group">
+                        <label>Vad ska din kurs heta?</label>
+                        <input type="text" id="courseName" placeholder="t.ex. Excel for nyborjare - Fran noll till pro pa 7 dagar">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Vilken transformation erbjuder du?</label>
+                        <div class="transformation-builder">
+                            <div class="trans-box from">
+                                <span class="trans-label">Fran:</span>
+                                <input type="text" id="transFrom" placeholder="t.ex. Forvirrad Excel-nyborjare">
+                            </div>
+                            <div class="trans-arrow"><i class="fas fa-arrow-right"></i></div>
+                            <div class="trans-box to">
+                                <span class="trans-label">Till:</span>
+                                <input type="text" id="transTo" placeholder="t.ex. Sjalvsaker Excel-anvandare">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Vem ar din idealkund?</label>
+                        <textarea id="targetAudience" placeholder="Beskriv din malgrupp: Alder, yrke, problem de har, vad de vill uppna..."></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Kursniva</label>
+                            <select id="courseLevel">
+                                <option value="beginner">Nyborjare</option>
+                                <option value="intermediate">Mellanniva</option>
+                                <option value="advanced">Avancerad</option>
+                                <option value="all">Alla nivaer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Uppskattad kurslangd</label>
+                            <select id="courseLength">
+                                <option value="mini">Mini (30 min - 1h)</option>
+                                <option value="short">Kort (1-3h)</option>
+                                <option value="medium">Medium (3-6h)</option>
+                                <option value="full">Full kurs (6h+)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn-primary" onclick="nextStep(2)">
+                        Nasta steg <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Course Structure -->
+        <div class="wizard-step" id="wizardStep2">
+            <div class="step-card">
+                <h2><i class="fas fa-sitemap"></i> Steg 2: Bygg kursstrukturen</h2>
+                <p class="step-intro">Dela upp din kurs i moduler och lektioner.</p>
+
+                <div class="modules-builder">
+                    <div class="modules-list" id="modulesList">
+                        <!-- Modules will be added here -->
+                    </div>
+
+                    <button class="btn-add-module" onclick="addModule()">
+                        <i class="fas fa-plus"></i> Lagg till modul
+                    </button>
+                </div>
+
+                <div class="structure-tips">
+                    <h4><i class="fas fa-lightbulb"></i> Tips for bra struktur</h4>
+                    <ul>
+                        <li><strong>3-7 moduler</strong> ar optimalt for de flesta kurser</li>
+                        <li><strong>Korta lektioner</strong> (5-15 min) har battre completion rate</li>
+                        <li><strong>Borja med en vinst</strong> - lat studenten kanna framgang tidigt</li>
+                        <li><strong>Avsluta med action</strong> - ge en konkret uppgift</li>
+                    </ul>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn-secondary" onclick="prevStep(1)">
+                        <i class="fas fa-arrow-left"></i> Tillbaka
+                    </button>
+                    <button class="btn-primary" onclick="nextStep(3)">
+                        Nasta steg <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Pricing -->
+        <div class="wizard-step" id="wizardStep3">
+            <div class="step-card">
+                <h2><i class="fas fa-tags"></i> Steg 3: Prissattning</h2>
+                <p class="step-intro">Satt ratt pris for att maximera bade forsaljning och intakt.</p>
+
+                <div class="pricing-section">
+                    <div class="pricing-calculator">
+                        <div class="form-group">
+                            <label>Valt prissegment</label>
+                            <div class="price-tiers">
+                                <button class="tier-btn" data-tier="budget" onclick="selectTier('budget')">
+                                    <span class="tier-price">199-499 kr</span>
+                                    <span class="tier-label">Introduktion</span>
+                                    <small>Lag troskel, hog volym</small>
+                                </button>
+                                <button class="tier-btn active" data-tier="standard" onclick="selectTier('standard')">
+                                    <span class="tier-price">999-1999 kr</span>
+                                    <span class="tier-label">Standard</span>
+                                    <small>Balanserat</small>
+                                </button>
+                                <button class="tier-btn" data-tier="premium" onclick="selectTier('premium')">
+                                    <span class="tier-price">2999-4999 kr</span>
+                                    <span class="tier-label">Premium</span>
+                                    <small>Hogre varde</small>
+                                </button>
+                                <button class="tier-btn" data-tier="flagship" onclick="selectTier('flagship')">
+                                    <span class="tier-price">5000+ kr</span>
+                                    <span class="tier-label">Flagship</span>
+                                    <small>High-ticket</small>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Ditt valda pris</label>
+                            <div class="price-input-wrapper">
+                                <input type="number" id="coursePrice" placeholder="1499" value="1499">
+                                <span class="currency">kr</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="revenue-projection">
+                        <h4>Intaktsprognos</h4>
+                        <div class="projection-grid">
+                            <div class="projection-card">
+                                <span class="proj-label">10 kopare/man</span>
+                                <span class="proj-value" id="proj10">14 990 kr</span>
+                            </div>
+                            <div class="projection-card">
+                                <span class="proj-label">50 kopare/man</span>
+                                <span class="proj-value" id="proj50">74 950 kr</span>
+                            </div>
+                            <div class="projection-card highlight">
+                                <span class="proj-label">100 kopare/man</span>
+                                <span class="proj-value" id="proj100">149 900 kr</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pricing-strategy">
+                        <h4><i class="fas fa-chess"></i> Lanseringsstrategi</h4>
+                        <div class="strategy-options">
+                            <label class="strategy-option">
+                                <input type="radio" name="strategy" value="earlybird" checked>
+                                <div class="option-content">
+                                    <span class="option-title">Early Bird</span>
+                                    <span class="option-desc">50% rabatt forsta veckan, sedan fullt pris</span>
+                                </div>
+                            </label>
+                            <label class="strategy-option">
+                                <input type="radio" name="strategy" value="founder">
+                                <div class="option-content">
+                                    <span class="option-title">Founder's Price</span>
+                                    <span class="option-desc">Permanent rabatt for forsta 50 koparna</span>
+                                </div>
+                            </label>
+                            <label class="strategy-option">
+                                <input type="radio" name="strategy" value="presale">
+                                <div class="option-content">
+                                    <span class="option-title">Pre-sale</span>
+                                    <span class="option-desc">Salj innan kursen ar klar (med rabatt)</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn-secondary" onclick="prevStep(2)">
+                        <i class="fas fa-arrow-left"></i> Tillbaka
+                    </button>
+                    <button class="btn-primary" onclick="nextStep(4)">
+                        Nasta steg <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Launch Plan -->
+        <div class="wizard-step" id="wizardStep4">
+            <div class="step-card">
+                <h2><i class="fas fa-rocket"></i> Steg 4: Lanseringsplan</h2>
+                <p class="step-intro">En strukturerad lansering okar dina chanser for framgang.</p>
+
+                <div class="launch-timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker">
+                            <i class="fas fa-bullhorn"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h4>4 veckor fore: Bygg hype</h4>
+                            <ul class="checklist">
+                                <li><input type="checkbox" id="check1"><label for="check1">Skapa en landings-sida med waitlist</label></li>
+                                <li><input type="checkbox" id="check2"><label for="check2">Borja prata om kurs-amnet pa sociala medier</label></li>
+                                <li><input type="checkbox" id="check3"><label for="check3">Ge bort gratisinnehall relaterat till kursen</label></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h4>2 veckor fore: Engagera</h4>
+                            <ul class="checklist">
+                                <li><input type="checkbox" id="check4"><label for="check4">Skicka teaser-mail till din lista</label></li>
+                                <li><input type="checkbox" id="check5"><label for="check5">Dela bakom-kulisserna content</label></li>
+                                <li><input type="checkbox" id="check6"><label for="check6">Samla beta-testare for feedback</label></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker highlight">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h4>Lanseringsveckan</h4>
+                            <ul class="checklist">
+                                <li><input type="checkbox" id="check7"><label for="check7">Oppna forsaljningen med early bird-pris</label></li>
+                                <li><input type="checkbox" id="check8"><label for="check8">Skicka lanseringsmail till hela listan</label></li>
+                                <li><input type="checkbox" id="check9"><label for="check9">Posta dagligen pa sociala medier</label></li>
+                                <li><input type="checkbox" id="check10"><label for="check10">Host ett live webinar/Q&A</label></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h4>Efter lansering</h4>
+                            <ul class="checklist">
+                                <li><input type="checkbox" id="check11"><label for="check11">Samla testimonials fran studenter</label></li>
+                                <li><input type="checkbox" id="check12"><label for="check12">Skapa ett affiliate-program</label></li>
+                                <li><input type="checkbox" id="check13"><label for="check13">Planera evergreen-funnel</label></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="platform-recommendation">
+                    <h4><i class="fas fa-store"></i> Rekommenderad plattform</h4>
+                    <div class="platform-cards">
+                        <div class="platform-rec-card">
+                            <div class="platform-badge">Rekommenderat</div>
+                            <h5>Teachable</h5>
+                            <p>Bast for kurser over 500 kr. Drip content, certifikat, bra analytics.</p>
+                            <span class="platform-price">Fran $39/man</span>
+                        </div>
+                        <div class="platform-rec-card">
+                            <h5>Udemy</h5>
+                            <p>Bra for att na nya kunder. Tar hog avgift men ger trafik.</p>
+                            <span class="platform-price">Gratis (37-97% avgift)</span>
+                        </div>
+                        <div class="platform-rec-card">
+                            <h5>Gumroad</h5>
+                            <p>Enklast att borja med. Bra for kortare kurser och e-bocker.</p>
+                            <span class="platform-price">10% avgift</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn-secondary" onclick="prevStep(3)">
+                        <i class="fas fa-arrow-left"></i> Tillbaka
+                    </button>
+                    <button class="btn-primary success" onclick="saveCourse()">
+                        <i class="fas fa-save"></i> Spara kursplan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saved Courses -->
+    <div class="saved-courses">
+        <h3><i class="fas fa-graduation-cap"></i> Dina kursprojekt</h3>
+        <div class="courses-list" id="coursesList">
+            <div class="empty-state">
+                <i class="fas fa-graduation-cap"></i>
+                <p>Inga kursprojekt sparade an</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.course-builder-page {
+    padding: 1rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Wizard Header */
+.wizard-header {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+}
+
+.wizard-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    transition: all 0.3s;
+}
+
+.progress-step.active .step-number,
+.progress-step.completed .step-number {
+    background: var(--primary);
+    color: white;
+}
+
+.progress-step.completed .step-number::after {
+    content: '✓';
+}
+
+.step-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.progress-step.active .step-label {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.progress-line {
+    width: 60px;
+    height: 3px;
+    background: var(--border);
+    margin: 0 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Wizard Steps */
+.wizard-step {
+    display: none;
+}
+
+.wizard-step.active {
+    display: block;
+}
+
+.step-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 2rem;
+    border: 1px solid var(--border);
+}
+
+.step-card h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.step-card h2 i {
+    color: var(--primary);
+}
+
+.step-intro {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+.form-section {
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Transformation Builder */
+.transformation-builder {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.trans-box {
+    flex: 1;
+    background: var(--background);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.trans-box.from {
+    border-left: 4px solid var(--danger);
+}
+
+.trans-box.to {
+    border-left: 4px solid var(--success);
+}
+
+.trans-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.trans-box input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+}
+
+.trans-arrow {
+    color: var(--primary);
+    font-size: 1.5rem;
+}
+
+/* Modules Builder */
+.modules-builder {
+    margin-bottom: 1.5rem;
+}
+
+.modules-list {
+    margin-bottom: 1rem;
+}
+
+.module-card {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border);
+}
+
+.module-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.module-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.module-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.module-title input {
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text);
+    width: 200px;
+}
+
+.module-actions button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.25rem;
+}
+
+.module-actions button:hover {
+    color: var(--danger);
+}
+
+.lessons-list {
+    margin-left: 2.5rem;
+}
+
+.lesson-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed var(--border);
+}
+
+.lesson-item:last-child {
+    border-bottom: none;
+}
+
+.lesson-item input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.lesson-item .lesson-duration {
+    width: 60px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.btn-add-lesson {
+    margin-left: 2.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px dashed var(--border);
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.btn-add-lesson:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.btn-add-module {
+    width: 100%;
+    padding: 1rem;
+    border: 2px dashed var(--border);
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-add-module:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.structure-tips {
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.structure-tips h4 {
+    margin: 0 0 0.75rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary);
+}
+
+.structure-tips ul {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.structure-tips li {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* Pricing */
+.price-tiers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.tier-btn {
+    padding: 1rem;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: transparent;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.tier-btn:hover {
+    border-color: var(--primary);
+}
+
+.tier-btn.active {
+    border-color: var(--primary);
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.tier-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    display: block;
+    color: var(--primary);
+}
+
+.tier-label {
+    font-weight: 600;
+    display: block;
+    margin: 0.25rem 0;
+}
+
+.tier-btn small {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.price-input-wrapper {
+    display: flex;
+    align-items: center;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.price-input-wrapper input {
+    flex: 1;
+    padding: 0.85rem;
+    border: none;
+    background: transparent;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.price-input-wrapper .currency {
+    padding: 0 1rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.revenue-projection {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin: 1.5rem 0;
+}
+
+.revenue-projection h4 {
+    margin: 0 0 1rem 0;
+}
+
+.projection-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.projection-card {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.projection-card.highlight {
+    background: var(--primary);
+    color: white;
+}
+
+.proj-label {
+    font-size: 0.85rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.projection-card.highlight .proj-label {
+    opacity: 0.9;
+}
+
+.proj-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.pricing-strategy {
+    margin-top: 1.5rem;
+}
+
+.pricing-strategy h4 {
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.strategy-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.strategy-option {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.strategy-option input {
+    accent-color: var(--primary);
+}
+
+.option-title {
+    font-weight: 600;
+    display: block;
+}
+
+.option-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Launch Timeline */
+.launch-timeline {
+    margin-bottom: 2rem;
+}
+
+.timeline-item {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-marker {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.timeline-marker.highlight {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.timeline-content {
+    flex: 1;
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.timeline-content h4 {
+    margin: 0 0 1rem 0;
+}
+
+.checklist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.checklist li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+}
+
+.checklist input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+}
+
+.checklist label {
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+/* Platform Recommendation */
+.platform-recommendation h4 {
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.platform-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.platform-rec-card {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1.25rem;
+    position: relative;
+}
+
+.platform-badge {
+    position: absolute;
+    top: -8px;
+    right: 10px;
+    background: var(--primary);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.platform-rec-card h5 {
+    margin: 0 0 0.5rem 0;
+}
+
+.platform-rec-card p {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.platform-price {
+    font-size: 0.85rem;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* Step Actions */
+.step-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.btn-primary {
+    padding: 0.85rem 1.5rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary.success {
+    background: var(--success);
+}
+
+.btn-secondary {
+    padding: 0.85rem 1.5rem;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Saved Courses */
+.saved-courses {
+    margin-top: 2rem;
+}
+
+.saved-courses h3 {
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.courses-list {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+}
+
+.course-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+}
+
+.course-item:last-child {
+    margin-bottom: 0;
+}
+
+.course-item .course-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.course-item .course-info {
+    flex: 1;
+}
+
+.course-item .course-name {
+    font-weight: 600;
+}
+
+.course-item .course-meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .transformation-builder {
+        flex-direction: column;
+    }
+
+    .trans-arrow {
+        transform: rotate(90deg);
+    }
+
+    .projection-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .price-tiers {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+</style>
+
+<script>
+let currentStep = 1;
+let moduleCount = 0;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadCourses();
+    addModule(); // Start with one module
+
+    // Price input listener
+    document.getElementById('coursePrice').addEventListener('input', updateProjections);
+    updateProjections();
+});
+
+function nextStep(step) {
+    document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('wizardStep' + step).classList.add('active');
+
+    document.querySelectorAll('.progress-step').forEach((s, i) => {
+        if (i + 1 < step) {
+            s.classList.add('completed');
+            s.classList.remove('active');
+        } else if (i + 1 === step) {
+            s.classList.add('active');
+            s.classList.remove('completed');
+        } else {
+            s.classList.remove('active', 'completed');
+        }
+    });
+
+    currentStep = step;
+}
+
+function prevStep(step) {
+    nextStep(step);
+}
+
+function addModule() {
+    moduleCount++;
+    const modulesList = document.getElementById('modulesList');
+
+    const moduleHtml = `
+        <div class="module-card" id="module${moduleCount}">
+            <div class="module-header">
+                <div class="module-title">
+                    <span class="module-number">${moduleCount}</span>
+                    <input type="text" placeholder="Modulnamn..." class="module-name-input">
+                </div>
+                <div class="module-actions">
+                    <button onclick="removeModule(${moduleCount})"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            <div class="lessons-list" id="lessons${moduleCount}">
+                <div class="lesson-item">
+                    <i class="fas fa-play-circle" style="color: var(--primary)"></i>
+                    <input type="text" placeholder="Lektionsnamn...">
+                    <span class="lesson-duration">5 min</span>
+                </div>
+            </div>
+            <button class="btn-add-lesson" onclick="addLesson(${moduleCount})">
+                <i class="fas fa-plus"></i> Lagg till lektion
+            </button>
+        </div>
+    `;
+
+    modulesList.insertAdjacentHTML('beforeend', moduleHtml);
+}
+
+function removeModule(id) {
+    const module = document.getElementById('module' + id);
+    if (module) {
+        module.remove();
+        renumberModules();
+    }
+}
+
+function renumberModules() {
+    document.querySelectorAll('.module-card').forEach((card, i) => {
+        card.querySelector('.module-number').textContent = i + 1;
+    });
+}
+
+function addLesson(moduleId) {
+    const lessonsList = document.getElementById('lessons' + moduleId);
+    const lessonHtml = `
+        <div class="lesson-item">
+            <i class="fas fa-play-circle" style="color: var(--primary)"></i>
+            <input type="text" placeholder="Lektionsnamn...">
+            <span class="lesson-duration">5 min</span>
+        </div>
+    `;
+    lessonsList.insertAdjacentHTML('beforeend', lessonHtml);
+}
+
+function selectTier(tier) {
+    document.querySelectorAll('.tier-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-tier="${tier}"]`).classList.add('active');
+
+    const prices = {
+        budget: 299,
+        standard: 1499,
+        premium: 3499,
+        flagship: 6999
+    };
+
+    document.getElementById('coursePrice').value = prices[tier];
+    updateProjections();
+}
+
+function updateProjections() {
+    const price = parseFloat(document.getElementById('coursePrice').value) || 0;
+
+    document.getElementById('proj10').textContent = formatCurrency(price * 10);
+    document.getElementById('proj50').textContent = formatCurrency(price * 50);
+    document.getElementById('proj100').textContent = formatCurrency(price * 100);
+}
+
+function saveCourse() {
+    const course = {
+        id: Date.now(),
+        name: document.getElementById('courseName').value || 'Namnlos kurs',
+        transFrom: document.getElementById('transFrom').value,
+        transTo: document.getElementById('transTo').value,
+        targetAudience: document.getElementById('targetAudience').value,
+        level: document.getElementById('courseLevel').value,
+        length: document.getElementById('courseLength').value,
+        price: parseFloat(document.getElementById('coursePrice').value) || 0,
+        strategy: document.querySelector('input[name="strategy"]:checked')?.value || 'earlybird',
+        modules: getModulesData(),
+        createdAt: new Date().toISOString()
+    };
+
+    const courses = JSON.parse(localStorage.getItem('course_projects') || '[]');
+    courses.push(course);
+    localStorage.setItem('course_projects', JSON.stringify(courses));
+
+    loadCourses();
+
+    if (window.WealthAgent) {
+        WealthAgent.showToast('Kursplan sparad!', 'success');
+    }
+
+    // Confetti celebration
+    if (typeof confetti !== 'undefined') {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    }
+}
+
+function getModulesData() {
+    const modules = [];
+    document.querySelectorAll('.module-card').forEach(card => {
+        const moduleName = card.querySelector('.module-name-input').value;
+        const lessons = [];
+        card.querySelectorAll('.lesson-item input').forEach(input => {
+            if (input.value) {
+                lessons.push(input.value);
+            }
+        });
+        modules.push({ name: moduleName, lessons: lessons });
+    });
+    return modules;
+}
+
+function loadCourses() {
+    const courses = JSON.parse(localStorage.getItem('course_projects') || '[]');
+    const container = document.getElementById('coursesList');
+
+    if (courses.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-graduation-cap"></i>
+                <p>Inga kursprojekt sparade an</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = courses.map(c => `
+        <div class="course-item">
+            <div class="course-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="course-info">
+                <div class="course-name">${c.name}</div>
+                <div class="course-meta">${c.modules?.length || 0} moduler • ${formatCurrency(c.price)}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK', maximumFractionDigits: 0 }).format(amount);
+}
+</script>
+{% endblock %}

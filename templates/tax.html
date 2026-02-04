@@ -1,0 +1,493 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Skatteoptimering - AI Wealth Agent{% endblock %}
+{% block page_title %}Skatteoptimering{% endblock %}
+
+{% block content %}
+<div class="tax-page">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h2><i class="fas fa-percentage"></i> Skatteoptimering</h2>
+            <p>Maximera dina avdrag och optimera dina investeringskonton</p>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+        <div class="stat-card highlight">
+            <div class="stat-icon">
+                <i class="fas fa-piggy-bank"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="potentialSavings">0 SEK</span>
+                <span class="stat-label">Potentiell besparing</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon blue">
+                <i class="fas fa-home"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="rotAmount">0 SEK</span>
+                <span class="stat-label">ROT-avdrag kvar</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon purple">
+                <i class="fas fa-broom"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="rutAmount">0 SEK</span>
+                <span class="stat-label">RUT-avdrag kvar</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ISK vs KF Calculator -->
+    <div class="card calculator-card">
+        <div class="card-header">
+            <h3><i class="fas fa-calculator"></i> ISK vs Traditionellt Konto</h3>
+        </div>
+        <div class="card-content">
+            <form id="iskForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Investeringsvarde (SEK)</label>
+                        <input type="number" name="investment_value" placeholder="500000">
+                    </div>
+                    <div class="form-group">
+                        <label>Forvantad kapitalvinst (SEK)</label>
+                        <input type="number" name="capital_gains" placeholder="50000">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-calculator"></i> Berakna
+                </button>
+            </form>
+
+            <div id="iskResult" class="result-box" style="display: none;">
+                <div class="result-comparison">
+                    <div class="result-option">
+                        <h4>ISK</h4>
+                        <div class="result-value" id="iskTax">0 SEK</div>
+                        <span class="result-label">Schablonbeskattning</span>
+                    </div>
+                    <div class="result-vs">VS</div>
+                    <div class="result-option">
+                        <h4>Traditionellt</h4>
+                        <div class="result-value" id="capitalTax">0 SEK</div>
+                        <span class="result-label">Kapitalvinstskatt (30%)</span>
+                    </div>
+                </div>
+                <div class="result-recommendation" id="iskRecommendation"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tax Deductions -->
+    <div class="deductions-grid">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-home"></i> ROT-avdrag</h3>
+            </div>
+            <div class="card-content">
+                <p class="deduction-info">ROT-avdrag ger dig 30% skattelattnad pa arbetskostnad for renovering och tillbyggnad.</p>
+                <div class="deduction-details">
+                    <div class="detail-row">
+                        <span>Max per person/ar</span>
+                        <strong>50 000 SEK</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Avdragsprocent</span>
+                        <strong>30%</strong>
+                    </div>
+                </div>
+                <div class="deduction-examples">
+                    <h5>Vanliga ROT-arbeten:</h5>
+                    <ul>
+                        <li>Badrumsrenovering</li>
+                        <li>Koksrenovering</li>
+                        <li>Tillaggsisolering</li>
+                        <li>Takbyte</li>
+                        <li>Fasadrenovering</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-broom"></i> RUT-avdrag</h3>
+            </div>
+            <div class="card-content">
+                <p class="deduction-info">RUT-avdrag ger dig 50% skattelattnad pa hushallstjanster.</p>
+                <div class="deduction-details">
+                    <div class="detail-row">
+                        <span>Max per person/ar</span>
+                        <strong>75 000 SEK</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Avdragsprocent</span>
+                        <strong>50%</strong>
+                    </div>
+                </div>
+                <div class="deduction-examples">
+                    <h5>Vanliga RUT-tjanster:</h5>
+                    <ul>
+                        <li>Stadning</li>
+                        <li>Fonsterputsning</li>
+                        <li>Tradgardsarbete</li>
+                        <li>Barnpassning</li>
+                        <li>Flytt</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3:12 Rules -->
+    <div class="card rules-card">
+        <div class="card-header">
+            <h3><i class="fas fa-building"></i> 3:12-reglerna (Foretagare)</h3>
+        </div>
+        <div class="card-content">
+            <p class="rules-intro">Om du ager aktiebolag kan 3:12-reglerna ge dig lagre skatt pa utdelningar.</p>
+
+            <div class="rules-boxes">
+                <div class="rule-box">
+                    <h4>Schablonbelopp 2024</h4>
+                    <div class="rule-value">204 325 SEK</div>
+                    <p>Utdelning upp till detta belopp beskattas med 20%</p>
+                </div>
+                <div class="rule-box">
+                    <h4>Loneutrymme</h4>
+                    <div class="rule-value">50% av loner</div>
+                    <p>Alternativt kan utdelningsutrymmet baseras pa utbetalda loner</p>
+                </div>
+                <div class="rule-box">
+                    <h4>Over gransen</h4>
+                    <div class="rule-value">~52% skatt</div>
+                    <p>Utdelning over gransen beskattas som inkomst av tjanst</p>
+                </div>
+            </div>
+
+            <div class="rules-tip">
+                <i class="fas fa-lightbulb"></i>
+                <p><strong>Tips:</strong> Spara oupptaget utdelningsutrymme till framtida ar nar du kan ta ut storre utdelning med lagre skatt.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.tax-page { max-width: 1200px; }
+
+.page-header { margin-bottom: 2rem; }
+
+.header-content h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.header-content h2 i { color: var(--primary); }
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid var(--border);
+}
+
+.stat-card.highlight {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05));
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.stat-icon.blue { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+.stat-icon.purple { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+
+.stat-info { display: flex; flex-direction: column; }
+.stat-value { font-size: 1.5rem; font-weight: 700; }
+.stat-label { font-size: 0.8rem; color: var(--text-muted); }
+
+.calculator-card { margin-bottom: 2rem; }
+
+.card {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+}
+
+.card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.card-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.card-content { padding: 1.5rem; }
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+}
+
+.result-box {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: var(--background);
+    border-radius: 12px;
+}
+
+.result-comparison {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1rem;
+}
+
+.result-option {
+    text-align: center;
+    flex: 1;
+}
+
+.result-option h4 { margin-bottom: 0.5rem; }
+.result-value { font-size: 1.5rem; font-weight: 700; }
+.result-label { font-size: 0.8rem; color: var(--text-muted); }
+
+.result-vs {
+    font-weight: 700;
+    color: var(--text-muted);
+    padding: 0 1rem;
+}
+
+.result-recommendation {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(34, 197, 94, 0.1);
+    border-radius: 8px;
+    color: #22c55e;
+    font-weight: 500;
+}
+
+.deductions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.deduction-info {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.deduction-details {
+    background: var(--background);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.detail-row:last-child { border-bottom: none; }
+
+.deduction-examples h5 {
+    margin-bottom: 0.5rem;
+    color: var(--text-muted);
+}
+
+.deduction-examples ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.deduction-examples li {
+    background: var(--background);
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.85rem;
+}
+
+.rules-intro {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+.rules-boxes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.rule-box {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.rule-box h4 {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.rule-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.rule-box p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.rules-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background: rgba(245, 158, 11, 0.1);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.rules-tip i { color: #f59e0b; margin-top: 0.2rem; }
+.rules-tip p { margin: 0; font-size: 0.9rem; }
+
+@media (max-width: 768px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .deductions-grid { grid-template-columns: 1fr; }
+    .rules-boxes { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .result-comparison { flex-direction: column; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('iskForm').addEventListener('submit', calculateISK);
+
+    // Set default max values
+    document.getElementById('rotAmount').textContent = '50 000 SEK';
+    document.getElementById('rutAmount').textContent = '75 000 SEK';
+});
+
+async function calculateISK(e) {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const investmentValue = parseFloat(formData.get('investment_value')) || 0;
+    const capitalGains = parseFloat(formData.get('capital_gains')) || 0;
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/tax/calculate', 'POST', {
+            investment_value: investmentValue,
+            capital_gains: capitalGains
+        });
+
+        if (response.success) {
+            displayResults(response.calculation);
+        }
+    } catch (error) {
+        console.error('Tax calculation failed:', error);
+        // Fallback to local calculation
+        localCalculation(investmentValue, capitalGains);
+    }
+}
+
+function localCalculation(investmentValue, capitalGains) {
+    // ISK schablonbeskattning (approximately)
+    const iskRate = 0.0114;
+    const iskTax = investmentValue * iskRate * 0.30;
+
+    // Traditional capital gains tax
+    const capitalTax = capitalGains * 0.30;
+
+    displayResults({
+        isk_tax: iskTax,
+        capital_tax: capitalTax,
+        isk_better: iskTax < capitalTax
+    });
+}
+
+function displayResults(calc) {
+    document.getElementById('iskResult').style.display = 'block';
+    document.getElementById('iskTax').textContent = WealthAgent.formatCurrency(calc.isk_tax);
+    document.getElementById('capitalTax').textContent = WealthAgent.formatCurrency(calc.capital_tax);
+
+    const recommendation = document.getElementById('iskRecommendation');
+    if (calc.isk_better) {
+        recommendation.innerHTML = '<i class="fas fa-check-circle"></i> ISK rekommenderas - du sparar ' +
+            WealthAgent.formatCurrency(calc.capital_tax - calc.isk_tax);
+        recommendation.style.background = 'rgba(34, 197, 94, 0.1)';
+        recommendation.style.color = '#22c55e';
+    } else {
+        recommendation.innerHTML = '<i class="fas fa-info-circle"></i> Traditionellt konto kan vara battre for denna avkastning';
+        recommendation.style.background = 'rgba(59, 130, 246, 0.1)';
+        recommendation.style.color = '#3b82f6';
+    }
+
+    // Update potential savings
+    const savings = Math.abs(calc.capital_tax - calc.isk_tax);
+    document.getElementById('potentialSavings').textContent = WealthAgent.formatCurrency(savings);
+}
+</script>
+{% endblock %}

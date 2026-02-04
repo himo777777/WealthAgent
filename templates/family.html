@@ -1,0 +1,1121 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Familjebudget - AI Wealth Agent{% endblock %}
+{% block page_title %}Familjebudget{% endblock %}
+
+{% block content %}
+<div class="family-page">
+    <!-- Family Overview -->
+    <div class="family-overview">
+        <div class="overview-header">
+            <div class="family-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="family-info">
+                <h2 id="familyName">Min familj</h2>
+                <p id="memberCount">0 medlemmar</p>
+            </div>
+            <button class="btn btn-primary" onclick="showAddMemberModal()">
+                <i class="fas fa-user-plus"></i> Lagg till medlem
+            </button>
+        </div>
+
+        <!-- Family Members -->
+        <div id="familyMembers" class="members-grid">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Combined Finances -->
+    <div class="finance-summary">
+        <div class="summary-card income">
+            <div class="summary-icon">
+                <i class="fas fa-arrow-down"></i>
+            </div>
+            <div class="summary-content">
+                <span class="summary-label">Total hushallsinkomst</span>
+                <span class="summary-value" id="totalHouseholdIncome">0 kr/man</span>
+            </div>
+        </div>
+        <div class="summary-card expenses">
+            <div class="summary-icon">
+                <i class="fas fa-arrow-up"></i>
+            </div>
+            <div class="summary-content">
+                <span class="summary-label">Totala utgifter</span>
+                <span class="summary-value" id="totalHouseholdExpenses">0 kr/man</span>
+            </div>
+        </div>
+        <div class="summary-card savings">
+            <div class="summary-icon">
+                <i class="fas fa-piggy-bank"></i>
+            </div>
+            <div class="summary-content">
+                <span class="summary-label">Hushallsparande</span>
+                <span class="summary-value" id="totalHouseholdSavings">0 kr/man</span>
+            </div>
+        </div>
+        <div class="summary-card net">
+            <div class="summary-icon">
+                <i class="fas fa-balance-scale"></i>
+            </div>
+            <div class="summary-content">
+                <span class="summary-label">Netto per manad</span>
+                <span class="summary-value" id="householdNet">0 kr</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Split -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-percentage"></i> Fordelning av utgifter</h3>
+            <div class="split-toggle">
+                <button class="split-btn active" data-split="equal">Lika</button>
+                <button class="split-btn" data-split="income">Efter inkomst</button>
+                <button class="split-btn" data-split="custom">Anpassad</button>
+            </div>
+        </div>
+        <div id="budgetSplit" class="budget-split">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Shared Goals -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-bullseye"></i> Gemensamma mal</h3>
+            <button class="btn btn-secondary btn-sm" onclick="showAddGoalModal()">
+                <i class="fas fa-plus"></i> Nytt mal
+            </button>
+        </div>
+        <div id="sharedGoals" class="goals-list">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Expense Categories by Member -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-chart-pie"></i> Utgifter per kategori</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="familyExpenseChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Activity Feed -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-history"></i> Aktivitet</h3>
+        </div>
+        <div id="activityFeed" class="activity-list">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Add Member Modal -->
+<div class="modal-overlay" id="memberModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Lagg till familjemedlem</h3>
+            <button class="modal-close" onclick="closeModals()">&times;</button>
+        </div>
+        <form id="memberForm">
+            <input type="hidden" id="memberId">
+            <div class="form-group">
+                <label>Namn</label>
+                <input type="text" id="memberName" required placeholder="t.ex. Anna">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Roll</label>
+                    <select id="memberRole">
+                        <option value="partner">Partner</option>
+                        <option value="child">Barn</option>
+                        <option value="parent">Foralder</option>
+                        <option value="other">Annan</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Alder</label>
+                    <input type="number" id="memberAge" min="0" max="120" placeholder="30">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Manadsinkomst (netto)</label>
+                    <input type="number" id="memberIncome" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>Personliga utgifter</label>
+                    <input type="number" id="memberExpenses" min="0" placeholder="0">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>E-post (for inbjudan)</label>
+                <input type="email" id="memberEmail" placeholder="anna@example.com">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModals()">Avbryt</button>
+                <button type="submit" class="btn btn-primary">Spara</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Goal Modal -->
+<div class="modal-overlay" id="goalModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Nytt gemensamt mal</h3>
+            <button class="modal-close" onclick="closeModals()">&times;</button>
+        </div>
+        <form id="goalForm">
+            <div class="form-group">
+                <label>Malnamn</label>
+                <input type="text" id="goalName" required placeholder="t.ex. Semesterresa">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Malbelopp</label>
+                    <input type="number" id="goalTarget" required min="0" placeholder="50000">
+                </div>
+                <div class="form-group">
+                    <label>Maldatum</label>
+                    <input type="date" id="goalDate">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Fordelning</label>
+                <select id="goalSplit">
+                    <option value="equal">Lika mellan alla</option>
+                    <option value="income">Efter inkomst</option>
+                    <option value="adults">Endast vuxna</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModals()">Avbryt</button>
+                <button type="submit" class="btn btn-primary">Skapa mal</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.family-page { max-width: 1100px; }
+
+.family-overview {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.overview-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.family-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: var(--primary);
+}
+
+.family-info {
+    flex: 1;
+}
+
+.family-info h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.family-info p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.members-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.member-card {
+    background: var(--background);
+    border-radius: 16px;
+    padding: 1.25rem;
+    text-align: center;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.member-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.member-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    margin: 0 auto 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.member-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.member-role {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+}
+
+.member-contribution {
+    font-size: 0.9rem;
+}
+
+.member-contribution strong {
+    color: var(--success);
+}
+
+.member-actions {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+}
+
+.member-actions button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.25rem;
+}
+
+.member-actions button:hover { color: var(--text); }
+
+.add-member-card {
+    border: 2px dashed var(--border);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+
+.add-member-card:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.add-member-card i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.finance-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.summary-card.income .summary-icon { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+.summary-card.expenses .summary-icon { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+.summary-card.savings .summary-icon { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
+.summary-card.net .summary-icon { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+
+.summary-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: block;
+}
+
+.summary-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.summary-card.income .summary-value { color: var(--success); }
+
+.section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.section-header h3 i { color: var(--primary); }
+
+.split-toggle {
+    display: flex;
+    gap: 0.25rem;
+    background: var(--background);
+    border-radius: 8px;
+    padding: 0.25rem;
+}
+
+.split-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.split-btn.active {
+    background: var(--primary);
+    color: white;
+}
+
+.budget-split {
+    padding: 1.25rem;
+}
+
+.split-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+}
+
+.split-item:last-child { margin-bottom: 0; }
+
+.split-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-right: 1rem;
+}
+
+.split-info {
+    flex: 1;
+}
+
+.split-name {
+    font-weight: 500;
+}
+
+.split-income {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.split-bar {
+    width: 200px;
+    margin: 0 1rem;
+}
+
+.split-bar .bar-container {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.split-bar .bar-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 4px;
+}
+
+.split-percent {
+    font-weight: 600;
+    min-width: 50px;
+    text-align: right;
+}
+
+.split-amount {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    min-width: 100px;
+    text-align: right;
+}
+
+.goals-list {
+    padding: 1rem;
+}
+
+.goal-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+}
+
+.goal-item:last-child { margin-bottom: 0; }
+
+.goal-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.goal-info {
+    flex: 1;
+}
+
+.goal-name {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.goal-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.goal-progress .bar-container {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.goal-progress .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #a855f7);
+    border-radius: 4px;
+}
+
+.goal-percent {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.goal-amount {
+    text-align: right;
+}
+
+.goal-current {
+    font-weight: 600;
+    display: block;
+}
+
+.goal-target {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.chart-container {
+    padding: 1.25rem;
+    height: 300px;
+}
+
+.activity-list {
+    padding: 1rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.activity-item:last-child { border-bottom: none; }
+
+.activity-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.activity-text {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.activity-text strong { color: var(--text); }
+
+.activity-time {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.empty-state {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+form {
+    padding: 1.25rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+@media (max-width: 1024px) {
+    .finance-summary { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .finance-summary { grid-template-columns: 1fr; }
+    .members-grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .split-bar { display: none; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let familyData = {
+    name: 'Familjen Andersson',
+    members: [],
+    goals: [],
+    activities: []
+};
+
+let currentSplitMode = 'equal';
+let expenseChart = null;
+
+const avatarColors = ['#6366f1', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6', '#0ea5e9'];
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadFamilyData();
+
+    document.querySelectorAll('.split-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.split-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentSplitMode = this.dataset.split;
+            renderBudgetSplit();
+        });
+    });
+
+    document.getElementById('memberForm').addEventListener('submit', saveMember);
+    document.getElementById('goalForm').addEventListener('submit', saveGoal);
+});
+
+async function loadFamilyData() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/family');
+        if (response.success) {
+            familyData = response.family;
+            renderAll();
+        }
+    } catch (error) {
+        familyData = getSampleData();
+        renderAll();
+    }
+}
+
+function getSampleData() {
+    return {
+        name: 'Familjen Andersson',
+        members: [
+            { id: 1, name: 'Erik', role: 'partner', age: 35, income: 42000, expenses: 5000, color: avatarColors[0] },
+            { id: 2, name: 'Anna', role: 'partner', age: 33, income: 38000, expenses: 4500, color: avatarColors[1] },
+            { id: 3, name: 'Maja', role: 'child', age: 8, income: 0, expenses: 1500, color: avatarColors[2] },
+            { id: 4, name: 'Oscar', role: 'child', age: 5, income: 0, expenses: 1200, color: avatarColors[3] }
+        ],
+        sharedExpenses: 45000,
+        goals: [
+            { id: 1, name: 'Semesterresa Thailand', target: 80000, current: 45000, date: '2025-06-01' },
+            { id: 2, name: 'Ny bil', target: 250000, current: 85000, date: '2026-01-01' }
+        ],
+        activities: [
+            { member: 'Anna', action: 'la till 5 000 kr till semestermalet', time: '2 timmar sedan' },
+            { member: 'Erik', action: 'uppdaterade budgeten', time: '1 dag sedan' },
+            { member: 'Anna', action: 'skapade ett nytt sparmal', time: '3 dagar sedan' }
+        ]
+    };
+}
+
+function renderAll() {
+    document.getElementById('familyName').textContent = familyData.name;
+    document.getElementById('memberCount').textContent = familyData.members.length + ' medlemmar';
+
+    renderMembers();
+    renderFinanceSummary();
+    renderBudgetSplit();
+    renderGoals();
+    renderExpenseChart();
+    renderActivities();
+}
+
+function renderMembers() {
+    const container = document.getElementById('familyMembers');
+
+    const memberCards = familyData.members.map(m => {
+        const roleLabels = { partner: 'Partner', child: 'Barn', parent: 'Foralder', other: 'Annan' };
+        const initial = m.name.charAt(0).toUpperCase();
+
+        return `
+            <div class="member-card">
+                <div class="member-actions">
+                    <button onclick="editMember(${m.id})"><i class="fas fa-edit"></i></button>
+                    <button onclick="removeMember(${m.id})"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="member-avatar" style="background: ${m.color}">
+                    ${initial}
+                </div>
+                <div class="member-name">${m.name}</div>
+                <div class="member-role">${roleLabels[m.role] || m.role}${m.age ? ', ' + m.age + ' ar' : ''}</div>
+                <div class="member-contribution">
+                    ${m.income > 0 ? `<strong>+${WealthAgent.formatCurrency(m.income)}</strong>/man` : 'Ingen inkomst'}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    const addCard = `
+        <div class="add-member-card member-card" onclick="showAddMemberModal()">
+            <i class="fas fa-user-plus"></i>
+            <span>Lagg till medlem</span>
+        </div>
+    `;
+
+    container.innerHTML = memberCards + addCard;
+}
+
+function renderFinanceSummary() {
+    const totalIncome = familyData.members.reduce((sum, m) => sum + (m.income || 0), 0);
+    const personalExpenses = familyData.members.reduce((sum, m) => sum + (m.expenses || 0), 0);
+    const sharedExpenses = familyData.sharedExpenses || 0;
+    const totalExpenses = personalExpenses + sharedExpenses;
+    const savings = totalIncome * 0.1; // Assume 10% savings
+    const net = totalIncome - totalExpenses - savings;
+
+    document.getElementById('totalHouseholdIncome').textContent = WealthAgent.formatCurrency(totalIncome) + '/man';
+    document.getElementById('totalHouseholdExpenses').textContent = WealthAgent.formatCurrency(totalExpenses) + '/man';
+    document.getElementById('totalHouseholdSavings').textContent = WealthAgent.formatCurrency(savings) + '/man';
+    document.getElementById('householdNet').textContent = WealthAgent.formatCurrency(net);
+
+    const netEl = document.getElementById('householdNet');
+    netEl.style.color = net >= 0 ? 'var(--success)' : 'var(--danger)';
+}
+
+function renderBudgetSplit() {
+    const container = document.getElementById('budgetSplit');
+    const adults = familyData.members.filter(m => m.role !== 'child');
+    const totalIncome = adults.reduce((sum, m) => sum + (m.income || 0), 0);
+    const sharedExpenses = familyData.sharedExpenses || 45000;
+
+    let splits;
+    if (currentSplitMode === 'equal') {
+        const share = 100 / adults.length;
+        splits = adults.map(m => ({
+            ...m,
+            percent: share,
+            amount: sharedExpenses / adults.length
+        }));
+    } else if (currentSplitMode === 'income') {
+        splits = adults.map(m => ({
+            ...m,
+            percent: totalIncome > 0 ? (m.income / totalIncome) * 100 : 0,
+            amount: totalIncome > 0 ? sharedExpenses * (m.income / totalIncome) : 0
+        }));
+    } else {
+        // Custom - use equal as default
+        const share = 100 / adults.length;
+        splits = adults.map(m => ({
+            ...m,
+            percent: share,
+            amount: sharedExpenses / adults.length
+        }));
+    }
+
+    container.innerHTML = splits.map(s => {
+        const initial = s.name.charAt(0).toUpperCase();
+
+        return `
+            <div class="split-item">
+                <div class="split-avatar" style="background: ${s.color}">
+                    ${initial}
+                </div>
+                <div class="split-info">
+                    <div class="split-name">${s.name}</div>
+                    <div class="split-income">Inkomst: ${WealthAgent.formatCurrency(s.income)}/man</div>
+                </div>
+                <div class="split-bar">
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: ${s.percent}%; background: ${s.color}"></div>
+                    </div>
+                </div>
+                <div class="split-percent">${Math.round(s.percent)}%</div>
+                <div class="split-amount">${WealthAgent.formatCurrency(s.amount)}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderGoals() {
+    const container = document.getElementById('sharedGoals');
+
+    if (!familyData.goals || familyData.goals.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <p>Inga gemensamma mal an. Skapa ett!</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = familyData.goals.map(g => {
+        const percent = (g.current / g.target) * 100;
+
+        return `
+            <div class="goal-item">
+                <div class="goal-icon">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div class="goal-info">
+                    <div class="goal-name">${g.name}</div>
+                    <div class="goal-progress">
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: ${Math.min(100, percent)}%"></div>
+                        </div>
+                        <span class="goal-percent">${Math.round(percent)}%</span>
+                    </div>
+                </div>
+                <div class="goal-amount">
+                    <span class="goal-current">${WealthAgent.formatCurrency(g.current)}</span>
+                    <span class="goal-target">av ${WealthAgent.formatCurrency(g.target)}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderExpenseChart() {
+    const ctx = document.getElementById('familyExpenseChart').getContext('2d');
+
+    if (expenseChart) expenseChart.destroy();
+
+    const categories = ['Boende', 'Mat', 'Transport', 'Barn', 'Sparande', 'Nojen'];
+
+    expenseChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: categories,
+            datasets: familyData.members.filter(m => m.role !== 'child').map(m => ({
+                label: m.name,
+                data: [12000, 4000, 2500, 3000, 4000, 2000].map(v => v * (m.income / 80000)),
+                backgroundColor: m.color,
+                borderRadius: 6
+            }))
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { color: getComputedStyle(document.body).getPropertyValue('--text').trim() }
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    grid: { display: false },
+                    ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-muted').trim() }
+                },
+                y: {
+                    stacked: true,
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: {
+                        color: getComputedStyle(document.body).getPropertyValue('--text-muted').trim(),
+                        callback: val => (val / 1000) + 'k'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderActivities() {
+    const container = document.getElementById('activityFeed');
+
+    if (!familyData.activities || familyData.activities.length === 0) {
+        container.innerHTML = '<div class="empty-state">Ingen aktivitet an</div>';
+        return;
+    }
+
+    container.innerHTML = familyData.activities.map(a => {
+        const member = familyData.members.find(m => m.name === a.member);
+        const color = member?.color || avatarColors[0];
+        const initial = a.member.charAt(0).toUpperCase();
+
+        return `
+            <div class="activity-item">
+                <div class="activity-avatar" style="background: ${color}">
+                    ${initial}
+                </div>
+                <div class="activity-text">
+                    <strong>${a.member}</strong> ${a.action}
+                </div>
+                <div class="activity-time">${a.time}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function showAddMemberModal() {
+    document.getElementById('memberForm').reset();
+    document.getElementById('memberId').value = '';
+    document.getElementById('memberModal').classList.add('active');
+}
+
+function showAddGoalModal() {
+    document.getElementById('goalForm').reset();
+    document.getElementById('goalModal').classList.add('active');
+}
+
+function closeModals() {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+}
+
+function editMember(id) {
+    const member = familyData.members.find(m => m.id === id);
+    if (!member) return;
+
+    document.getElementById('memberId').value = id;
+    document.getElementById('memberName').value = member.name;
+    document.getElementById('memberRole').value = member.role;
+    document.getElementById('memberAge').value = member.age || '';
+    document.getElementById('memberIncome').value = member.income || 0;
+    document.getElementById('memberExpenses').value = member.expenses || 0;
+    document.getElementById('memberEmail').value = member.email || '';
+
+    document.getElementById('memberModal').classList.add('active');
+}
+
+async function saveMember(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('memberId').value;
+    const data = {
+        name: document.getElementById('memberName').value,
+        role: document.getElementById('memberRole').value,
+        age: parseInt(document.getElementById('memberAge').value) || null,
+        income: parseFloat(document.getElementById('memberIncome').value) || 0,
+        expenses: parseFloat(document.getElementById('memberExpenses').value) || 0,
+        email: document.getElementById('memberEmail').value,
+        color: avatarColors[familyData.members.length % avatarColors.length]
+    };
+
+    try {
+        const response = await WealthAgent.apiCall(
+            id ? `/wealth/api/family/members/${id}` : '/wealth/api/family/members',
+            id ? 'PUT' : 'POST',
+            data
+        );
+        if (response.success) {
+            WealthAgent.showToast(id ? 'Medlem uppdaterad!' : 'Medlem tillagd!', 'success');
+            closeModals();
+            loadFamilyData();
+        }
+    } catch (error) {
+        if (id) {
+            const idx = familyData.members.findIndex(m => m.id == id);
+            if (idx >= 0) familyData.members[idx] = { ...familyData.members[idx], ...data };
+        } else {
+            familyData.members.push({ id: Date.now(), ...data });
+        }
+        WealthAgent.showToast(id ? 'Medlem uppdaterad!' : 'Medlem tillagd!', 'success');
+        closeModals();
+        renderAll();
+    }
+}
+
+async function removeMember(id) {
+    if (!confirm('Ta bort denna familjemedlem?')) return;
+
+    try {
+        await WealthAgent.apiCall(`/wealth/api/family/members/${id}`, 'DELETE');
+        loadFamilyData();
+    } catch (error) {
+        familyData.members = familyData.members.filter(m => m.id !== id);
+        renderAll();
+    }
+    WealthAgent.showToast('Medlem borttagen', 'success');
+}
+
+async function saveGoal(e) {
+    e.preventDefault();
+
+    const data = {
+        name: document.getElementById('goalName').value,
+        target: parseFloat(document.getElementById('goalTarget').value),
+        date: document.getElementById('goalDate').value,
+        split: document.getElementById('goalSplit').value,
+        current: 0
+    };
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/family/goals', 'POST', data);
+        if (response.success) {
+            WealthAgent.showToast('Mal skapat!', 'success');
+            closeModals();
+            loadFamilyData();
+        }
+    } catch (error) {
+        familyData.goals = familyData.goals || [];
+        familyData.goals.push({ id: Date.now(), ...data });
+        WealthAgent.showToast('Mal skapat!', 'success');
+        closeModals();
+        renderAll();
+    }
+}
+</script>
+{% endblock %}

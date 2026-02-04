@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="sv" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Wealth Agent{% endblock %}</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Confetti for celebrations -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/wealth_agent.css') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-coins"></i>
+                <span>Wealth Agent</span>
+            </div>
+            <div class="version-badge">AI</div>
+        </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.index' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.index') }}">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.chat' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.chat') }}">
+                    <i class="fas fa-comments"></i>
+                    <span>AI Chat</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.goals' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.goals') }}">
+                    <i class="fas fa-bullseye"></i>
+                    <span>Mina Mål</span>
+                </a>
+            </li>
+
+            <li class="nav-section">Verktyg</li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.millionaire' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.millionaire') }}">
+                    <i class="fas fa-gem"></i>
+                    <span>Miljonarskalkylator</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.fire_calculator' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.fire_calculator') }}">
+                    <i class="fas fa-fire"></i>
+                    <span>FIRE Kalkylator</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.opportunities' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.opportunities') }}">
+                    <i class="fas fa-satellite-dish"></i>
+                    <span>Opportunity Radar</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.side_income' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.side_income') }}">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <span>Sidoinkomster</span>
+                </a>
+            </li>
+
+            <li class="nav-section">Ekonomi</li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.net_worth' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.net_worth') }}">
+                    <i class="fas fa-chart-area"></i>
+                    <span>Nettoformogenhet</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.portfolio' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.portfolio') }}">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Portfolj</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.budget' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.budget') }}">
+                    <i class="fas fa-wallet"></i>
+                    <span>Budget</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.recurring_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.recurring_page') }}">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Aterkommande</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.expense_analysis_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.expense_analysis_page') }}">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Utgiftsanalys</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.income_sources_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.income_sources_page') }}">
+                    <i class="fas fa-coins"></i>
+                    <span>Inkomstkallor</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.emergency_fund_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.emergency_fund_page') }}">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Buffert</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.debt_management' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.debt_management') }}">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Skulder</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.tax_optimization' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.tax_optimization') }}">
+                    <i class="fas fa-percentage"></i>
+                    <span>Skatteoptimering</span>
+                </a>
+            </li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.subscriptions_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.subscriptions_page') }}">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Prenumerationer</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.pension_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.pension_page') }}">
+                    <i class="fas fa-umbrella-beach"></i>
+                    <span>Pension</span>
+                </a>
+            </li>
+
+            <li class="nav-section">Automation</li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.auto_invest' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.auto_invest') }}">
+                    <i class="fas fa-robot"></i>
+                    <span>Auto-Invest</span>
+                </a>
+            </li>
+
+            <li class="nav-section">Larande & Achievements</li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.education' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.education') }}">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>Utbildning</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.achievements_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.achievements_page') }}">
+                    <i class="fas fa-trophy"></i>
+                    <span>Achievements</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.health_score_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.health_score_page') }}">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>Ekonomisk Halsa</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.challenges_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.challenges_page') }}">
+                    <i class="fas fa-medal"></i>
+                    <span>Sparutmaningar</span>
+                </a>
+            </li>
+
+            <li class="nav-section">Planering</li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.scenarios_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.scenarios_page') }}">
+                    <i class="fas fa-crystal-ball"></i>
+                    <span>What-If Scenarier</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.benchmark_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.benchmark_page') }}">
+                    <i class="fas fa-users"></i>
+                    <span>Peer-jamforelse</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.family_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.family_page') }}">
+                    <i class="fas fa-home"></i>
+                    <span>Familjebudget</span>
+                </a>
+            </li>
+
+            <li class="nav-section">Miljonarsverktyg</li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.compound_calculator_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.compound_calculator_page') }}">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Ranterantan</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.dividend_tracker_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.dividend_tracker_page') }}">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <span>Utdelningar</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.rebalancing_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.rebalancing_page') }}">
+                    <i class="fas fa-balance-scale-right"></i>
+                    <span>Ombalansering</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.real_estate_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.real_estate_page') }}">
+                    <i class="fas fa-building"></i>
+                    <span>Fastigheter</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.wealth_projection_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.wealth_projection_page') }}">
+                    <i class="fas fa-rocket"></i>
+                    <span>Prognos</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.habits_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.habits_page') }}">
+                    <i class="fas fa-gem"></i>
+                    <span>Rika Vanor</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.networth_timeline_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.networth_timeline_page') }}">
+                    <i class="fas fa-history"></i>
+                    <span>NW Tidslinje</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.fire_calculator_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.fire_calculator_page') }}">
+                    <i class="fas fa-fire-alt"></i>
+                    <span>FIRE Kalkylator</span>
+                </a>
+            </li>
+
+            <li class="nav-section">Entreprenör</li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.business_ideas_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.business_ideas_page') }}">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Affärsidéer</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.side_hustles_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.side_hustles_page') }}">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Sidoprojekt</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.income_streams_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.income_streams_page') }}">
+                    <i class="fas fa-stream"></i>
+                    <span>Inkomstströmmar</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.skill_monetization_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.skill_monetization_page') }}">
+                    <i class="fas fa-brain"></i>
+                    <span>Skill→Pengar</span>
+                </a>
+            </li>
+
+            <li class="nav-section">Flipping & Trading</li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.flipping_dashboard_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.flipping_dashboard_page') }}">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Flipping Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.deal_tracker_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.deal_tracker_page') }}">
+                    <i class="fas fa-list-alt"></i>
+                    <span>Deal Tracker</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.flipping_calc_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.flipping_calc_page') }}">
+                    <i class="fas fa-calculator"></i>
+                    <span>Vinstkalkylator</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.arbitrage_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.arbitrage_page') }}">
+                    <i class="fas fa-search-dollar"></i>
+                    <span>Arbitrage Finder</span>
+                </a>
+            </li>
+
+            <li class="nav-section">Inkomstboost</li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.rate_optimizer_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.rate_optimizer_page') }}">
+                    <i class="fas fa-dollar-sign"></i>
+                    <span>Rate Optimizer</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.gig_tracker_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.gig_tracker_page') }}">
+                    <i class="fas fa-motorcycle"></i>
+                    <span>Gig Tracker</span>
+                </a>
+            </li>
+
+            <li class="nav-section">Digitala Produkter</li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.digital_products_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.digital_products_page') }}">
+                    <i class="fas fa-laptop-code"></i>
+                    <span>Produktskapare</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.course_builder_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.course_builder_page') }}">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>Kursbyggare</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.passive_tracker_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.passive_tracker_page') }}">
+                    <i class="fas fa-coins"></i>
+                    <span>Passiv Inkomst</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.ai_content_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.ai_content_page') }}">
+                    <i class="fas fa-robot"></i>
+                    <span>AI Content</span>
+                </a>
+            </li>
+
+            <li class="nav-section">Affärstillväxt</li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.client_pipeline_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.client_pipeline_page') }}">
+                    <i class="fas fa-funnel-dollar"></i>
+                    <span>Client Pipeline</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.upsell_generator_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.upsell_generator_page') }}">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Upsell Generator</span>
+                </a>
+            </li>
+
+            <li class="nav-section">Företagsbyggande</li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.revenue_models_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.revenue_models_page') }}">
+                    <i class="fas fa-sitemap"></i>
+                    <span>Intäktsmodeller</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.first_customers_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.first_customers_page') }}">
+                    <i class="fas fa-users"></i>
+                    <span>Första 1000</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.pitch_builder_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.pitch_builder_page') }}">
+                    <i class="fas fa-presentation"></i>
+                    <span>Pitch Builder</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.crowdfunding_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.crowdfunding_page') }}">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <span>Crowdfunding</span>
+                </a>
+            </li>
+
+            <li class="nav-section">Rapporter</li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.reports_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.reports_page') }}">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Rapporter</span>
+                </a>
+            </li>
+
+            <li class="nav-divider"></li>
+
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.notifications' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.notifications') }}">
+                    <i class="fas fa-bell"></i>
+                    <span>Notiser</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.settings_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.settings_page') }}">
+                    <i class="fas fa-cog"></i>
+                    <span>Installningar</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.sharing_page' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.sharing_page') }}">
+                    <i class="fas fa-users"></i>
+                    <span>Dela med Partner</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'wealth_agent.profile' %}active{% endif %}">
+                <a href="{{ url_for('wealth_agent.profile') }}">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Min Profil</span>
+                </a>
+            </li>
+            <li class="nav-divider"></li>
+            <li class="nav-item">
+                <a href="{{ url_for('dashboard.index') }}">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>ComplicationAI</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <div class="ai-status">
+                <div class="status-indicator online"></div>
+                <span>AI Active</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+            </div>
+            <div class="topbar-right">
+                <!-- Theme Toggle -->
+                <button class="theme-toggle" id="themeToggle" title="Byt tema">
+                    <i class="fas fa-sun" id="themeIcon"></i>
+                </button>
+
+                <!-- XP & Level Badge -->
+                <div class="xp-badge" id="xpBadge" onclick="window.location.href='{{ url_for('wealth_agent.achievements_page') }}'">
+                    <i class="fas fa-star"></i>
+                    <span id="userLevel">Lv 1</span>
+                </div>
+
+                <!-- Streak Badge -->
+                <div class="streak-badge" id="streakBadge">
+                    <i class="fas fa-fire"></i>
+                    <span id="userStreak">0</span>
+                </div>
+
+                <div class="user-menu">
+                    <div class="user-info">
+                        <span class="user-name">{{ session.get('dashboard_name', 'Anvandare') }}</span>
+                        <span class="user-role">Wealth Agent</span>
+                    </div>
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="dropdown-menu">
+                        <a href="{{ url_for('wealth_agent.settings_page') }}"><i class="fas fa-cog"></i> Installningar</a>
+                        <a href="{{ url_for('wealth_agent.sharing_page') }}"><i class="fas fa-users"></i> Dela med partner</a>
+                        <a href="{{ url_for('dashboard.logout') }}"><i class="fas fa-sign-out-alt"></i> Logga ut</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="content-wrapper">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Floating Action Button -->
+    <div class="fab-container">
+        <button class="fab-main" id="fabMain" onclick="toggleFabMenu()">
+            <i class="fas fa-plus"></i>
+        </button>
+        <div class="fab-menu" id="fabMenu">
+            <a href="{{ url_for('wealth_agent.budget') }}?add=expense" class="fab-item expense" title="Lägg till utgift">
+                <i class="fas fa-minus"></i>
+                <span>Utgift</span>
+            </a>
+            <a href="{{ url_for('wealth_agent.budget') }}?add=income" class="fab-item income" title="Lägg till inkomst">
+                <i class="fas fa-plus"></i>
+                <span>Inkomst</span>
+            </a>
+            <a href="{{ url_for('wealth_agent.goals') }}?new=1" class="fab-item goal" title="Nytt mål">
+                <i class="fas fa-bullseye"></i>
+                <span>Mål</span>
+            </a>
+            <a href="{{ url_for('wealth_agent.chat') }}" class="fab-item chat" title="Fråga AI">
+                <i class="fas fa-robot"></i>
+                <span>AI</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav">
+        <a href="{{ url_for('wealth_agent.index') }}" class="mobile-nav-item {% if request.endpoint == 'wealth_agent.index' %}active{% endif %}">
+            <i class="fas fa-home"></i>
+            <span>Hem</span>
+        </a>
+        <a href="{{ url_for('wealth_agent.budget') }}" class="mobile-nav-item {% if request.endpoint == 'wealth_agent.budget' %}active{% endif %}">
+            <i class="fas fa-wallet"></i>
+            <span>Budget</span>
+        </a>
+        <button class="mobile-nav-item mobile-nav-fab" onclick="toggleFabMenu()">
+            <i class="fas fa-plus"></i>
+        </button>
+        <a href="{{ url_for('wealth_agent.portfolio') }}" class="mobile-nav-item {% if request.endpoint == 'wealth_agent.portfolio' %}active{% endif %}">
+            <i class="fas fa-chart-line"></i>
+            <span>Portfölj</span>
+        </a>
+        <a href="{{ url_for('wealth_agent.chat') }}" class="mobile-nav-item {% if request.endpoint == 'wealth_agent.chat' %}active{% endif %}">
+            <i class="fas fa-robot"></i>
+            <span>AI</span>
+        </a>
+    </nav>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/wealth_agent.js') }}"></script>
+
+    <!-- Theme & Gamification Script -->
+    <script>
+    // Theme Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const html = document.documentElement;
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem('wealth-theme') || 'dark';
+    html.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+
+    themeToggle?.addEventListener('click', () => {
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('wealth-theme', newTheme);
+        updateThemeIcon(newTheme);
+
+        // Save to server
+        fetch('/wealth/api/preferences', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ theme: newTheme })
+        });
+    });
+
+    function updateThemeIcon(theme) {
+        if (themeIcon) {
+            themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+    }
+
+    // Load Gamification Status
+    async function loadGamificationStatus() {
+        try {
+            const response = await fetch('/wealth/api/gamification/status');
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('userLevel').textContent = `Lv ${data.level.current}`;
+                document.getElementById('userStreak').textContent = data.streak.current;
+            }
+        } catch (e) {
+            console.log('Gamification not loaded');
+        }
+    }
+
+    // Milestone Celebration
+    window.celebrateMilestone = function(milestoneLabel) {
+        // Confetti!
+        confetti({
+            particleCount: 150,
+            spread: 80,
+            origin: { y: 0.6 }
+        });
+
+        // Show toast
+        if (window.WealthAgent) {
+            WealthAgent.showToast(`🎉 Grattis! Du nådde ${milestoneLabel}!`, 'success');
+        }
+
+        // Fire more confetti
+        setTimeout(() => {
+            confetti({
+                particleCount: 100,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 }
+            });
+            confetti({
+                particleCount: 100,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 }
+            });
+        }, 500);
+    };
+
+    // Check for new milestones
+    async function checkMilestones() {
+        try {
+            const netWorthEl = document.querySelector('[data-net-worth]');
+            if (netWorthEl) {
+                const netWorth = parseFloat(netWorthEl.dataset.netWorth) || 0;
+                const response = await fetch('/wealth/api/milestones/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ net_worth: netWorth })
+                });
+                const data = await response.json();
+                if (data.celebrate && data.newly_reached.length > 0) {
+                    const milestone = data.newly_reached[0];
+                    celebrateMilestone(milestone.milestone_label);
+                }
+            }
+        } catch (e) {
+            console.log('Milestone check failed');
+        }
+    }
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/static/sw.js').catch(() => {});
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadGamificationStatus();
+        setTimeout(checkMilestones, 2000);
+    });
+
+    // Floating Action Button
+    function toggleFabMenu() {
+        const fabMain = document.getElementById('fabMain');
+        const fabMenu = document.getElementById('fabMenu');
+
+        if (fabMain) fabMain.classList.toggle('active');
+        if (fabMenu) fabMenu.classList.toggle('active');
+    }
+
+    // Close FAB menu when clicking outside
+    document.addEventListener('click', (e) => {
+        const fabContainer = document.querySelector('.fab-container');
+        const mobileNavFab = document.querySelector('.mobile-nav-fab');
+
+        if (fabContainer && !fabContainer.contains(e.target) && !mobileNavFab?.contains(e.target)) {
+            const fabMain = document.getElementById('fabMain');
+            const fabMenu = document.getElementById('fabMenu');
+            if (fabMain) fabMain.classList.remove('active');
+            if (fabMenu) fabMenu.classList.remove('active');
+        }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + K to open AI chat
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            window.location.href = '/wealth/chat';
+        }
+
+        // Ctrl/Cmd + N to add new transaction
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+            e.preventDefault();
+            toggleFabMenu();
+        }
+
+        // Escape to close FAB menu
+        if (e.key === 'Escape') {
+            const fabMain = document.getElementById('fabMain');
+            const fabMenu = document.getElementById('fabMenu');
+            if (fabMain) fabMain.classList.remove('active');
+            if (fabMenu) fabMenu.classList.remove('active');
+        }
+    });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

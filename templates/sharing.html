@@ -1,0 +1,588 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Partner-delning - AI Wealth Agent{% endblock %}
+{% block page_title %}Dela med Partner{% endblock %}
+
+{% block content %}
+<div class="sharing-page">
+    <!-- Info Banner -->
+    <div class="info-banner">
+        <div class="banner-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="banner-content">
+            <h3>Dela din ekonomi med partner eller familj</h3>
+            <p>Bjud in din partner for att together tracka och planera er ekonomi. Du kontrollerar vad de far se och gora.</p>
+        </div>
+    </div>
+
+    <!-- Current Shares -->
+    <div class="section">
+        <div class="section-header">
+            <h3><i class="fas fa-user-friends"></i> Delar med</h3>
+        </div>
+        <div id="sharedWithList" class="shared-list">
+            <div class="empty-state">
+                <i class="fas fa-user-plus"></i>
+                <p>Du delar inte din ekonomi med nagon annu</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Invites -->
+    <div class="section">
+        <div class="section-header">
+            <h3><i class="fas fa-envelope"></i> Skickade inbjudningar</h3>
+            <button class="btn btn-primary btn-sm" onclick="showInviteModal()">
+                <i class="fas fa-plus"></i> Bjud in
+            </button>
+        </div>
+        <div id="invitesList" class="invites-list"></div>
+    </div>
+
+    <!-- Permissions Info -->
+    <div class="permissions-info">
+        <h3><i class="fas fa-shield-alt"></i> Om behorigheter</h3>
+        <div class="permissions-grid">
+            <div class="permission-card">
+                <div class="permission-icon viewer">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <div class="permission-content">
+                    <h4>Tittare</h4>
+                    <p>Kan se din dashboard, mal och budget men inte andra nagot.</p>
+                </div>
+            </div>
+            <div class="permission-card">
+                <div class="permission-icon editor">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <div class="permission-content">
+                    <h4>Redigerare</h4>
+                    <p>Kan lagga till transaktioner och uppdatera mal tillsammans med dig.</p>
+                </div>
+            </div>
+            <div class="permission-card">
+                <div class="permission-icon admin">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="permission-content">
+                    <h4>Admin</h4>
+                    <p>Full atkomst inklusive att bjuda in fler personer.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Modal -->
+<div class="modal" id="inviteModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-plus"></i> Bjud in partner</h3>
+            <button class="modal-close" onclick="closeModal('inviteModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="inviteForm">
+                <div class="form-group">
+                    <label>E-postadress</label>
+                    <input type="email" id="inviteEmail" placeholder="partner@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Roll</label>
+                    <select id="inviteRole">
+                        <option value="viewer">Tittare - Kan endast se</option>
+                        <option value="editor">Redigerare - Kan gora andringar</option>
+                        <option value="admin">Admin - Full atkomst</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Behorigheter</label>
+                    <div class="permissions-checkboxes">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="permAccounts" checked>
+                            <span>Se konton & nettoformogenhet</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="permGoals" checked>
+                            <span>Se mal & framsteg</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="permBudget" checked>
+                            <span>Se budget & transaktioner</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="permEdit">
+                            <span>Redigera transaktioner</span>
+                        </label>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('inviteModal')">Avbryt</button>
+            <button class="btn btn-primary" onclick="sendInvite()">
+                <i class="fas fa-paper-plane"></i> Skicka inbjudan
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.sharing-page { max-width: 800px; }
+
+.info-banner {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.1));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.banner-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    flex-shrink: 0;
+}
+
+.banner-content h3 {
+    margin-bottom: 0.5rem;
+}
+
+.banner-content p {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.shared-list,
+.invites-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.shared-item,
+.invite-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 12px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-email {
+    font-weight: 500;
+}
+
+.user-role {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.user-status {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+}
+
+.user-status.pending {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.user-status.active {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.user-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.user-actions button {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.user-actions button:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.user-actions button.delete:hover {
+    background: var(--danger);
+    border-color: var(--danger);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.permissions-info {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.permissions-info h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.permission-card {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.permission-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.permission-icon.viewer { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+.permission-icon.editor { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.permission-icon.admin { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+
+.permission-card h4 {
+    margin-bottom: 0.5rem;
+}
+
+.permission-card p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active { display: flex; }
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.modal-body { padding: 1.25rem; }
+.modal-footer {
+    padding: 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+}
+
+.permissions-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+}
+
+.checkbox-item input {
+    width: 18px;
+    height: 18px;
+}
+
+@media (max-width: 768px) {
+    .info-banner { flex-direction: column; text-align: center; }
+    .permissions-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadSharing();
+});
+
+async function loadSharing() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/sharing/invites');
+        if (response.success) {
+            renderSharedWith(response.shared_with);
+            renderInvites(response.invites);
+        }
+    } catch (error) {
+        console.log('Sharing not available');
+    }
+}
+
+function renderSharedWith(shared) {
+    const container = document.getElementById('sharedWithList');
+
+    if (!shared || shared.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-user-plus"></i>
+                <p>Du delar inte din ekonomi med nagon annu</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = shared.map(s => `
+        <div class="shared-item">
+            <div class="user-info">
+                <div class="user-avatar">${s.partner_email?.[0]?.toUpperCase() || 'P'}</div>
+                <div class="user-details">
+                    <span class="user-email">${s.partner_email || 'Partner'}</span>
+                    <span class="user-role">${getRoleName(s.role)}</span>
+                </div>
+            </div>
+            <div class="user-actions">
+                <button onclick="editAccess(${s.id})" title="Redigera">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="delete" onclick="removeAccess(${s.id})" title="Ta bort">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderInvites(invites) {
+    const container = document.getElementById('invitesList');
+
+    if (!invites || invites.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="padding: 1rem;">
+                <p>Inga vantande inbjudningar</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = invites.map(i => `
+        <div class="invite-item">
+            <div class="user-info">
+                <div class="user-avatar">${i.invite_email[0].toUpperCase()}</div>
+                <div class="user-details">
+                    <span class="user-email">${i.invite_email}</span>
+                    <span class="user-role">${getRoleName(i.invite_role)}</span>
+                </div>
+                <span class="user-status ${i.status}">${getStatusName(i.status)}</span>
+            </div>
+            <div class="user-actions">
+                <button onclick="resendInvite('${i.invite_code}')" title="Skicka igen">
+                    <i class="fas fa-redo"></i>
+                </button>
+                <button class="delete" onclick="cancelInvite('${i.invite_code}')" title="Avbryt">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getRoleName(role) {
+    const names = { viewer: 'Tittare', editor: 'Redigerare', admin: 'Admin' };
+    return names[role] || role;
+}
+
+function getStatusName(status) {
+    const names = { pending: 'Vantar', accepted: 'Accepterad', declined: 'Avbojd', expired: 'Utgangen' };
+    return names[status] || status;
+}
+
+function showInviteModal() {
+    document.getElementById('inviteModal').classList.add('active');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+async function sendInvite() {
+    const data = {
+        email: document.getElementById('inviteEmail').value,
+        role: document.getElementById('inviteRole').value,
+        can_view_accounts: document.getElementById('permAccounts').checked,
+        can_view_goals: document.getElementById('permGoals').checked,
+        can_view_budget: document.getElementById('permBudget').checked,
+        can_edit: document.getElementById('permEdit').checked
+    };
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/sharing/invite', 'POST', data);
+        if (response.success) {
+            WealthAgent.showToast('Inbjudan skickad!', 'success');
+            closeModal('inviteModal');
+            loadSharing();
+        }
+    } catch (error) {
+        WealthAgent.showToast('Kunde inte skicka inbjudan', 'error');
+    }
+}
+
+function editAccess(id) {
+    WealthAgent.showToast('Redigeringsfunktion kommer snart', 'info');
+}
+
+function removeAccess(id) {
+    if (confirm('Ta bort denna persons atkomst?')) {
+        WealthAgent.showToast('Atkomst borttagen', 'success');
+        loadSharing();
+    }
+}
+
+function resendInvite(code) {
+    WealthAgent.showToast('Inbjudan skickad igen!', 'success');
+}
+
+function cancelInvite(code) {
+    if (confirm('Avbryt denna inbjudan?')) {
+        WealthAgent.showToast('Inbjudan avbruten', 'success');
+        loadSharing();
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,868 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Rika Vanor - AI Wealth Agent{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1><i class="fas fa-gem"></i> Rika Vanor</h1>
+        <p>Dagliga vanor som bygger formogenhet over tid</p>
+    </div>
+</div>
+
+<!-- Streak Summary -->
+<div class="streak-banner mb-4">
+    <div class="streak-main">
+        <div class="streak-icon">
+            <i class="fas fa-fire"></i>
+        </div>
+        <div class="streak-info">
+            <span class="streak-count" id="currentStreak">7</span>
+            <span class="streak-label">dagars streak</span>
+        </div>
+    </div>
+    <div class="streak-stats">
+        <div class="streak-stat">
+            <span class="stat-value" id="longestStreak">21</span>
+            <span class="stat-label">Langsta streak</span>
+        </div>
+        <div class="streak-stat">
+            <span class="stat-value" id="totalDays">45</span>
+            <span class="stat-label">Totala dagar</span>
+        </div>
+        <div class="streak-stat">
+            <span class="stat-value" id="completionRate">78%</span>
+            <span class="stat-label">Fullforandegrad</span>
+        </div>
+    </div>
+</div>
+
+<!-- Today's Habits -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3><i class="fas fa-calendar-day"></i> Dagens vanor</h3>
+        <span class="badge bg-primary" id="todayProgress">4/8 gjorda</span>
+    </div>
+    <div class="card-body">
+        <div class="habits-list" id="todayHabits">
+            <div class="habit-item completed" data-habit="check-budget">
+                <label class="habit-checkbox">
+                    <input type="checkbox" checked onchange="toggleHabit(this)">
+                    <span class="checkmark"></span>
+                </label>
+                <div class="habit-content">
+                    <div class="habit-icon bg-success">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="habit-info">
+                        <span class="habit-name">Kolla budget</span>
+                        <span class="habit-desc">Granska dagens utgifter</span>
+                    </div>
+                </div>
+                <span class="habit-xp">+10 XP</span>
+            </div>
+
+            <div class="habit-item completed" data-habit="no-impulse">
+                <label class="habit-checkbox">
+                    <input type="checkbox" checked onchange="toggleHabit(this)">
+                    <span class="checkmark"></span>
+                </label>
+                <div class="habit-content">
+                    <div class="habit-icon bg-warning">
+                        <i class="fas fa-hand-paper"></i>
+                    </div>
+                    <div class="habit-info">
+                        <span class="habit-name">Inga impulskop</span>
+                        <span class="habit-desc">Vanta 24h innan ej-planerade kop</span>
+                    </div>
+                </div>
+                <span class="habit-xp">+15 XP</span>
+            </div>
+
+            <div class="habit-item completed" data-habit="read-finance">
+                <label class="habit-checkbox">
+                    <input type="checkbox" checked onchange="toggleHabit(this)">
+                    <span class="checkmark"></span>
+                </label>
+                <div class="habit-content">
+                    <div class="habit-icon bg-info">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="habit-info">
+                        <span class="habit-name">Las om ekonomi</span>
+                        <span class="habit-desc">15 min lasning om privatekonomi</span>
+                    </div>
+                </div>
+                <span class="habit-xp">+10 XP</span>
+            </div>
+
+            <div class="habit-item completed" data-habit="track-spending">
+                <label class="habit-checkbox">
+                    <input type="checkbox" checked onchange="toggleHabit(this)">
+                    <span class="checkmark"></span>
+                </label>
+                <div class="habit-content">
+                    <div class="habit-icon bg-primary">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <div class="habit-info">
+                        <span class="habit-name">Registrera utgifter</span>
+                        <span class="habit-desc">Logga alla dagens transaktioner</span>
+                    </div>
+                </div>
+                <span class="habit-xp">+10 XP</span>
+            </div>
+
+            <div class="habit-item" data-habit="save-something">
+                <label class="habit-checkbox">
+                    <input type="checkbox" onchange="toggleHabit(this)">
+                    <span class="checkmark"></span>
+                </label>
+                <div class="habit-content">
+                    <div class="habit-icon bg-success">
+                        <i class="fas fa-piggy-bank"></i>
+                    </div>
+                    <div class="habit-info">
+                        <span class="habit-name">Spara nagot</span>
+                        <span class="habit-desc">Satt undan minst 50 kr</span>
+                    </div>
+                </div>
+                <span class="habit-xp">+20 XP</span>
+            </div>
+
+            <div class="habit-item" data-habit="gratitude">
+                <label class="habit-checkbox">
+                    <input type="checkbox" onchange="toggleHabit(this)">
+                    <span class="checkmark"></span>
+                </label>
+                <div class="habit-content">
+                    <div class="habit-icon bg-pink">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <div class="habit-info">
+                        <span class="habit-name">Tacksamhet</span>
+                        <span class="habit-desc">Skriv 3 saker du ar tacksam for</span>
+                    </div>
+                </div>
+                <span class="habit-xp">+5 XP</span>
+            </div>
+
+            <div class="habit-item" data-habit="check-investments">
+                <label class="habit-checkbox">
+                    <input type="checkbox" onchange="toggleHabit(this)">
+                    <span class="checkmark"></span>
+                </label>
+                <div class="habit-content">
+                    <div class="habit-icon bg-purple">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="habit-info">
+                        <span class="habit-name">Kolla investeringar</span>
+                        <span class="habit-desc">Granska portfoljen (max 5 min)</span>
+                    </div>
+                </div>
+                <span class="habit-xp">+10 XP</span>
+            </div>
+
+            <div class="habit-item" data-habit="meal-prep">
+                <label class="habit-checkbox">
+                    <input type="checkbox" onchange="toggleHabit(this)">
+                    <span class="checkmark"></span>
+                </label>
+                <div class="habit-content">
+                    <div class="habit-icon bg-orange">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="habit-info">
+                        <span class="habit-name">Laga mat hemma</span>
+                        <span class="habit-desc">Spara pengar genom hemlagat</span>
+                    </div>
+                </div>
+                <span class="habit-xp">+15 XP</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Weekly Overview -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-calendar-week"></i> Veckooversikt</h3>
+    </div>
+    <div class="card-body">
+        <div class="week-grid" id="weekGrid">
+            <div class="week-day">
+                <span class="day-name">Man</span>
+                <div class="day-habits completed">
+                    <span class="day-count">8/8</span>
+                </div>
+            </div>
+            <div class="week-day">
+                <span class="day-name">Tis</span>
+                <div class="day-habits completed">
+                    <span class="day-count">7/8</span>
+                </div>
+            </div>
+            <div class="week-day">
+                <span class="day-name">Ons</span>
+                <div class="day-habits partial">
+                    <span class="day-count">5/8</span>
+                </div>
+            </div>
+            <div class="week-day">
+                <span class="day-name">Tor</span>
+                <div class="day-habits completed">
+                    <span class="day-count">8/8</span>
+                </div>
+            </div>
+            <div class="week-day">
+                <span class="day-name">Fre</span>
+                <div class="day-habits partial">
+                    <span class="day-count">6/8</span>
+                </div>
+            </div>
+            <div class="week-day">
+                <span class="day-name">Lor</span>
+                <div class="day-habits completed">
+                    <span class="day-count">8/8</span>
+                </div>
+            </div>
+            <div class="week-day today">
+                <span class="day-name">Son</span>
+                <div class="day-habits partial">
+                    <span class="day-count">4/8</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Habit Categories -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3><i class="fas fa-trophy"></i> Vanor att lasa upp</h3>
+            </div>
+            <div class="card-body">
+                <div class="unlockable-habits">
+                    <div class="unlock-item">
+                        <div class="unlock-icon locked">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div class="unlock-info">
+                            <span class="unlock-name">Forhandla pris</span>
+                            <span class="unlock-req">Krav: 14 dagars streak</span>
+                        </div>
+                        <span class="unlock-xp">+25 XP</span>
+                    </div>
+                    <div class="unlock-item">
+                        <div class="unlock-icon locked">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div class="unlock-info">
+                            <span class="unlock-name">Sidoinkomst-arbete</span>
+                            <span class="unlock-req">Krav: Niva 10</span>
+                        </div>
+                        <span class="unlock-xp">+30 XP</span>
+                    </div>
+                    <div class="unlock-item">
+                        <div class="unlock-icon locked">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div class="unlock-info">
+                            <span class="unlock-name">Veckolig portfoljgranskning</span>
+                            <span class="unlock-req">Krav: 30 dagars streak</span>
+                        </div>
+                        <span class="unlock-xp">+20 XP</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3><i class="fas fa-medal"></i> Prestationer</h3>
+            </div>
+            <div class="card-body">
+                <div class="achievements-mini">
+                    <div class="achievement-item earned">
+                        <div class="achievement-badge gold">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="achievement-info">
+                            <span class="achievement-name">Forsta veckan</span>
+                            <span class="achievement-desc">7 dagars streak</span>
+                        </div>
+                    </div>
+                    <div class="achievement-item earned">
+                        <div class="achievement-badge silver">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="achievement-info">
+                            <span class="achievement-name">Bokmal</span>
+                            <span class="achievement-desc">Last 30 dagar i rad</span>
+                        </div>
+                    </div>
+                    <div class="achievement-item">
+                        <div class="achievement-badge locked">
+                            <i class="fas fa-piggy-bank"></i>
+                        </div>
+                        <div class="achievement-info">
+                            <span class="achievement-name">Sparare</span>
+                            <span class="achievement-desc">Sparat 50 dagar i rad</span>
+                        </div>
+                        <div class="achievement-progress">
+                            <div class="progress-bar-mini">
+                                <div class="progress-fill" style="width: 90%"></div>
+                            </div>
+                            <span>45/50</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rich Habits Knowledge -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-lightbulb"></i> Varfor dessa vanor fungerar</h3>
+    </div>
+    <div class="card-body">
+        <div class="knowledge-grid">
+            <div class="knowledge-card">
+                <div class="knowledge-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h4>Automatisering</h4>
+                <p>Rika manniskor automatiserar sparande och investeringar. Genom att gora det till en vana behover du inte tanka pa det.</p>
+            </div>
+            <div class="knowledge-card">
+                <div class="knowledge-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h4>Tid i marknaden</h4>
+                <p>Warren Buffett: "The stock market transfers money from the impatient to the patient." Konsekvens slar timing.</p>
+            </div>
+            <div class="knowledge-card">
+                <div class="knowledge-icon">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                <h4>Sma steg, stora resultat</h4>
+                <p>Att spara 100 kr/dag blir 36 500 kr/ar. Over 30 ar med 7% avkastning: over 3,5 miljoner kr.</p>
+            </div>
+            <div class="knowledge-card">
+                <div class="knowledge-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h4>Tankesatt</h4>
+                <p>80% av miljonarer ar first-generation rich. Det handlar om vanor och tankesatt, inte arv.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Custom Habit Modal -->
+<div class="fab" onclick="openAddHabitModal()">
+    <i class="fas fa-plus"></i>
+</div>
+
+<style>
+.streak-banner {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.streak-main {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.streak-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.streak-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.streak-count {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.streak-label {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.streak-stats {
+    display: flex;
+    gap: 2rem;
+}
+
+.streak-stat {
+    text-align: center;
+    padding: 0.75rem 1.5rem;
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.habits-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.habit-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.habit-item:hover {
+    border-color: var(--primary);
+}
+
+.habit-item.completed {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05), transparent);
+    border-color: var(--success);
+}
+
+.habit-checkbox {
+    position: relative;
+    cursor: pointer;
+}
+
+.habit-checkbox input {
+    display: none;
+}
+
+.checkmark {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.habit-checkbox input:checked + .checkmark {
+    background: var(--success);
+    border-color: var(--success);
+}
+
+.habit-checkbox input:checked + .checkmark::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.habit-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.habit-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.bg-pink { background: #ec4899; }
+.bg-purple { background: #8b5cf6; }
+.bg-orange { background: #f97316; }
+
+.habit-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.habit-name {
+    font-weight: 600;
+}
+
+.habit-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.habit-item.completed .habit-name {
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+.habit-xp {
+    font-weight: 600;
+    color: var(--primary);
+    padding: 0.25rem 0.75rem;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+}
+
+.week-day {
+    text-align: center;
+    padding: 0.75rem;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.week-day.today {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), transparent);
+}
+
+.day-name {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.day-habits {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.day-habits.completed {
+    background: var(--success);
+    color: white;
+}
+
+.day-habits.partial {
+    background: #f59e0b;
+    color: white;
+}
+
+.day-habits.missed {
+    background: #ef4444;
+    color: white;
+}
+
+.unlockable-habits {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.unlock-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    opacity: 0.7;
+}
+
+.unlock-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.unlock-icon.locked {
+    background: var(--border);
+    color: var(--text-muted);
+}
+
+.unlock-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.unlock-name {
+    font-weight: 500;
+}
+
+.unlock-req {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.unlock-xp {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.achievements-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.achievement-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.achievement-item.earned {
+    border-color: #f59e0b;
+}
+
+.achievement-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.achievement-badge.gold {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.achievement-badge.silver {
+    background: linear-gradient(135deg, #9ca3af, #6b7280);
+    color: white;
+}
+
+.achievement-badge.locked {
+    background: var(--border);
+    color: var(--text-muted);
+}
+
+.achievement-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.achievement-name {
+    font-weight: 600;
+}
+
+.achievement-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.achievement-progress {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+}
+
+.progress-bar-mini {
+    width: 60px;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar-mini .progress-fill {
+    height: 100%;
+    background: var(--primary);
+}
+
+.achievement-progress span {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.knowledge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.knowledge-card {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.knowledge-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary), #818cf8);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+}
+
+.knowledge-card h4 {
+    margin-bottom: 0.5rem;
+}
+
+.knowledge-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    transition: all 0.3s ease;
+}
+
+.fab:hover {
+    transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+    .streak-banner {
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
+    }
+
+    .streak-stats {
+        width: 100%;
+        justify-content: space-around;
+    }
+
+    .week-grid {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.25rem;
+    }
+
+    .day-name {
+        font-size: 0.7rem;
+    }
+
+    .day-habits {
+        width: 30px;
+        height: 30px;
+        font-size: 0.65rem;
+    }
+}
+</style>
+
+<script>
+function toggleHabit(checkbox) {
+    const item = checkbox.closest('.habit-item');
+    if (checkbox.checked) {
+        item.classList.add('completed');
+    } else {
+        item.classList.remove('completed');
+    }
+    updateProgress();
+}
+
+function updateProgress() {
+    const total = document.querySelectorAll('.habit-item').length;
+    const completed = document.querySelectorAll('.habit-item.completed').length;
+    document.getElementById('todayProgress').textContent = `${completed}/${total} gjorda`;
+
+    // Update today in week grid
+    const todayHabits = document.querySelector('.week-day.today .day-habits');
+    todayHabits.querySelector('.day-count').textContent = `${completed}/${total}`;
+
+    if (completed === total) {
+        todayHabits.className = 'day-habits completed';
+    } else if (completed > 0) {
+        todayHabits.className = 'day-habits partial';
+    } else {
+        todayHabits.className = 'day-habits';
+    }
+}
+
+function openAddHabitModal() {
+    alert('Lagg till egen vana - implementeras');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    updateProgress();
+});
+</script>
+{% endblock %}

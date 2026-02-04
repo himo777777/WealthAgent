@@ -1,0 +1,968 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Auto-Invest - AI Wealth Agent{% endblock %}
+{% block page_title %}Auto-Invest{% endblock %}
+
+{% block content %}
+<div class="auto-invest-page">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h2><i class="fas fa-robot"></i> Auto-Invest</h2>
+            <p>Automatisera ditt sparande genom Avanza och Nordnet</p>
+        </div>
+    </div>
+
+    <!-- Connection Status -->
+    <div class="connections-section">
+        <h3>Kopplade Plattformar</h3>
+        <div class="broker-cards">
+            <div class="broker-card" id="avanzaCard">
+                <div class="broker-logo avanza">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="broker-info">
+                    <h4>Avanza</h4>
+                    <p class="broker-status disconnected">
+                        <i class="fas fa-circle"></i> Ej ansluten
+                    </p>
+                </div>
+                <button class="btn btn-outline" onclick="connectAvanza()">
+                    Anslut
+                </button>
+            </div>
+
+            <div class="broker-card" id="nordnetCard">
+                <div class="broker-logo nordnet">
+                    <i class="fas fa-piggy-bank"></i>
+                </div>
+                <div class="broker-info">
+                    <h4>Nordnet</h4>
+                    <p class="broker-status disconnected">
+                        <i class="fas fa-circle"></i> Ej ansluten
+                    </p>
+                </div>
+                <button class="btn btn-outline" onclick="connectNordnet()">
+                    Anslut
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto-Invest Rules -->
+    <div class="rules-section">
+        <div class="section-header">
+            <h3>Auto-Invest Regler</h3>
+            <button class="btn btn-primary" onclick="openRuleModal()">
+                <i class="fas fa-plus"></i> Ny Regel
+            </button>
+        </div>
+
+        <div id="rulesContainer">
+            <!-- Sample Rule -->
+            <div class="rule-card">
+                <div class="rule-header">
+                    <div class="rule-status active">
+                        <i class="fas fa-check-circle"></i> Aktiv
+                    </div>
+                    <div class="rule-actions">
+                        <button class="btn-icon" title="Redigera"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon" title="Pausa"><i class="fas fa-pause"></i></button>
+                        <button class="btn-icon danger" title="Ta bort"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="rule-body">
+                    <h4>Manadssparande ISK</h4>
+                    <div class="rule-details">
+                        <div class="rule-detail">
+                            <span class="detail-label">Belopp</span>
+                            <span class="detail-value">5 000 SEK</span>
+                        </div>
+                        <div class="rule-detail">
+                            <span class="detail-label">Frekvens</span>
+                            <span class="detail-value">Manatligen (25:e)</span>
+                        </div>
+                        <div class="rule-detail">
+                            <span class="detail-label">Investering</span>
+                            <span class="detail-value">Global Index Fund</span>
+                        </div>
+                        <div class="rule-detail">
+                            <span class="detail-label">Konto</span>
+                            <span class="detail-value">Avanza ISK</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="rule-footer">
+                    <span class="rule-invested">
+                        <i class="fas fa-coins"></i> Totalt investerat: 45 000 SEK
+                    </span>
+                    <span class="rule-next">
+                        <i class="fas fa-calendar"></i> Nasta: 25 Feb 2026
+                    </span>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="noRules" class="empty-state" style="display: none;">
+                <i class="fas fa-cogs"></i>
+                <h3>Inga regler skapade</h3>
+                <p>Skapa din forsta auto-invest regel for att borja automatisera ditt sparande</p>
+                <button class="btn btn-primary" onclick="openRuleModal()">
+                    <i class="fas fa-plus"></i> Skapa Regel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Strategy Recommendations -->
+    <div class="strategies-section">
+        <h3><i class="fas fa-lightbulb"></i> AI-Rekommenderade Strategier</h3>
+        <div class="strategy-cards">
+            <div class="strategy-card">
+                <div class="strategy-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="strategy-content">
+                    <h4>Konservativ Tillvaxt</h4>
+                    <p>70% Global Index, 20% Obligationer, 10% Kassa</p>
+                    <div class="strategy-stats">
+                        <span><i class="fas fa-chart-line"></i> ~6% arsavkastning</span>
+                        <span><i class="fas fa-exclamation-triangle"></i> Lag risk</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline" onclick="applyStrategy('conservative')">
+                    Tillämpa
+                </button>
+            </div>
+
+            <div class="strategy-card featured">
+                <div class="strategy-badge">Rekommenderad</div>
+                <div class="strategy-icon">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+                <div class="strategy-content">
+                    <h4>Balanserad Tillvaxt</h4>
+                    <p>80% Aktier (global + tillväxt), 15% Fastigheter, 5% Alternativa</p>
+                    <div class="strategy-stats">
+                        <span><i class="fas fa-chart-line"></i> ~8-10% arsavkastning</span>
+                        <span><i class="fas fa-exclamation-triangle"></i> Medel risk</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="applyStrategy('balanced')">
+                    Tillämpa
+                </button>
+            </div>
+
+            <div class="strategy-card">
+                <div class="strategy-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <div class="strategy-content">
+                    <h4>Aggressiv Tillvaxt</h4>
+                    <p>60% Global Index, 30% Tillväxtmarknader, 10% Tech</p>
+                    <div class="strategy-stats">
+                        <span><i class="fas fa-chart-line"></i> ~12-15% arsavkastning</span>
+                        <span><i class="fas fa-exclamation-triangle"></i> Hog risk</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline" onclick="applyStrategy('aggressive')">
+                    Tillämpa
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Investment Insights -->
+    <div class="insights-section">
+        <h3><i class="fas fa-brain"></i> Smart Investerings-Tips</h3>
+        <div class="insight-cards">
+            <div class="insight-card">
+                <div class="insight-icon green">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <div class="insight-content">
+                    <h4>ISK vs KF - Valj ratt kontotyp</h4>
+                    <p>Med din skattesituation ar ISK oftast battre for langsiktigt sparande. Schablonskatt ar fordelaktigt nar avkastningen overstiger 3%.</p>
+                </div>
+            </div>
+            <div class="insight-card">
+                <div class="insight-icon purple">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <div class="insight-content">
+                    <h4>Rebalansera automatiskt</h4>
+                    <p>Hall din portfolio i balans genom att satta upp automatisk rebalansering var kvartal.</p>
+                </div>
+            </div>
+            <div class="insight-card">
+                <div class="insight-icon orange">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="insight-content">
+                    <h4>Avgifter ater avgift</h4>
+                    <p>Valj indexfonder med lag avgift (under 0.4%). 1% skillnad i avgift kan kosta 100 000+ SEK over 20 ar.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Rule Modal -->
+<div id="ruleModal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h3>Skapa Auto-Invest Regel</h3>
+            <button class="modal-close" onclick="closeRuleModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="ruleForm">
+                <div class="form-group">
+                    <label>Namn pa regeln</label>
+                    <input type="text" name="name" placeholder="T.ex. Manadssparande ISK" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Belopp (SEK)</label>
+                        <input type="number" name="amount" placeholder="5000" min="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Frekvens</label>
+                        <select name="frequency" required>
+                            <option value="weekly">Varje vecka</option>
+                            <option value="biweekly">Varannan vecka</option>
+                            <option value="monthly" selected>Varje manad</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Dag i manaden (for manadssparande)</label>
+                    <select name="day_of_month">
+                        <option value="1">1:a</option>
+                        <option value="15">15:e</option>
+                        <option value="25" selected>25:e (lonedagen)</option>
+                        <option value="last">Sista dagen</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Plattform</label>
+                    <select name="platform" required>
+                        <option value="avanza">Avanza</option>
+                        <option value="nordnet">Nordnet</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Kontotyp</label>
+                    <select name="account_type" required>
+                        <option value="isk">ISK (Investeringssparkonto)</option>
+                        <option value="kf">KF (Kapitalforsakring)</option>
+                        <option value="af">AF (Aktiefondskonto)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Investering</label>
+                    <select name="investment" required>
+                        <option value="">Valj fond/ETF...</option>
+                        <optgroup label="Indexfonder">
+                            <option value="avanza_global">Avanza Global</option>
+                            <option value="lansforsakringar_global">Lansforsakringar Global Indexnara</option>
+                            <option value="spiltan_aktiefond_investmentbolag">Spiltan Aktiefond Investmentbolag</option>
+                        </optgroup>
+                        <optgroup label="ETF:er">
+                            <option value="xact_omxs30">XACT OMXS30</option>
+                            <option value="ishares_core_msci">iShares Core MSCI World</option>
+                        </optgroup>
+                        <optgroup label="Tema">
+                            <option value="tech_index">Teknikfond</option>
+                            <option value="healthcare_index">Sjalkvardsfond</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="round_up" value="1">
+                        Avrunda kop uppat till hela andelar
+                    </label>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeRuleModal()">Avbryt</button>
+            <button class="btn btn-primary" onclick="saveRule()">
+                <i class="fas fa-save"></i> Spara Regel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Connect Modal -->
+<div id="connectModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="connectTitle">Anslut Plattform</h3>
+            <button class="modal-close" onclick="closeConnectModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="connect-info">
+                <i class="fas fa-shield-alt" style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                <h4>Saker anslutning</h4>
+                <p>Vi anvander BankID for att sakert ansluta till din plattform. Dina inloggningsuppgifter lagras aldrig hos oss.</p>
+
+                <div class="connect-steps">
+                    <div class="connect-step">
+                        <span class="step-num">1</span>
+                        <span>Du omdirigeras till <span id="platformName">plattformen</span></span>
+                    </div>
+                    <div class="connect-step">
+                        <span class="step-num">2</span>
+                        <span>Logga in med BankID</span>
+                    </div>
+                    <div class="connect-step">
+                        <span class="step-num">3</span>
+                        <span>Godkann atkomst till kontoinformation</span>
+                    </div>
+                </div>
+
+                <div class="permissions-info">
+                    <h5>Vi far tillgang till:</h5>
+                    <ul>
+                        <li><i class="fas fa-check"></i> Se konton och innehav</li>
+                        <li><i class="fas fa-check"></i> Se transaktionshistorik</li>
+                        <li><i class="fas fa-times"></i> Vi kan INTE gora transaktioner</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeConnectModal()">Avbryt</button>
+            <button class="btn btn-primary" id="connectBtn" onclick="initiateConnect()">
+                <i class="fas fa-external-link-alt"></i> Anslut med BankID
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.auto-invest-page {
+    max-width: 1200px;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.page-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.page-header h2 i {
+    color: var(--primary);
+}
+
+.page-header p {
+    color: var(--text-muted);
+}
+
+/* Broker Cards */
+.connections-section {
+    margin-bottom: 2rem;
+}
+
+.connections-section h3 {
+    margin-bottom: 1rem;
+}
+
+.broker-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.broker-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid var(--border);
+}
+
+.broker-logo {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.broker-logo.avanza {
+    background: linear-gradient(135deg, #00a651, #008c44);
+    color: white;
+}
+
+.broker-logo.nordnet {
+    background: linear-gradient(135deg, #0046be, #003399);
+    color: white;
+}
+
+.broker-info {
+    flex: 1;
+}
+
+.broker-info h4 {
+    margin-bottom: 0.25rem;
+}
+
+.broker-status {
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.broker-status i {
+    font-size: 0.5rem;
+}
+
+.broker-status.disconnected {
+    color: var(--text-muted);
+}
+
+.broker-status.connected {
+    color: var(--success);
+}
+
+/* Rules Section */
+.rules-section {
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.rule-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 1rem;
+}
+
+.rule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.rule-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.rule-status.active {
+    color: var(--success);
+}
+
+.rule-status.paused {
+    color: var(--warning);
+}
+
+.rule-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: var(--surface-light);
+    color: var(--text);
+}
+
+.btn-icon.danger:hover {
+    color: var(--error);
+}
+
+.rule-body {
+    padding: 1.25rem;
+}
+
+.rule-body h4 {
+    margin-bottom: 1rem;
+}
+
+.rule-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.rule-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.detail-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.detail-value {
+    font-weight: 600;
+}
+
+.rule-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.rule-footer i {
+    margin-right: 0.5rem;
+}
+
+/* Strategies */
+.strategies-section {
+    margin-bottom: 2rem;
+}
+
+.strategies-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.strategies-section h3 i {
+    color: var(--warning);
+}
+
+.strategy-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.strategy-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: relative;
+}
+
+.strategy-card.featured {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), transparent);
+}
+
+.strategy-badge {
+    position: absolute;
+    top: -10px;
+    right: 1rem;
+    background: var(--primary);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.strategy-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.strategy-content {
+    flex: 1;
+}
+
+.strategy-content h4 {
+    margin-bottom: 0.5rem;
+}
+
+.strategy-content p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.strategy-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.strategy-stats span {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Insights */
+.insights-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.insights-section h3 i {
+    color: var(--secondary);
+}
+
+.insight-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.insight-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    gap: 1rem;
+    border: 1px solid var(--border);
+}
+
+.insight-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.insight-icon.green {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.insight-icon.purple {
+    background: rgba(99, 102, 241, 0.2);
+    color: #818cf8;
+}
+
+.insight-icon.orange {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.insight-content h4 {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+
+.insight-content p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-large {
+    max-width: 600px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 0.5rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Connect Modal */
+.connect-info {
+    text-align: center;
+}
+
+.connect-steps {
+    margin: 1.5rem 0;
+    text-align: left;
+}
+
+.connect-step {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.connect-step:last-child {
+    border-bottom: none;
+}
+
+.step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.permissions-info {
+    background: var(--background);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: left;
+}
+
+.permissions-info h5 {
+    margin-bottom: 0.75rem;
+}
+
+.permissions-info ul {
+    list-style: none;
+}
+
+.permissions-info li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+    font-size: 0.9rem;
+}
+
+.permissions-info li i.fa-check {
+    color: var(--success);
+}
+
+.permissions-info li i.fa-times {
+    color: var(--error);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    background: var(--surface);
+    border-radius: 12px;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .rule-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentPlatform = null;
+
+function connectAvanza() {
+    currentPlatform = 'avanza';
+    document.getElementById('connectTitle').textContent = 'Anslut Avanza';
+    document.getElementById('platformName').textContent = 'Avanza';
+    document.getElementById('connectModal').classList.add('show');
+}
+
+function connectNordnet() {
+    currentPlatform = 'nordnet';
+    document.getElementById('connectTitle').textContent = 'Anslut Nordnet';
+    document.getElementById('platformName').textContent = 'Nordnet';
+    document.getElementById('connectModal').classList.add('show');
+}
+
+function closeConnectModal() {
+    document.getElementById('connectModal').classList.remove('show');
+    currentPlatform = null;
+}
+
+function initiateConnect() {
+    // In production, this would redirect to the broker's OAuth page
+    WealthAgent.showToast(`Anslutning till ${currentPlatform} kommer snart!`, 'info');
+    closeConnectModal();
+}
+
+function openRuleModal() {
+    document.getElementById('ruleModal').classList.add('show');
+}
+
+function closeRuleModal() {
+    document.getElementById('ruleModal').classList.remove('show');
+}
+
+function saveRule() {
+    const form = document.getElementById('ruleForm');
+    const formData = new FormData(form);
+
+    // In production, save to backend
+    WealthAgent.showToast('Regel sparad!', 'success');
+    closeRuleModal();
+    form.reset();
+}
+
+function applyStrategy(strategyType) {
+    const strategies = {
+        conservative: 'Konservativ Tillvaxt',
+        balanced: 'Balanserad Tillvaxt',
+        aggressive: 'Aggressiv Tillvaxt'
+    };
+
+    WealthAgent.showToast(`Strategin "${strategies[strategyType]}" kommer att tillampas`, 'info');
+}
+
+// Close modals on outside click
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('show');
+        }
+    });
+});
+</script>
+{% endblock %}

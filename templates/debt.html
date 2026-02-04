@@ -1,0 +1,547 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Skuldsanering - AI Wealth Agent{% endblock %}
+{% block page_title %}Skuldhantering{% endblock %}
+
+{% block content %}
+<div class="debt-page">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h2><i class="fas fa-credit-card"></i> Skuldhantering</h2>
+            <p>Planera din vag till skuldfrihet</p>
+        </div>
+        <button class="btn btn-primary" onclick="openAddModal()">
+            <i class="fas fa-plus"></i> Lagg till skuld
+        </button>
+    </div>
+
+    <!-- Summary -->
+    <div class="debt-summary">
+        <div class="summary-main">
+            <div class="summary-label">Total skuld</div>
+            <div class="summary-value" id="totalDebt">0 SEK</div>
+            <div class="summary-sub">
+                <span id="monthlyPayment">0 SEK</span> / manad i amortering
+            </div>
+        </div>
+        <div class="summary-stats">
+            <div class="summary-stat">
+                <span class="stat-value" id="avgRate">0%</span>
+                <span class="stat-label">Snittränta</span>
+            </div>
+            <div class="summary-stat">
+                <span class="stat-value" id="debtCount">0</span>
+                <span class="stat-label">Lan</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payoff Strategy -->
+    <div class="strategy-section">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-route"></i> Avbetalningsstrategi</h3>
+            </div>
+            <div class="card-content">
+                <div class="strategy-options">
+                    <div class="strategy-option active" onclick="selectStrategy('avalanche')">
+                        <div class="option-header">
+                            <input type="radio" name="strategy" value="avalanche" checked>
+                            <h4>Avalanche</h4>
+                            <span class="option-badge recommended">Rekommenderad</span>
+                        </div>
+                        <p>Beta av hogsta rantan forst. Sparar mest pengar totalt.</p>
+                    </div>
+                    <div class="strategy-option" onclick="selectStrategy('snowball')">
+                        <div class="option-header">
+                            <input type="radio" name="strategy" value="snowball">
+                            <h4>Snowball</h4>
+                        </div>
+                        <p>Beta av minsta skulden forst. Ger snabba vinster och motivation.</p>
+                    </div>
+                </div>
+
+                <div class="extra-payment-section">
+                    <label>Extra amortering per manad (SEK)</label>
+                    <div class="input-with-button">
+                        <input type="number" id="extraPayment" placeholder="0" value="0">
+                        <button class="btn btn-secondary" onclick="calculatePayoff()">Berakna</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debts List -->
+    <div class="card debts-card">
+        <div class="card-header">
+            <h3>Dina skulder</h3>
+        </div>
+        <div class="card-content">
+            <div id="debtsList" class="debts-list"></div>
+        </div>
+    </div>
+
+    <!-- Payoff Plan -->
+    <div id="payoffPlan" class="card" style="display: none;">
+        <div class="card-header">
+            <h3><i class="fas fa-calendar-alt"></i> Avbetalningsplan</h3>
+        </div>
+        <div class="card-content">
+            <div id="payoffTimeline" class="payoff-timeline"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Debt Modal -->
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Lagg till skuld</h3>
+            <button class="modal-close" onclick="closeAddModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="debtForm">
+                <div class="form-group">
+                    <label>Namn *</label>
+                    <input type="text" name="name" placeholder="T.ex. Bolan SEB" required>
+                </div>
+                <div class="form-group">
+                    <label>Typ</label>
+                    <select name="debt_type">
+                        <option value="bolan">Bolan</option>
+                        <option value="studielan">Studielan</option>
+                        <option value="billan">Billan</option>
+                        <option value="konsumentlan">Konsumentlan</option>
+                        <option value="kreditkort">Kreditkort</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nuvarande skuld (SEK) *</label>
+                    <input type="number" name="current_balance" placeholder="1500000" required>
+                </div>
+                <div class="form-group">
+                    <label>Ranta (%) *</label>
+                    <input type="number" name="interest_rate" step="0.01" placeholder="4.5" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Minsta amortering</label>
+                        <input type="number" name="minimum_payment" placeholder="5000">
+                    </div>
+                    <div class="form-group">
+                        <label>Nuvarande amortering</label>
+                        <input type="number" name="current_payment" placeholder="7000">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Langivare</label>
+                    <input type="text" name="lender" placeholder="T.ex. SEB">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeAddModal()">Avbryt</button>
+            <button class="btn btn-primary" onclick="saveDebt()">Spara</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.debt-page { max-width: 1000px; }
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.header-content h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.header-content h2 i { color: var(--error); }
+
+.debt-summary {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.summary-label { color: var(--text-muted); margin-bottom: 0.5rem; }
+.summary-value { font-size: 2.5rem; font-weight: 700; color: var(--error); }
+.summary-sub { color: var(--text-muted); margin-top: 0.5rem; }
+
+.summary-stats { display: flex; gap: 2rem; }
+.summary-stat { text-align: center; }
+.summary-stat .stat-value { display: block; font-size: 1.5rem; font-weight: 700; }
+.summary-stat .stat-label { color: var(--text-muted); font-size: 0.85rem; }
+
+.strategy-section { margin-bottom: 2rem; }
+
+.card {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.card-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.card-content { padding: 1.5rem; }
+
+.strategy-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.strategy-option {
+    background: var(--background);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.strategy-option:hover { border-color: var(--primary); }
+.strategy-option.active { border-color: var(--primary); background: rgba(99, 102, 241, 0.1); }
+
+.option-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.option-header h4 { flex: 1; margin: 0; }
+
+.option-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    background: var(--success);
+    color: white;
+}
+
+.strategy-option p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.extra-payment-section label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.input-with-button {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.input-with-button input {
+    flex: 1;
+    padding: 0.75rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+}
+
+.debts-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.debt-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 10px;
+    gap: 1rem;
+}
+
+.debt-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.debt-info { flex: 1; }
+.debt-name { font-weight: 600; display: block; }
+.debt-meta { font-size: 0.8rem; color: var(--text-muted); }
+
+.debt-details { text-align: right; }
+.debt-balance { font-weight: 600; display: block; color: var(--error); }
+.debt-rate { font-size: 0.85rem; color: var(--text-muted); }
+
+.payoff-timeline { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.timeline-order {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.timeline-info { flex: 1; }
+.timeline-name { font-weight: 500; }
+.timeline-months { font-size: 0.85rem; color: var(--text-muted); }
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.show { display: flex; }
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    max-width: 450px;
+    width: 100%;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.modal-body { padding: 1.5rem; }
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .debt-summary { flex-direction: column; text-align: center; gap: 1.5rem; }
+    .strategy-options { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let debts = [];
+let currentStrategy = 'avalanche';
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadDebts();
+});
+
+async function loadDebts() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/debts');
+        if (response.success) {
+            debts = response.debts;
+            updateSummary(response.summary);
+            renderDebts();
+        }
+    } catch (error) {
+        console.error('Failed to load debts:', error);
+    }
+}
+
+function updateSummary(summary) {
+    document.getElementById('totalDebt').textContent = WealthAgent.formatCurrency(summary.total_debt);
+    document.getElementById('monthlyPayment').textContent = WealthAgent.formatCurrency(summary.total_monthly_payment);
+    document.getElementById('avgRate').textContent = summary.weighted_avg_rate.toFixed(2) + '%';
+    document.getElementById('debtCount').textContent = debts.length;
+}
+
+function renderDebts() {
+    const list = document.getElementById('debtsList');
+
+    if (debts.length === 0) {
+        list.innerHTML = '<div class="empty-state"><p>Inga skulder tillagda</p></div>';
+        return;
+    }
+
+    list.innerHTML = debts.map(d => `
+        <div class="debt-item">
+            <div class="debt-icon">
+                <i class="fas fa-${getDebtIcon(d.debt_type)}"></i>
+            </div>
+            <div class="debt-info">
+                <span class="debt-name">${d.name}</span>
+                <span class="debt-meta">${d.lender || d.debt_type}</span>
+            </div>
+            <div class="debt-details">
+                <span class="debt-balance">${WealthAgent.formatCurrency(d.current_balance)}</span>
+                <span class="debt-rate">${(d.interest_rate * 100).toFixed(2)}% ranta</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getDebtIcon(type) {
+    const icons = {
+        'bolan': 'home',
+        'studielan': 'graduation-cap',
+        'billan': 'car',
+        'konsumentlan': 'money-bill-wave',
+        'kreditkort': 'credit-card'
+    };
+    return icons[type] || 'credit-card';
+}
+
+function selectStrategy(strategy) {
+    currentStrategy = strategy;
+    document.querySelectorAll('.strategy-option').forEach(opt => {
+        opt.classList.toggle('active', opt.querySelector('input').value === strategy);
+        opt.querySelector('input').checked = opt.querySelector('input').value === strategy;
+    });
+}
+
+async function calculatePayoff() {
+    const extraPayment = parseFloat(document.getElementById('extraPayment').value) || 0;
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/debts/payoff-plan', 'POST', {
+            strategy: currentStrategy,
+            extra_payment: extraPayment
+        });
+
+        if (response.success) {
+            displayPayoffPlan(response.payoff_plan);
+        }
+    } catch (error) {
+        console.error('Failed to calculate payoff:', error);
+    }
+}
+
+function displayPayoffPlan(plan) {
+    document.getElementById('payoffPlan').style.display = 'block';
+
+    const timeline = document.getElementById('payoffTimeline');
+    timeline.innerHTML = plan.map((item, index) => `
+        <div class="timeline-item">
+            <span class="timeline-order">${index + 1}</span>
+            <div class="timeline-info">
+                <span class="timeline-name">${item.name}</span>
+                <span class="timeline-months">${item.months_to_payoff ? item.months_to_payoff + ' manader' : 'Beraknas'}</span>
+            </div>
+            <div style="text-align: right;">
+                <span style="font-weight: 600;">${WealthAgent.formatCurrency(item.balance)}</span>
+                <span style="display: block; font-size: 0.8rem; color: var(--text-muted);">${item.rate}% ranta</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function openAddModal() {
+    document.getElementById('addModal').classList.add('show');
+}
+
+function closeAddModal() {
+    document.getElementById('addModal').classList.remove('show');
+}
+
+async function saveDebt() {
+    const form = document.getElementById('debtForm');
+    const formData = new FormData(form);
+
+    const data = {
+        name: formData.get('name'),
+        debt_type: formData.get('debt_type'),
+        current_balance: parseFloat(formData.get('current_balance')),
+        interest_rate: parseFloat(formData.get('interest_rate')),
+        minimum_payment: parseFloat(formData.get('minimum_payment')) || null,
+        current_payment: parseFloat(formData.get('current_payment')) || null,
+        lender: formData.get('lender')
+    };
+
+    try {
+        await WealthAgent.apiCall('/wealth/api/debts', 'POST', data);
+        WealthAgent.showToast('Skuld tillagd!', 'success');
+        closeAddModal();
+        form.reset();
+        loadDebts();
+    } catch (error) {
+        WealthAgent.showToast('Kunde inte spara', 'error');
+    }
+}
+</script>
+{% endblock %}

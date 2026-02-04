@@ -1,0 +1,1262 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Rate Optimizer - Wealth Agent{% endblock %}
+
+{% block page_title %}Freelance Rate Optimizer{% endblock %}
+
+{% block content %}
+<div class="rate-optimizer">
+    <!-- Current Rate Section -->
+    <div class="current-rate-section">
+        <div class="rate-card main">
+            <div class="rate-header">
+                <h3><i class="fas fa-user-tie"></i> Din nuvarande profil</h3>
+                <button class="btn-edit" onclick="openProfileModal()">
+                    <i class="fas fa-edit"></i> Redigera
+                </button>
+            </div>
+            <div class="rate-content">
+                <div class="profile-info" id="profileInfo">
+                    <div class="profile-item">
+                        <span class="label">Kompetens:</span>
+                        <span class="value" id="profileSkill">Ej angiven</span>
+                    </div>
+                    <div class="profile-item">
+                        <span class="label">Erfarenhet:</span>
+                        <span class="value" id="profileExperience">0 ar</span>
+                    </div>
+                    <div class="profile-item">
+                        <span class="label">Nuvarande timpris:</span>
+                        <span class="value highlight" id="profileRate">0 kr/h</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="rate-card comparison">
+            <div class="rate-header">
+                <h3><i class="fas fa-chart-bar"></i> Marknadsjamforelse</h3>
+            </div>
+            <div class="rate-content">
+                <div class="comparison-meter">
+                    <div class="meter-labels">
+                        <span>Under marknad</span>
+                        <span>Marknadspris</span>
+                        <span>Premium</span>
+                    </div>
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="meterFill"></div>
+                        <div class="meter-marker" id="meterMarker"></div>
+                    </div>
+                    <div class="meter-values">
+                        <span id="minRate">0 kr</span>
+                        <span id="avgRate">0 kr</span>
+                        <span id="maxRate">0 kr</span>
+                    </div>
+                </div>
+                <div class="comparison-insight" id="comparisonInsight">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Fyll i din profil for att se marknadsjamforelse</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rate Ladder -->
+    <div class="rate-ladder-section">
+        <div class="section-header">
+            <h2><i class="fas fa-stairs"></i> Din prisstege - Sa okar du timpriset</h2>
+            <p>Strategisk plan for att nå premium-priser</p>
+        </div>
+
+        <div class="rate-ladder" id="rateLadder">
+            <div class="ladder-step current">
+                <div class="step-marker">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="step-content">
+                    <div class="step-rate">0 kr/h</div>
+                    <div class="step-label">Nuvarande</div>
+                </div>
+            </div>
+            <div class="ladder-connector"></div>
+            <div class="ladder-step">
+                <div class="step-marker">
+                    <span>1</span>
+                </div>
+                <div class="step-content">
+                    <div class="step-rate" id="step1Rate">0 kr/h</div>
+                    <div class="step-label">+20% okning</div>
+                    <div class="step-tip">Hoj priset for nya kunder</div>
+                </div>
+            </div>
+            <div class="ladder-connector"></div>
+            <div class="ladder-step">
+                <div class="step-marker">
+                    <span>2</span>
+                </div>
+                <div class="step-content">
+                    <div class="step-rate" id="step2Rate">0 kr/h</div>
+                    <div class="step-label">+40% okning</div>
+                    <div class="step-tip">Specialisera dig mer</div>
+                </div>
+            </div>
+            <div class="ladder-connector"></div>
+            <div class="ladder-step">
+                <div class="step-marker">
+                    <span>3</span>
+                </div>
+                <div class="step-content">
+                    <div class="step-rate" id="step3Rate">0 kr/h</div>
+                    <div class="step-label">+70% okning</div>
+                    <div class="step-tip">Bygg personligt varumarke</div>
+                </div>
+            </div>
+            <div class="ladder-connector"></div>
+            <div class="ladder-step premium">
+                <div class="step-marker">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <div class="step-content">
+                    <div class="step-rate" id="step4Rate">0 kr/h</div>
+                    <div class="step-label">Premium (2x)</div>
+                    <div class="step-tip">Expertposition</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Packaging Strategy -->
+    <div class="packaging-section">
+        <div class="section-header">
+            <h2><i class="fas fa-box-open"></i> Paketerings-strategi</h2>
+            <p>Slut med timpriser - salj varde istallet</p>
+        </div>
+
+        <div class="packages-grid">
+            <div class="package-card">
+                <div class="package-badge">Grundpaket</div>
+                <div class="package-price" id="pkg1Price">0 kr</div>
+                <div class="package-hours">~<span id="pkg1Hours">0</span> timmar arbete</div>
+                <ul class="package-features">
+                    <li><i class="fas fa-check"></i> En leverans</li>
+                    <li><i class="fas fa-check"></i> 1 revision</li>
+                    <li><i class="fas fa-check"></i> Standardleverans</li>
+                </ul>
+                <div class="package-effective">
+                    Effektivt timpris: <strong id="pkg1Effective">0 kr/h</strong>
+                </div>
+            </div>
+
+            <div class="package-card featured">
+                <div class="package-badge">Popularast</div>
+                <div class="package-price" id="pkg2Price">0 kr</div>
+                <div class="package-hours">~<span id="pkg2Hours">0</span> timmar arbete</div>
+                <ul class="package-features">
+                    <li><i class="fas fa-check"></i> Komplett leverans</li>
+                    <li><i class="fas fa-check"></i> 3 revisioner</li>
+                    <li><i class="fas fa-check"></i> Prioriterad support</li>
+                    <li><i class="fas fa-check"></i> Snabbare leverans</li>
+                </ul>
+                <div class="package-effective">
+                    Effektivt timpris: <strong id="pkg2Effective">0 kr/h</strong>
+                </div>
+            </div>
+
+            <div class="package-card premium">
+                <div class="package-badge">Premium</div>
+                <div class="package-price" id="pkg3Price">0 kr</div>
+                <div class="package-hours">~<span id="pkg3Hours">0</span> timmar arbete</div>
+                <ul class="package-features">
+                    <li><i class="fas fa-check"></i> Allt i Popularast</li>
+                    <li><i class="fas fa-check"></i> Obegransade revisioner</li>
+                    <li><i class="fas fa-check"></i> Expres leverans</li>
+                    <li><i class="fas fa-check"></i> Strategikonsultation</li>
+                    <li><i class="fas fa-check"></i> 30 dagars support</li>
+                </ul>
+                <div class="package-effective">
+                    Effektivt timpris: <strong id="pkg3Effective">0 kr/h</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="packaging-tip">
+            <i class="fas fa-lightbulb"></i>
+            <div>
+                <strong>Tips:</strong> Nar du saljer paket istallet for timmar okar du ofta din effektiva timpeng med 50-100%
+                eftersom kunder fokuserar pa vardLet istallet for tid.
+            </div>
+        </div>
+    </div>
+
+    <!-- Income Calculator -->
+    <div class="income-section">
+        <div class="section-header">
+            <h2><i class="fas fa-calculator"></i> Inkomstkalkylator</h2>
+            <p>Se hur prishoningar paverkar din manadsinkomst</p>
+        </div>
+
+        <div class="income-calculator">
+            <div class="calc-inputs">
+                <div class="calc-group">
+                    <label>Timmar per vecka</label>
+                    <input type="range" id="hoursPerWeek" min="5" max="40" value="20">
+                    <span class="range-value" id="hoursValue">20 h</span>
+                </div>
+                <div class="calc-group">
+                    <label>Timpris (kr)</label>
+                    <input type="range" id="calcRate" min="200" max="2000" value="500" step="50">
+                    <span class="range-value" id="rateValue">500 kr</span>
+                </div>
+            </div>
+
+            <div class="calc-results">
+                <div class="result-card">
+                    <span class="result-label">Manadsinkomst (brutto)</span>
+                    <span class="result-value" id="monthlyIncome">0 kr</span>
+                </div>
+                <div class="result-card">
+                    <span class="result-label">Arsinkomst (brutto)</span>
+                    <span class="result-value" id="yearlyIncome">0 kr</span>
+                </div>
+                <div class="result-card highlight">
+                    <span class="result-label">Med +50% hogre pris</span>
+                    <span class="result-value" id="higherIncome">0 kr/man</span>
+                    <span class="result-diff" id="incomeDiff">+0 kr/man</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Tips -->
+    <div class="tips-section">
+        <div class="section-header">
+            <h2><i class="fas fa-rocket"></i> Konkreta steg for att hoja ditt pris</h2>
+        </div>
+
+        <div class="tips-grid">
+            <div class="tip-card">
+                <div class="tip-number">1</div>
+                <h4>Specialisera dig</h4>
+                <p>En specialist kan ta 2-3x hogre pris an en generalist. Valj en nisch och bli expert.</p>
+                <div class="tip-example">
+                    <strong>Exempel:</strong> "Webbutvecklare" → "E-handelsspecialist for Shopify"
+                </div>
+            </div>
+
+            <div class="tip-card">
+                <div class="tip-number">2</div>
+                <h4>Bygg portfolio</h4>
+                <p>Visa konkreta resultat. Case studies med siffror ("+40% konvertering") overtygar.</p>
+                <div class="tip-example">
+                    <strong>Verktyg:</strong> Notion, Behance, egen hemsida
+                </div>
+            </div>
+
+            <div class="tip-card">
+                <div class="tip-number">3</div>
+                <h4>Hoj for nya kunder</h4>
+                <p>Testa hogre priser pa nya kunder. Om ingen klagar ar du for billig.</p>
+                <div class="tip-example">
+                    <strong>Regel:</strong> Hoj med 20% varannan manad tills du far motstand
+                </div>
+            </div>
+
+            <div class="tip-card">
+                <div class="tip-number">4</div>
+                <h4>Salj resultat, inte tid</h4>
+                <p>Istallet for "10 timmar design" - salj "Komplett landningssida som konverterar".</p>
+                <div class="tip-example">
+                    <strong>Fokus:</strong> Vad kunden far, inte hur lang tid det tar
+                </div>
+            </div>
+
+            <div class="tip-card">
+                <div class="tip-number">5</div>
+                <h4>Skapa brist</h4>
+                <p>Begransat antal platser skapar urgency. "Tar max 3 nya kunder/manad".</p>
+                <div class="tip-example">
+                    <strong>Effekt:</strong> Kunder uppskattar mer och pratar inte pris
+                </div>
+            </div>
+
+            <div class="tip-card">
+                <div class="tip-number">6</div>
+                <h4>Testimonials & socialt bevis</h4>
+                <p>Be nojda kunder om omdomen. Video-testimonials ar mest kraftfulla.</p>
+                <div class="tip-example">
+                    <strong>Mall:</strong> "Resultat + Problem lost + Rekommendation"
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Modal -->
+<div class="modal" id="profileModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-edit"></i> Uppdatera din profil</h3>
+            <button class="modal-close" onclick="closeModal('profileModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="profileForm">
+                <div class="form-group">
+                    <label>Huvudkompetens *</label>
+                    <select id="inputSkill" required>
+                        <option value="">Valj kompetens...</option>
+                        <optgroup label="Tech & Utveckling">
+                            <option value="web_dev">Webbutveckling</option>
+                            <option value="mobile_dev">Apputveckling</option>
+                            <option value="backend">Backend-utveckling</option>
+                            <option value="devops">DevOps</option>
+                            <option value="data_science">Data Science</option>
+                            <option value="ai_ml">AI/Machine Learning</option>
+                        </optgroup>
+                        <optgroup label="Design">
+                            <option value="ui_ux">UI/UX Design</option>
+                            <option value="graphic">Grafisk design</option>
+                            <option value="brand">Varumarkesdesign</option>
+                            <option value="motion">Motion graphics</option>
+                        </optgroup>
+                        <optgroup label="Marknadsforing">
+                            <option value="seo">SEO</option>
+                            <option value="sem">SEM/Ads</option>
+                            <option value="social">Social media</option>
+                            <option value="content">Content marketing</option>
+                            <option value="email">E-postmarknadsforing</option>
+                        </optgroup>
+                        <optgroup label="Skrivande">
+                            <option value="copywriting">Copywriting</option>
+                            <option value="technical_writing">Tekniskt skrivande</option>
+                            <option value="translation">Oversattning</option>
+                        </optgroup>
+                        <optgroup label="Konsulting">
+                            <option value="management">Management</option>
+                            <option value="strategy">Affarsstrategi</option>
+                            <option value="finance">Ekonomi/Finans</option>
+                        </optgroup>
+                        <optgroup label="Ovrigt">
+                            <option value="video">Videoproduktion</option>
+                            <option value="photo">Fotografi</option>
+                            <option value="va">Virtuell assistent</option>
+                            <option value="other">Annat</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Erfarenhet *</label>
+                    <select id="inputExperience" required>
+                        <option value="0">Nyborjare (0-1 ar)</option>
+                        <option value="2">Junior (1-3 ar)</option>
+                        <option value="4">Mellan (3-5 ar)</option>
+                        <option value="6">Senior (5-8 ar)</option>
+                        <option value="10">Expert (8+ ar)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Ditt nuvarande timpris (kr) *</label>
+                    <input type="number" id="inputRate" placeholder="t.ex. 500" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Plattform du arbetar genom</label>
+                    <select id="inputPlatform">
+                        <option value="direct">Direkt till kund</option>
+                        <option value="upwork">Upwork</option>
+                        <option value="fiverr">Fiverr</option>
+                        <option value="toptal">Toptal</option>
+                        <option value="freelancer">Freelancer.com</option>
+                        <option value="agency">Via byra</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeModal('profileModal')">Avbryt</button>
+            <button class="btn-primary" onclick="saveProfile()">
+                <i class="fas fa-save"></i> Spara
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.rate-optimizer {
+    padding: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.current-rate-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.rate-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.rate-card.main {
+    border-left: 4px solid var(--primary);
+}
+
+.rate-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rate-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rate-header h3 i {
+    color: var(--primary);
+}
+
+.btn-edit {
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.btn-edit:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.rate-content {
+    padding: 1.25rem;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.profile-item {
+    display: flex;
+    justify-content: space-between;
+}
+
+.profile-item .label {
+    color: var(--text-muted);
+}
+
+.profile-item .value {
+    font-weight: 600;
+}
+
+.profile-item .value.highlight {
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+/* Comparison Meter */
+.comparison-meter {
+    margin-bottom: 1rem;
+}
+
+.meter-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.meter-bar {
+    height: 12px;
+    background: linear-gradient(to right, #ef4444, #f59e0b, #10b981);
+    border-radius: 6px;
+    position: relative;
+}
+
+.meter-marker {
+    position: absolute;
+    top: -4px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border: 3px solid var(--primary);
+    border-radius: 50%;
+    transform: translateX(-50%);
+    transition: left 0.3s ease;
+    left: 0%;
+}
+
+.meter-values {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.comparison-insight {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.comparison-insight i {
+    color: var(--primary);
+}
+
+/* Section Headers */
+.section-header {
+    margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+    font-size: 1.25rem;
+    margin: 0 0 0.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-header h2 i {
+    color: var(--primary);
+}
+
+.section-header p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Rate Ladder */
+.rate-ladder-section {
+    margin-bottom: 2rem;
+}
+
+.rate-ladder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0;
+}
+
+.ladder-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    min-width: 120px;
+    transition: all 0.3s;
+}
+
+.ladder-step:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+}
+
+.ladder-step.current {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, var(--primary), #4f46e5);
+    color: white;
+}
+
+.ladder-step.premium {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.step-marker {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.ladder-step.current .step-marker,
+.ladder-step.premium .step-marker {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+.step-content {
+    text-align: center;
+}
+
+.step-rate {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.step-label {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.step-tip {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    margin-top: 0.25rem;
+}
+
+.ladder-connector {
+    width: 40px;
+    height: 3px;
+    background: var(--border);
+}
+
+/* Packages */
+.packaging-section {
+    margin-bottom: 2rem;
+}
+
+.packages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.package-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.package-card:hover {
+    transform: translateY(-5px);
+}
+
+.package-card.featured {
+    border-color: var(--primary);
+    position: relative;
+}
+
+.package-card.featured::before {
+    content: 'Rekommenderat';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.package-card.premium {
+    border-color: #f59e0b;
+}
+
+.package-badge {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+}
+
+.package-price {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 0.25rem;
+}
+
+.package-card.premium .package-price {
+    color: #f59e0b;
+}
+
+.package-hours {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.package-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+    text-align: left;
+}
+
+.package-features li {
+    padding: 0.4rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.package-features li i {
+    color: var(--success);
+}
+
+.package-effective {
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.package-effective strong {
+    color: var(--success);
+}
+
+.packaging-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+}
+
+.packaging-tip i {
+    color: var(--primary);
+    font-size: 1.25rem;
+    margin-top: 0.1rem;
+}
+
+/* Income Calculator */
+.income-section {
+    margin-bottom: 2rem;
+}
+
+.income-calculator {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+}
+
+.calc-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.calc-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.calc-group label {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.calc-group input[type="range"] {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--border);
+    -webkit-appearance: none;
+}
+
+.calc-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+}
+
+.range-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.calc-results {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.result-card {
+    background: var(--background);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.result-card.highlight {
+    background: var(--primary);
+    color: white;
+}
+
+.result-label {
+    font-size: 0.85rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.result-card.highlight .result-label {
+    opacity: 0.9;
+}
+
+.result-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: block;
+}
+
+.result-diff {
+    font-size: 0.9rem;
+    color: #10b981;
+    display: block;
+}
+
+.result-card.highlight .result-diff {
+    color: #a7f3d0;
+}
+
+/* Tips Grid */
+.tips-section {
+    margin-bottom: 2rem;
+}
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.tip-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    position: relative;
+}
+
+.tip-number {
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    width: 28px;
+    height: 28px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.tip-card h4 {
+    margin: 0.5rem 0 0.75rem 0;
+    font-size: 1rem;
+}
+
+.tip-card p {
+    margin: 0 0 1rem 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.tip-example {
+    background: var(--background);
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+}
+
+.tip-example strong {
+    color: var(--primary);
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 450px;
+}
+
+.modal-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.modal-body {
+    padding: 1.25rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+}
+
+.btn-primary {
+    padding: 0.75rem 1.25rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-secondary {
+    padding: 0.75rem 1.25rem;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .current-rate-section {
+        grid-template-columns: 1fr;
+    }
+
+    .rate-ladder {
+        flex-direction: column;
+    }
+
+    .ladder-connector {
+        width: 3px;
+        height: 20px;
+    }
+
+    .calc-inputs {
+        grid-template-columns: 1fr;
+    }
+
+    .calc-results {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+// Market rate data (simplified)
+const marketRates = {
+    web_dev: { min: 400, avg: 700, max: 1200 },
+    mobile_dev: { min: 500, avg: 800, max: 1400 },
+    backend: { min: 500, avg: 850, max: 1500 },
+    devops: { min: 600, avg: 950, max: 1600 },
+    data_science: { min: 600, avg: 1000, max: 1800 },
+    ai_ml: { min: 700, avg: 1200, max: 2000 },
+    ui_ux: { min: 400, avg: 650, max: 1100 },
+    graphic: { min: 300, avg: 500, max: 900 },
+    brand: { min: 400, avg: 700, max: 1200 },
+    motion: { min: 450, avg: 750, max: 1300 },
+    seo: { min: 400, avg: 650, max: 1000 },
+    sem: { min: 450, avg: 700, max: 1100 },
+    social: { min: 300, avg: 500, max: 800 },
+    content: { min: 350, avg: 550, max: 900 },
+    email: { min: 400, avg: 600, max: 950 },
+    copywriting: { min: 400, avg: 700, max: 1200 },
+    technical_writing: { min: 450, avg: 750, max: 1200 },
+    translation: { min: 300, avg: 500, max: 800 },
+    management: { min: 800, avg: 1200, max: 2000 },
+    strategy: { min: 700, avg: 1100, max: 1800 },
+    finance: { min: 600, avg: 1000, max: 1600 },
+    video: { min: 400, avg: 700, max: 1200 },
+    photo: { min: 350, avg: 600, max: 1000 },
+    va: { min: 200, avg: 350, max: 600 },
+    other: { min: 300, avg: 500, max: 900 }
+};
+
+const skillLabels = {
+    web_dev: 'Webbutveckling',
+    mobile_dev: 'Apputveckling',
+    backend: 'Backend',
+    devops: 'DevOps',
+    data_science: 'Data Science',
+    ai_ml: 'AI/ML',
+    ui_ux: 'UI/UX Design',
+    graphic: 'Grafisk design',
+    brand: 'Varumarkesdesign',
+    motion: 'Motion graphics',
+    seo: 'SEO',
+    sem: 'SEM/Ads',
+    social: 'Social media',
+    content: 'Content marketing',
+    email: 'E-postmarknadsforing',
+    copywriting: 'Copywriting',
+    technical_writing: 'Tekniskt skrivande',
+    translation: 'Oversattning',
+    management: 'Management',
+    strategy: 'Affarsstrategi',
+    finance: 'Ekonomi',
+    video: 'Videoproduktion',
+    photo: 'Fotografi',
+    va: 'Virtuell assistent',
+    other: 'Annat'
+};
+
+let profile = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadProfile();
+    initCalculator();
+});
+
+function loadProfile() {
+    profile = JSON.parse(localStorage.getItem('freelance_profile'));
+    if (profile) {
+        updateProfileDisplay();
+        updateComparison();
+        updateRateLadder();
+        updatePackages();
+    }
+}
+
+function updateProfileDisplay() {
+    document.getElementById('profileSkill').textContent = skillLabels[profile.skill] || 'Ej angiven';
+    document.getElementById('profileExperience').textContent = profile.experience + ' ar';
+    document.getElementById('profileRate').textContent = profile.rate + ' kr/h';
+
+    // Update calculator default
+    document.getElementById('calcRate').value = profile.rate;
+    document.getElementById('rateValue').textContent = profile.rate + ' kr';
+    calculateIncome();
+}
+
+function updateComparison() {
+    const rates = marketRates[profile.skill];
+    if (!rates) return;
+
+    // Adjust rates based on experience
+    const expMultiplier = 1 + (profile.experience * 0.05); // 5% per year
+    const minRate = Math.round(rates.min * expMultiplier);
+    const avgRate = Math.round(rates.avg * expMultiplier);
+    const maxRate = Math.round(rates.max * expMultiplier);
+
+    document.getElementById('minRate').textContent = minRate + ' kr';
+    document.getElementById('avgRate').textContent = avgRate + ' kr';
+    document.getElementById('maxRate').textContent = maxRate + ' kr';
+
+    // Position marker
+    const position = Math.min(100, Math.max(0, ((profile.rate - minRate) / (maxRate - minRate)) * 100));
+    document.getElementById('meterMarker').style.left = position + '%';
+
+    // Insight
+    let insight = '';
+    if (profile.rate < minRate) {
+        insight = `<span style="color: var(--danger)">Du tar betydligt mindre an marknadspris. Du kan hoja med minst ${minRate - profile.rate} kr/h.</span>`;
+    } else if (profile.rate < avgRate) {
+        insight = `Du ligger under genomsnittet. Potential att hoja till ${avgRate} kr/h (+${avgRate - profile.rate} kr).`;
+    } else if (profile.rate < maxRate) {
+        insight = `<span style="color: var(--success)">Bra! Du ligger over genomsnittet. Premium-pris ar runt ${maxRate} kr/h.</span>`;
+    } else {
+        insight = `<span style="color: var(--success)">Utmarkt! Du tar premium-priser for din kompetens.</span>`;
+    }
+    document.getElementById('comparisonInsight').innerHTML = `<i class="fas fa-info-circle"></i><span>${insight}</span>`;
+}
+
+function updateRateLadder() {
+    const rate = profile.rate;
+
+    document.querySelector('.ladder-step.current .step-rate').textContent = rate + ' kr/h';
+    document.getElementById('step1Rate').textContent = Math.round(rate * 1.2) + ' kr/h';
+    document.getElementById('step2Rate').textContent = Math.round(rate * 1.4) + ' kr/h';
+    document.getElementById('step3Rate').textContent = Math.round(rate * 1.7) + ' kr/h';
+    document.getElementById('step4Rate').textContent = Math.round(rate * 2) + ' kr/h';
+}
+
+function updatePackages() {
+    const rate = profile.rate;
+
+    // Package 1: 8 hours
+    const pkg1Hours = 8;
+    const pkg1Price = Math.round(rate * pkg1Hours * 0.9); // Slight discount
+    document.getElementById('pkg1Hours').textContent = pkg1Hours;
+    document.getElementById('pkg1Price').textContent = formatCurrency(pkg1Price);
+    document.getElementById('pkg1Effective').textContent = Math.round(pkg1Price / pkg1Hours) + ' kr/h';
+
+    // Package 2: 20 hours
+    const pkg2Hours = 20;
+    const pkg2Price = Math.round(rate * pkg2Hours * 1.2); // Premium for value
+    document.getElementById('pkg2Hours').textContent = pkg2Hours;
+    document.getElementById('pkg2Price').textContent = formatCurrency(pkg2Price);
+    document.getElementById('pkg2Effective').textContent = Math.round(pkg2Price / pkg2Hours) + ' kr/h';
+
+    // Package 3: 40 hours
+    const pkg3Hours = 40;
+    const pkg3Price = Math.round(rate * pkg3Hours * 1.5); // Premium+
+    document.getElementById('pkg3Hours').textContent = pkg3Hours;
+    document.getElementById('pkg3Price').textContent = formatCurrency(pkg3Price);
+    document.getElementById('pkg3Effective').textContent = Math.round(pkg3Price / pkg3Hours) + ' kr/h';
+}
+
+function initCalculator() {
+    document.getElementById('hoursPerWeek').addEventListener('input', function() {
+        document.getElementById('hoursValue').textContent = this.value + ' h';
+        calculateIncome();
+    });
+
+    document.getElementById('calcRate').addEventListener('input', function() {
+        document.getElementById('rateValue').textContent = this.value + ' kr';
+        calculateIncome();
+    });
+
+    calculateIncome();
+}
+
+function calculateIncome() {
+    const hours = parseInt(document.getElementById('hoursPerWeek').value);
+    const rate = parseInt(document.getElementById('calcRate').value);
+
+    const monthly = hours * rate * 4.33; // Average weeks per month
+    const yearly = monthly * 12;
+    const higherMonthly = hours * (rate * 1.5) * 4.33;
+
+    document.getElementById('monthlyIncome').textContent = formatCurrency(monthly);
+    document.getElementById('yearlyIncome').textContent = formatCurrency(yearly);
+    document.getElementById('higherIncome').textContent = formatCurrency(higherMonthly) + '/man';
+    document.getElementById('incomeDiff').textContent = '+' + formatCurrency(higherMonthly - monthly) + '/man';
+}
+
+function openProfileModal() {
+    if (profile) {
+        document.getElementById('inputSkill').value = profile.skill;
+        document.getElementById('inputExperience').value = profile.experience;
+        document.getElementById('inputRate').value = profile.rate;
+        document.getElementById('inputPlatform').value = profile.platform || 'direct';
+    }
+    document.getElementById('profileModal').classList.add('active');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+function saveProfile() {
+    profile = {
+        skill: document.getElementById('inputSkill').value,
+        experience: parseInt(document.getElementById('inputExperience').value),
+        rate: parseInt(document.getElementById('inputRate').value),
+        platform: document.getElementById('inputPlatform').value
+    };
+
+    localStorage.setItem('freelance_profile', JSON.stringify(profile));
+    closeModal('profileModal');
+    updateProfileDisplay();
+    updateComparison();
+    updateRateLadder();
+    updatePackages();
+
+    if (window.WealthAgent) {
+        WealthAgent.showToast('Profil sparad!', 'success');
+    }
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK', maximumFractionDigits: 0 }).format(amount);
+}
+</script>
+{% endblock %}

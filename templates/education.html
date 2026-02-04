@@ -1,0 +1,484 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Utbildning - AI Wealth Agent{% endblock %}
+{% block page_title %}Utbildningscenter{% endblock %}
+
+{% block content %}
+<div class="education-page">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h2><i class="fas fa-graduation-cap"></i> Utbildningscenter</h2>
+            <p>Lar dig allt om privatekonomi, investeringar och formogenhetsbyggande</p>
+        </div>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="progress-overview">
+        <div class="progress-card">
+            <div class="progress-icon">
+                <i class="fas fa-book-reader"></i>
+            </div>
+            <div class="progress-info">
+                <span class="progress-value" id="completedCourses">0</span>
+                <span class="progress-label">Avklarade kurser</span>
+            </div>
+        </div>
+        <div class="progress-card">
+            <div class="progress-icon purple">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="progress-info">
+                <span class="progress-value" id="totalTime">0 min</span>
+                <span class="progress-label">Total lartid</span>
+            </div>
+        </div>
+        <div class="progress-card">
+            <div class="progress-icon orange">
+                <i class="fas fa-fire"></i>
+            </div>
+            <div class="progress-info">
+                <span class="progress-value" id="streak">0</span>
+                <span class="progress-label">Dagars streak</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="category-filter">
+        <button class="category-btn active" data-category="all">
+            <i class="fas fa-th"></i> Alla
+        </button>
+        <button class="category-btn" data-category="investering">
+            <i class="fas fa-chart-line"></i> Investering
+        </button>
+        <button class="category-btn" data-category="budgetering">
+            <i class="fas fa-wallet"></i> Budgetering
+        </button>
+        <button class="category-btn" data-category="skatteplanering">
+            <i class="fas fa-percentage"></i> Skatt
+        </button>
+        <button class="category-btn" data-category="foretagande">
+            <i class="fas fa-building"></i> Foretagande
+        </button>
+    </div>
+
+    <!-- Courses Grid -->
+    <div id="coursesGrid" class="courses-grid"></div>
+</div>
+
+<style>
+.education-page { max-width: 1200px; }
+
+.page-header { margin-bottom: 2rem; }
+
+.header-content h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.header-content h2 i { color: var(--primary); }
+
+.progress-overview {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.progress-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid var(--border);
+}
+
+.progress-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.progress-icon.purple { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+.progress-icon.orange { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
+.progress-info { display: flex; flex-direction: column; }
+.progress-value { font-size: 1.5rem; font-weight: 700; }
+.progress-label { font-size: 0.8rem; color: var(--text-muted); }
+
+.category-filter {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.category-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.category-btn:hover { background: var(--surface-light); }
+
+.category-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.course-card {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.course-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 40px rgba(99, 102, 241, 0.15);
+}
+
+.course-thumbnail {
+    height: 140px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: rgba(255,255,255,0.3);
+}
+
+.course-content {
+    padding: 1.25rem;
+}
+
+.course-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.course-category {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--primary-light);
+}
+
+.course-difficulty {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.course-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.course-description {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.course-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.course-duration {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.course-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.progress-bar {
+    width: 60px;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--success);
+    border-radius: 3px;
+}
+
+.progress-text {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.course-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--success);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.course-card.completed .course-thumbnail {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+@media (max-width: 768px) {
+    .progress-overview { grid-template-columns: 1fr; }
+    .courses-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let courses = [];
+let currentCategory = 'all';
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadCourses();
+
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentCategory = this.dataset.category;
+            renderCourses();
+        });
+    });
+});
+
+async function loadCourses() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/education/courses');
+        if (response.success) {
+            courses = response.courses;
+            renderCourses();
+            updateProgress();
+        }
+    } catch (error) {
+        console.error('Failed to load courses:', error);
+        courses = getSampleCourses();
+        renderCourses();
+        updateProgress();
+    }
+}
+
+function getSampleCourses() {
+    return [
+        {
+            id: 1,
+            title: 'Investering for nyborjare',
+            description: 'Lar dig grunderna i aktier, fonder och ETF:er. Perfekt for dig som just borjat.',
+            category: 'investering',
+            difficulty: 'beginner',
+            duration_minutes: 45,
+            user_progress: { progress_percent: 75, status: 'in_progress' }
+        },
+        {
+            id: 2,
+            title: 'Budgetering som fungerar',
+            description: 'Skapa en budget du faktiskt kan folja. Praktiska tips och mallar.',
+            category: 'budgetering',
+            difficulty: 'beginner',
+            duration_minutes: 30,
+            user_progress: { progress_percent: 100, status: 'completed' }
+        },
+        {
+            id: 3,
+            title: 'ISK vs KF - Vad ska jag valja?',
+            description: 'Forsta skillnaderna mellan investeringssparkonto och kapitalforsakring.',
+            category: 'skatteplanering',
+            difficulty: 'intermediate',
+            duration_minutes: 25,
+            user_progress: { progress_percent: 0, status: 'not_started' }
+        },
+        {
+            id: 4,
+            title: 'Indexfonder - Den basta strategin?',
+            description: 'Varfor passiva indexfonder ofta slar aktiva fonder pa lang sikt.',
+            category: 'investering',
+            difficulty: 'beginner',
+            duration_minutes: 35,
+            user_progress: { progress_percent: 0, status: 'not_started' }
+        },
+        {
+            id: 5,
+            title: 'Starta eget som sidoverksamhet',
+            description: 'Sa startar du ett foretag vid sidan av ditt vanliga jobb.',
+            category: 'foretagande',
+            difficulty: 'intermediate',
+            duration_minutes: 60,
+            user_progress: { progress_percent: 30, status: 'in_progress' }
+        },
+        {
+            id: 6,
+            title: '3:12-reglerna forklarade',
+            description: 'Hur fungerar 3:12-reglerna och hur kan du optimera din utdelning?',
+            category: 'skatteplanering',
+            difficulty: 'advanced',
+            duration_minutes: 50,
+            user_progress: { progress_percent: 0, status: 'not_started' }
+        },
+        {
+            id: 7,
+            title: 'FIRE - Ekonomisk frihet',
+            description: 'Lar dig strategierna bakom Financial Independence, Retire Early.',
+            category: 'investering',
+            difficulty: 'intermediate',
+            duration_minutes: 55,
+            user_progress: { progress_percent: 0, status: 'not_started' }
+        },
+        {
+            id: 8,
+            title: '50/30/20-regeln',
+            description: 'En enkel budgetregel som hjälper dig att spara mer automatiskt.',
+            category: 'budgetering',
+            difficulty: 'beginner',
+            duration_minutes: 20,
+            user_progress: { progress_percent: 100, status: 'completed' }
+        }
+    ];
+}
+
+function renderCourses() {
+    const grid = document.getElementById('coursesGrid');
+
+    let filtered = courses;
+    if (currentCategory !== 'all') {
+        filtered = courses.filter(c => c.category === currentCategory);
+    }
+
+    grid.innerHTML = filtered.map(course => {
+        const progress = course.user_progress || { progress_percent: 0, status: 'not_started' };
+        const isCompleted = progress.status === 'completed';
+
+        return `
+            <div class="course-card ${isCompleted ? 'completed' : ''}" onclick="openCourse(${course.id})">
+                <div class="course-thumbnail">
+                    <i class="fas fa-${getCategoryIcon(course.category)}"></i>
+                    ${isCompleted ? '<div class="course-badge"><i class="fas fa-check"></i> Klar</div>' : ''}
+                </div>
+                <div class="course-content">
+                    <div class="course-header">
+                        <span class="course-category">${getCategoryLabel(course.category)}</span>
+                        <span class="course-difficulty">${getDifficultyLabel(course.difficulty)}</span>
+                    </div>
+                    <h3 class="course-title">${course.title}</h3>
+                    <p class="course-description">${course.description}</p>
+                    <div class="course-footer">
+                        <span class="course-duration">
+                            <i class="fas fa-clock"></i> ${course.duration_minutes} min
+                        </span>
+                        <div class="course-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progress.progress_percent}%"></div>
+                            </div>
+                            <span class="progress-text">${progress.progress_percent}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getCategoryIcon(category) {
+    const icons = {
+        'investering': 'chart-line',
+        'budgetering': 'wallet',
+        'skatteplanering': 'percentage',
+        'foretagande': 'building'
+    };
+    return icons[category] || 'book';
+}
+
+function getCategoryLabel(category) {
+    const labels = {
+        'investering': 'Investering',
+        'budgetering': 'Budgetering',
+        'skatteplanering': 'Skatteplanering',
+        'foretagande': 'Foretagande'
+    };
+    return labels[category] || category;
+}
+
+function getDifficultyLabel(difficulty) {
+    const labels = {
+        'beginner': 'Nyborjare',
+        'intermediate': 'Medel',
+        'advanced': 'Avancerad'
+    };
+    return labels[difficulty] || difficulty;
+}
+
+function updateProgress() {
+    const completed = courses.filter(c => c.user_progress?.status === 'completed').length;
+    const totalTime = courses.filter(c => c.user_progress?.status === 'completed')
+        .reduce((sum, c) => sum + (c.duration_minutes || 0), 0);
+
+    document.getElementById('completedCourses').textContent = completed;
+    document.getElementById('totalTime').textContent = totalTime + ' min';
+    document.getElementById('streak').textContent = Math.floor(Math.random() * 7);
+}
+
+function openCourse(id) {
+    const course = courses.find(c => c.id === id);
+    if (course) {
+        WealthAgent.showToast(`Oppnar: ${course.title}`, 'info');
+        // In a real implementation, this would open the course content
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,861 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Scenario-planering - AI Wealth Agent{% endblock %}
+{% block page_title %}What-If Scenario-planering{% endblock %}
+
+{% block content %}
+<div class="scenarios-page">
+    <!-- Intro Section -->
+    <div class="intro-card">
+        <div class="intro-icon">
+            <i class="fas fa-crystal-ball"></i>
+        </div>
+        <div class="intro-content">
+            <h2>Utforska framtiden</h2>
+            <p>Testa olika scenarier och se hur forandringar paverkar din ekonomi over tid.</p>
+        </div>
+    </div>
+
+    <!-- Quick Scenarios -->
+    <div class="quick-scenarios">
+        <h3>Snabbscenarier</h3>
+        <div class="scenario-buttons">
+            <button class="scenario-btn" onclick="loadQuickScenario('salary_increase')">
+                <i class="fas fa-arrow-trend-up"></i>
+                <span>Loneokning +10%</span>
+            </button>
+            <button class="scenario-btn" onclick="loadQuickScenario('savings_increase')">
+                <i class="fas fa-piggy-bank"></i>
+                <span>Oka sparandet</span>
+            </button>
+            <button class="scenario-btn" onclick="loadQuickScenario('interest_rate')">
+                <i class="fas fa-percentage"></i>
+                <span>Rantan stiger</span>
+            </button>
+            <button class="scenario-btn" onclick="loadQuickScenario('job_loss')">
+                <i class="fas fa-briefcase"></i>
+                <span>Jobbbyte/forlust</span>
+            </button>
+            <button class="scenario-btn" onclick="loadQuickScenario('house_purchase')">
+                <i class="fas fa-home"></i>
+                <span>Kopa bostad</span>
+            </button>
+            <button class="scenario-btn" onclick="loadQuickScenario('side_income')">
+                <i class="fas fa-hand-holding-usd"></i>
+                <span>Sidoinkomst</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Scenario Builder -->
+    <div class="builder-section">
+        <div class="builder-form">
+            <h3><i class="fas fa-sliders-h"></i> Bygg ditt scenario</h3>
+
+            <div class="form-section">
+                <h4>Inkomst</h4>
+                <div class="form-group">
+                    <label>Manadslon (brutto)</label>
+                    <div class="input-with-slider">
+                        <input type="number" id="salary" value="45000" min="0">
+                        <input type="range" id="salarySlider" min="0" max="150000" value="45000">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Loneokning per ar (%)</label>
+                    <div class="input-with-slider">
+                        <input type="number" id="salaryGrowth" value="3" min="0" max="20" step="0.5">
+                        <input type="range" id="salaryGrowthSlider" min="0" max="20" value="3" step="0.5">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Sidoinkomst (per manad)</label>
+                    <div class="input-with-slider">
+                        <input type="number" id="sideIncome" value="0" min="0">
+                        <input type="range" id="sideIncomeSlider" min="0" max="50000" value="0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h4>Utgifter</h4>
+                <div class="form-group">
+                    <label>Totala manadsutgifter</label>
+                    <div class="input-with-slider">
+                        <input type="number" id="expenses" value="30000" min="0">
+                        <input type="range" id="expensesSlider" min="0" max="100000" value="30000">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Inflation per ar (%)</label>
+                    <div class="input-with-slider">
+                        <input type="number" id="inflation" value="2" min="0" max="15" step="0.5">
+                        <input type="range" id="inflationSlider" min="0" max="15" value="2" step="0.5">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h4>Sparande & Investeringar</h4>
+                <div class="form-group">
+                    <label>Manatligt sparande</label>
+                    <div class="input-with-slider">
+                        <input type="number" id="monthlySavings" value="5000" min="0">
+                        <input type="range" id="monthlySavingsSlider" min="0" max="50000" value="5000">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Forvantad avkastning (%)</label>
+                    <div class="input-with-slider">
+                        <input type="number" id="returnRate" value="7" min="0" max="20" step="0.5">
+                        <input type="range" id="returnRateSlider" min="0" max="20" value="7" step="0.5">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Nuvarande portfoljvarde</label>
+                    <div class="input-with-slider">
+                        <input type="number" id="currentPortfolio" value="100000" min="0">
+                        <input type="range" id="currentPortfolioSlider" min="0" max="5000000" value="100000" step="10000">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h4>Tidshorisont</h4>
+                <div class="form-group">
+                    <label>Antal ar att simulera</label>
+                    <div class="input-with-slider">
+                        <input type="number" id="years" value="10" min="1" max="40">
+                        <input type="range" id="yearsSlider" min="1" max="40" value="10">
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary btn-lg" onclick="runScenario()">
+                <i class="fas fa-play"></i> Kor scenario
+            </button>
+        </div>
+
+        <!-- Results -->
+        <div class="results-section">
+            <h3><i class="fas fa-chart-line"></i> Resultat</h3>
+
+            <div class="result-cards">
+                <div class="result-card">
+                    <span class="result-label">Slutlig formogenhet</span>
+                    <span class="result-value" id="finalWealth">0 kr</span>
+                </div>
+                <div class="result-card">
+                    <span class="result-label">Totalt sparat</span>
+                    <span class="result-value" id="totalSaved">0 kr</span>
+                </div>
+                <div class="result-card">
+                    <span class="result-label">Avkastning</span>
+                    <span class="result-value" id="totalReturns">0 kr</span>
+                </div>
+                <div class="result-card fire">
+                    <span class="result-label">FIRE-tal</span>
+                    <span class="result-value" id="fireNumber">0 kr</span>
+                    <span class="result-hint" id="fireStatus">-</span>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="scenarioChart"></canvas>
+            </div>
+
+            <div class="milestones-section">
+                <h4><i class="fas fa-flag"></i> Milstolpar</h4>
+                <div id="scenarioMilestones" class="milestones-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saved Scenarios -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-bookmark"></i> Sparade scenarier</h3>
+            <button class="btn btn-secondary btn-sm" onclick="saveCurrentScenario()">
+                <i class="fas fa-save"></i> Spara nuvarande
+            </button>
+        </div>
+        <div id="savedScenarios" class="saved-list">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+</div>
+
+<style>
+.scenarios-page { max-width: 1200px; }
+
+.intro-card {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(99, 102, 241, 0.1));
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 20px;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.intro-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: rgba(168, 85, 247, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: #a855f7;
+}
+
+.intro-content h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.intro-content p {
+    color: var(--text-muted);
+}
+
+.quick-scenarios {
+    margin-bottom: 1.5rem;
+}
+
+.quick-scenarios h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.scenario-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.scenario-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.scenario-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.scenario-btn i { font-size: 1rem; }
+
+.builder-section {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.builder-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.builder-form > h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.builder-form > h3 i { color: var(--primary); }
+
+.form-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.form-section:last-of-type { border-bottom: none; }
+
+.form-section h4 {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.input-with-slider {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.input-with-slider input[type="number"] {
+    width: 120px;
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+    text-align: right;
+}
+
+.input-with-slider input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    background: var(--border);
+    height: 6px;
+    border-radius: 3px;
+}
+
+.input-with-slider input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.btn-lg {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+}
+
+.results-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.results-section > h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.results-section > h3 i { color: var(--primary); }
+
+.result-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.result-card {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.result-card.fire {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.1));
+}
+
+.result-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.result-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    display: block;
+}
+
+.result-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.chart-container {
+    height: 300px;
+    margin-bottom: 1.5rem;
+}
+
+.milestones-section h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.milestones-section h4 i { color: var(--warning); }
+
+.milestones-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.milestone-tag {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--background);
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.milestone-tag i { color: var(--success); }
+.milestone-tag .year { color: var(--text-muted); }
+
+.section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.section-header h3 i { color: var(--primary); }
+
+.saved-list {
+    padding: 1rem;
+}
+
+.saved-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+}
+
+.saved-item:last-child { margin-bottom: 0; }
+
+.saved-name {
+    font-weight: 500;
+}
+
+.saved-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.saved-actions button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.saved-actions button:hover { color: var(--text); }
+
+.empty-state {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+@media (max-width: 1024px) {
+    .builder-section { grid-template-columns: 1fr; }
+    .result-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .scenario-buttons { flex-direction: column; }
+    .result-cards { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let scenarioChart = null;
+let savedScenarios = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    setupSliderSync();
+    runScenario();
+    loadSavedScenarios();
+});
+
+function setupSliderSync() {
+    const pairs = [
+        ['salary', 'salarySlider'],
+        ['salaryGrowth', 'salaryGrowthSlider'],
+        ['sideIncome', 'sideIncomeSlider'],
+        ['expenses', 'expensesSlider'],
+        ['inflation', 'inflationSlider'],
+        ['monthlySavings', 'monthlySavingsSlider'],
+        ['returnRate', 'returnRateSlider'],
+        ['currentPortfolio', 'currentPortfolioSlider'],
+        ['years', 'yearsSlider']
+    ];
+
+    pairs.forEach(([inputId, sliderId]) => {
+        const input = document.getElementById(inputId);
+        const slider = document.getElementById(sliderId);
+
+        input.addEventListener('input', () => {
+            slider.value = input.value;
+        });
+
+        slider.addEventListener('input', () => {
+            input.value = slider.value;
+        });
+    });
+}
+
+function loadQuickScenario(type) {
+    const scenarios = {
+        salary_increase: {
+            salaryGrowth: 10,
+            description: 'Loneokning pa 10% per ar'
+        },
+        savings_increase: {
+            monthlySavings: 10000,
+            description: 'Oka sparandet till 10 000 kr/manad'
+        },
+        interest_rate: {
+            inflation: 5,
+            returnRate: 4,
+            description: 'Hog inflation och lagre avkastning'
+        },
+        job_loss: {
+            salary: 0,
+            sideIncome: 20000,
+            description: 'Forlorat jobb, sidoinkomst endast'
+        },
+        house_purchase: {
+            expenses: 45000,
+            monthlySavings: 2000,
+            description: 'Hogre utgifter efter bostadskop'
+        },
+        side_income: {
+            sideIncome: 10000,
+            description: 'Starta sidoinkomst pa 10 000 kr/manad'
+        }
+    };
+
+    const scenario = scenarios[type];
+    if (!scenario) return;
+
+    Object.keys(scenario).forEach(key => {
+        if (key !== 'description') {
+            const input = document.getElementById(key);
+            const slider = document.getElementById(key + 'Slider');
+            if (input) input.value = scenario[key];
+            if (slider) slider.value = scenario[key];
+        }
+    });
+
+    WealthAgent.showToast(scenario.description, 'info');
+    runScenario();
+}
+
+function runScenario() {
+    const params = {
+        salary: parseFloat(document.getElementById('salary').value) || 0,
+        salaryGrowth: parseFloat(document.getElementById('salaryGrowth').value) || 0,
+        sideIncome: parseFloat(document.getElementById('sideIncome').value) || 0,
+        expenses: parseFloat(document.getElementById('expenses').value) || 0,
+        inflation: parseFloat(document.getElementById('inflation').value) || 0,
+        monthlySavings: parseFloat(document.getElementById('monthlySavings').value) || 0,
+        returnRate: parseFloat(document.getElementById('returnRate').value) || 0,
+        currentPortfolio: parseFloat(document.getElementById('currentPortfolio').value) || 0,
+        years: parseInt(document.getElementById('years').value) || 10
+    };
+
+    const results = calculateScenario(params);
+    displayResults(results, params);
+}
+
+function calculateScenario(params) {
+    const data = [];
+    let portfolio = params.currentPortfolio;
+    let salary = params.salary;
+    let sideIncome = params.sideIncome;
+    let expenses = params.expenses;
+    let totalSaved = 0;
+    let totalReturns = 0;
+    const milestones = [];
+    const milestoneTargets = [100000, 250000, 500000, 1000000, 2000000, 5000000, 10000000];
+
+    for (let year = 0; year <= params.years; year++) {
+        data.push({
+            year: year,
+            portfolio: portfolio
+        });
+
+        // Check milestones
+        milestoneTargets.forEach(target => {
+            if (portfolio >= target && !milestones.some(m => m.target === target)) {
+                milestones.push({ target, year });
+            }
+        });
+
+        if (year < params.years) {
+            // Calculate net income (simplified: after tax ~ 70%)
+            const annualNetIncome = (salary * 0.7 + sideIncome) * 12;
+            const annualExpenses = expenses * 12;
+            const annualSavings = params.monthlySavings * 12;
+
+            // Investment returns
+            const returns = portfolio * (params.returnRate / 100);
+            totalReturns += returns;
+            totalSaved += annualSavings;
+
+            // Update portfolio
+            portfolio += annualSavings + returns;
+
+            // Apply growth rates
+            salary *= (1 + params.salaryGrowth / 100);
+            expenses *= (1 + params.inflation / 100);
+        }
+    }
+
+    // FIRE number (25x annual expenses)
+    const fireNumber = expenses * 12 * 25;
+
+    return {
+        data,
+        finalWealth: portfolio,
+        totalSaved,
+        totalReturns,
+        fireNumber,
+        milestones
+    };
+}
+
+function displayResults(results, params) {
+    document.getElementById('finalWealth').textContent = WealthAgent.formatCurrency(results.finalWealth);
+    document.getElementById('totalSaved').textContent = WealthAgent.formatCurrency(results.totalSaved);
+    document.getElementById('totalReturns').textContent = WealthAgent.formatCurrency(results.totalReturns);
+    document.getElementById('fireNumber').textContent = WealthAgent.formatCurrency(results.fireNumber);
+
+    const firePercent = (results.finalWealth / results.fireNumber) * 100;
+    const fireStatus = document.getElementById('fireStatus');
+    if (firePercent >= 100) {
+        fireStatus.textContent = 'FIRE uppnatt!';
+        fireStatus.style.color = 'var(--success)';
+    } else {
+        fireStatus.textContent = `${Math.round(firePercent)}% av FIRE`;
+        fireStatus.style.color = 'var(--text-muted)';
+    }
+
+    renderChart(results.data);
+    renderMilestones(results.milestones);
+}
+
+function renderChart(data) {
+    const ctx = document.getElementById('scenarioChart').getContext('2d');
+
+    if (scenarioChart) scenarioChart.destroy();
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
+    gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+    scenarioChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => `Ar ${d.year}`),
+            datasets: [{
+                label: 'Formogenhet',
+                data: data.map(d => d.portfolio),
+                borderColor: '#6366f1',
+                backgroundColor: gradient,
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#6366f1',
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => WealthAgent.formatCurrency(ctx.raw)
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-muted').trim() }
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: {
+                        color: getComputedStyle(document.body).getPropertyValue('--text-muted').trim(),
+                        callback: val => formatLargeNumber(val)
+                    }
+                }
+            }
+        }
+    });
+}
+
+function formatLargeNumber(val) {
+    if (val >= 1000000) return (val / 1000000).toFixed(1) + ' M';
+    if (val >= 1000) return (val / 1000).toFixed(0) + ' k';
+    return val;
+}
+
+function renderMilestones(milestones) {
+    const container = document.getElementById('scenarioMilestones');
+
+    if (milestones.length === 0) {
+        container.innerHTML = '<span class="empty-state">Inga milstolpar uppnadda i detta scenario</span>';
+        return;
+    }
+
+    container.innerHTML = milestones.map(m => `
+        <div class="milestone-tag">
+            <i class="fas fa-flag"></i>
+            <span>${WealthAgent.formatCurrency(m.target)}</span>
+            <span class="year">ar ${m.year}</span>
+        </div>
+    `).join('');
+}
+
+function saveCurrentScenario() {
+    const name = prompt('Ge scenariot ett namn:');
+    if (!name) return;
+
+    const params = {
+        name,
+        salary: document.getElementById('salary').value,
+        salaryGrowth: document.getElementById('salaryGrowth').value,
+        sideIncome: document.getElementById('sideIncome').value,
+        expenses: document.getElementById('expenses').value,
+        inflation: document.getElementById('inflation').value,
+        monthlySavings: document.getElementById('monthlySavings').value,
+        returnRate: document.getElementById('returnRate').value,
+        currentPortfolio: document.getElementById('currentPortfolio').value,
+        years: document.getElementById('years').value,
+        created: new Date().toISOString()
+    };
+
+    savedScenarios.push(params);
+    localStorage.setItem('wealthScenarios', JSON.stringify(savedScenarios));
+    renderSavedScenarios();
+    WealthAgent.showToast('Scenario sparat!', 'success');
+}
+
+function loadSavedScenarios() {
+    try {
+        savedScenarios = JSON.parse(localStorage.getItem('wealthScenarios')) || [];
+    } catch (e) {
+        savedScenarios = [];
+    }
+    renderSavedScenarios();
+}
+
+function renderSavedScenarios() {
+    const container = document.getElementById('savedScenarios');
+
+    if (savedScenarios.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <p>Inga sparade scenarier. Bygg ett scenario och spara det!</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = savedScenarios.map((s, i) => `
+        <div class="saved-item">
+            <div>
+                <span class="saved-name">${s.name}</span>
+                <span class="saved-meta">${formatDate(s.created)}</span>
+            </div>
+            <div class="saved-actions">
+                <button onclick="loadSavedScenario(${i})" title="Ladda">
+                    <i class="fas fa-upload"></i>
+                </button>
+                <button onclick="deleteSavedScenario(${i})" title="Ta bort">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function loadSavedScenario(index) {
+    const scenario = savedScenarios[index];
+    if (!scenario) return;
+
+    const fields = ['salary', 'salaryGrowth', 'sideIncome', 'expenses', 'inflation', 'monthlySavings', 'returnRate', 'currentPortfolio', 'years'];
+
+    fields.forEach(field => {
+        const input = document.getElementById(field);
+        const slider = document.getElementById(field + 'Slider');
+        if (input && scenario[field] !== undefined) {
+            input.value = scenario[field];
+            if (slider) slider.value = scenario[field];
+        }
+    });
+
+    runScenario();
+    WealthAgent.showToast(`Scenario "${scenario.name}" laddat!`, 'success');
+}
+
+function deleteSavedScenario(index) {
+    if (!confirm('Ta bort detta scenario?')) return;
+
+    savedScenarios.splice(index, 1);
+    localStorage.setItem('wealthScenarios', JSON.stringify(savedScenarios));
+    renderSavedScenarios();
+    WealthAgent.showToast('Scenario borttaget', 'success');
+}
+
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('sv-SE');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,1150 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Revenue Model Explorer - Wealth Agent{% endblock %}
+
+{% block extra_css %}
+<style>
+    .revenue-hero {
+        background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .revenue-hero h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Filter Section */
+    .filter-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 20px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--text);
+    }
+
+    .filter-btn:hover {
+        border-color: var(--primary);
+    }
+
+    .filter-btn.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    /* Model Cards Grid */
+    .models-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .model-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .model-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+
+    .model-header {
+        padding: 1.25rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .model-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .model-icon.saas { background: rgba(59, 130, 246, 0.1); }
+    .model-icon.marketplace { background: rgba(16, 185, 129, 0.1); }
+    .model-icon.subscription { background: rgba(139, 92, 246, 0.1); }
+    .model-icon.freemium { background: rgba(245, 158, 11, 0.1); }
+    .model-icon.advertising { background: rgba(236, 72, 153, 0.1); }
+    .model-icon.affiliate { background: rgba(20, 184, 166, 0.1); }
+    .model-icon.licensing { background: rgba(99, 102, 241, 0.1); }
+    .model-icon.services { background: rgba(239, 68, 68, 0.1); }
+
+    .model-title {
+        font-weight: 600;
+        font-size: 1.125rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .model-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .model-body {
+        padding: 0 1.25rem 1.25rem;
+    }
+
+    .model-desc {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
+    .model-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .model-metric {
+        text-align: center;
+        padding: 0.75rem;
+        background: var(--background);
+        border-radius: 8px;
+    }
+
+    .metric-value {
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 0.125rem;
+    }
+
+    .metric-value.high { color: var(--success); }
+    .metric-value.medium { color: var(--warning); }
+    .metric-value.low { color: var(--text-muted); }
+
+    .metric-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    .model-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+        margin-bottom: 1rem;
+    }
+
+    .model-tag {
+        padding: 0.25rem 0.5rem;
+        background: var(--background);
+        border-radius: 4px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .model-footer {
+        padding: 1rem 1.25rem;
+        background: var(--background);
+        border-top: 1px solid var(--border);
+    }
+
+    .model-examples {
+        font-size: 0.875rem;
+    }
+
+    .model-examples strong {
+        color: var(--text-muted);
+    }
+
+    .model-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    /* Pros/Cons */
+    .pros-cons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .pros-list, .cons-list {
+        font-size: 0.8rem;
+    }
+
+    .pros-list li {
+        color: var(--success);
+        margin-bottom: 0.25rem;
+    }
+
+    .cons-list li {
+        color: var(--danger);
+        margin-bottom: 0.25rem;
+    }
+
+    .pros-list li::marker { content: "✓ "; }
+    .cons-list li::marker { content: "✗ "; }
+
+    /* Calculator Section */
+    .calculator-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .calc-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .calc-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .calc-inputs {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .calc-results {
+        background: var(--background);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    .calc-result-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .calc-result-item:last-child {
+        border-bottom: none;
+    }
+
+    .calc-result-item.highlight {
+        font-weight: 600;
+        font-size: 1.125rem;
+    }
+
+    .calc-result-item .label {
+        color: var(--text-muted);
+    }
+
+    .calc-result-item .value {
+        font-weight: 500;
+    }
+
+    .calc-result-item .value.positive { color: var(--success); }
+    .calc-result-item .value.negative { color: var(--danger); }
+
+    /* Comparison Table */
+    .comparison-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .comparison-table {
+        width: 100%;
+        font-size: 0.875rem;
+    }
+
+    .comparison-table th {
+        background: var(--background);
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .comparison-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+
+    .comparison-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .rating-dots {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .rating-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--border);
+    }
+
+    .rating-dot.filled { background: var(--primary); }
+    .rating-dot.filled.high { background: var(--success); }
+    .rating-dot.filled.medium { background: var(--warning); }
+
+    /* Tips Section */
+    .tips-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+
+    .tip-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+    }
+
+    .tip-icon {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .tip-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .tip-text {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    /* Quiz Section */
+    .quiz-section {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(99, 102, 241, 0.1));
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .quiz-question {
+        margin-bottom: 1.5rem;
+    }
+
+    .quiz-question h6 {
+        margin-bottom: 0.75rem;
+    }
+
+    .quiz-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .quiz-option {
+        padding: 0.5rem 1rem;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+    }
+
+    .quiz-option:hover {
+        border-color: var(--primary);
+    }
+
+    .quiz-option.selected {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    .quiz-result {
+        padding: 1.5rem;
+        background: var(--surface);
+        border-radius: 12px;
+        display: none;
+    }
+
+    .quiz-result.show {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Hero Section -->
+    <div class="revenue-hero">
+        <h1>Revenue Model Explorer</h1>
+        <p class="mb-0 opacity-75">Utforska 15+ intäktsmodeller och hitta den som passar din affärsidé</p>
+    </div>
+
+    <!-- Quiz Section -->
+    <div class="quiz-section">
+        <h5 class="mb-3">🎯 Hitta rätt intäktsmodell för dig</h5>
+        <p class="text-muted mb-4">Svara på frågorna för att få en rekommendation</p>
+
+        <div class="quiz-question" data-question="1">
+            <h6>1. Vad säljer du primärt?</h6>
+            <div class="quiz-options">
+                <div class="quiz-option" data-value="product" onclick="selectQuizOption(this)">Fysisk produkt</div>
+                <div class="quiz-option" data-value="digital" onclick="selectQuizOption(this)">Digital produkt</div>
+                <div class="quiz-option" data-value="software" onclick="selectQuizOption(this)">Programvara/App</div>
+                <div class="quiz-option" data-value="service" onclick="selectQuizOption(this)">Tjänst/Expertis</div>
+                <div class="quiz-option" data-value="content" onclick="selectQuizOption(this)">Innehåll/Media</div>
+            </div>
+        </div>
+
+        <div class="quiz-question" data-question="2">
+            <h6>2. Hur ofta behöver kunden det du erbjuder?</h6>
+            <div class="quiz-options">
+                <div class="quiz-option" data-value="once" onclick="selectQuizOption(this)">Engångsköp</div>
+                <div class="quiz-option" data-value="recurring" onclick="selectQuizOption(this)">Regelbundet (månad/år)</div>
+                <div class="quiz-option" data-value="usage" onclick="selectQuizOption(this)">Vid behov/användning</div>
+            </div>
+        </div>
+
+        <div class="quiz-question" data-question="3">
+            <h6>3. Vilken prisnivå siktar du på?</h6>
+            <div class="quiz-options">
+                <div class="quiz-option" data-value="low" onclick="selectQuizOption(this)">Lågt pris, hög volym</div>
+                <div class="quiz-option" data-value="medium" onclick="selectQuizOption(this)">Medium pris</div>
+                <div class="quiz-option" data-value="high" onclick="selectQuizOption(this)">Premium/Enterprise</div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary mt-3" onclick="getRecommendation()">
+            <i class="fas fa-magic me-2"></i> Få rekommendation
+        </button>
+
+        <div class="quiz-result mt-4" id="quizResult">
+            <h5 id="recommendedModel">-</h5>
+            <p class="text-muted" id="recommendedReason">-</p>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <label class="form-label fw-500 mb-2">Filtrera efter kategori:</label>
+        <div class="filter-group">
+            <button class="filter-btn active" onclick="filterModels('all')">Alla</button>
+            <button class="filter-btn" onclick="filterModels('recurring')">Återkommande</button>
+            <button class="filter-btn" onclick="filterModels('transactional')">Transaktionell</button>
+            <button class="filter-btn" onclick="filterModels('platform')">Plattform</button>
+            <button class="filter-btn" onclick="filterModels('content')">Innehåll</button>
+            <button class="filter-btn" onclick="filterModels('service')">Tjänst</button>
+        </div>
+    </div>
+
+    <!-- Models Grid -->
+    <div class="models-grid" id="modelsGrid">
+        <!-- SaaS -->
+        <div class="model-card" data-category="recurring">
+            <div class="model-header">
+                <div class="model-icon saas">☁️</div>
+                <div>
+                    <div class="model-title">SaaS (Software as a Service)</div>
+                    <div class="model-subtitle">Prenumerationsbaserad mjukvara</div>
+                </div>
+            </div>
+            <div class="model-body">
+                <p class="model-desc">Kunder betalar månads- eller årsavgift för tillgång till molnbaserad programvara.</p>
+                <div class="model-metrics">
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Skalbarhet</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Marginal</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Startkostnad</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <ul class="pros-list">
+                        <li>Förutsägbar intäkt</li>
+                        <li>Hög kundlojalitet</li>
+                        <li>Skalbart</li>
+                    </ul>
+                    <ul class="cons-list">
+                        <li>Hög churn-risk</li>
+                        <li>Tekniskt krävande</li>
+                        <li>Support-intensivt</li>
+                    </ul>
+                </div>
+                <div class="model-tags">
+                    <span class="model-tag">B2B</span>
+                    <span class="model-tag">B2C</span>
+                    <span class="model-tag">Tech</span>
+                </div>
+            </div>
+            <div class="model-footer">
+                <div class="model-examples">
+                    <strong>Exempel:</strong> Spotify, Netflix, Slack, Notion
+                </div>
+            </div>
+        </div>
+
+        <!-- Marketplace -->
+        <div class="model-card" data-category="platform">
+            <div class="model-header">
+                <div class="model-icon marketplace">🏪</div>
+                <div>
+                    <div class="model-title">Marketplace</div>
+                    <div class="model-subtitle">Provision på transaktioner</div>
+                </div>
+            </div>
+            <div class="model-body">
+                <p class="model-desc">Koppla ihop köpare och säljare och ta provision på varje transaktion.</p>
+                <div class="model-metrics">
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Skalbarhet</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value medium">Medium</div>
+                        <div class="metric-label">Marginal</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Startkostnad</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <ul class="pros-list">
+                        <li>Nätverkseffekter</li>
+                        <li>Inget lager</li>
+                        <li>Högt tak</li>
+                    </ul>
+                    <ul class="cons-list">
+                        <li>Höna-ägg problem</li>
+                        <li>Komplex logistik</li>
+                        <li>Konkurrens</li>
+                    </ul>
+                </div>
+                <div class="model-tags">
+                    <span class="model-tag">Plattform</span>
+                    <span class="model-tag">Provision</span>
+                </div>
+            </div>
+            <div class="model-footer">
+                <div class="model-examples">
+                    <strong>Exempel:</strong> Airbnb, Uber, Tradera, Etsy
+                </div>
+            </div>
+        </div>
+
+        <!-- Freemium -->
+        <div class="model-card" data-category="recurring">
+            <div class="model-header">
+                <div class="model-icon freemium">🎁</div>
+                <div>
+                    <div class="model-title">Freemium</div>
+                    <div class="model-subtitle">Gratis bas + betald premium</div>
+                </div>
+            </div>
+            <div class="model-body">
+                <p class="model-desc">Erbjud gratis grundversion för att locka användare, sälj premium-funktioner.</p>
+                <div class="model-metrics">
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Skalbarhet</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value medium">Medium</div>
+                        <div class="metric-label">Marginal</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value medium">Medium</div>
+                        <div class="metric-label">Startkostnad</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <ul class="pros-list">
+                        <li>Låg tröskel</li>
+                        <li>Viral spridning</li>
+                        <li>Stor användarbas</li>
+                    </ul>
+                    <ul class="cons-list">
+                        <li>Låg konvertering (2-5%)</li>
+                        <li>Hög kostnad/användare</li>
+                        <li>Svårt balansera</li>
+                    </ul>
+                </div>
+                <div class="model-tags">
+                    <span class="model-tag">B2C</span>
+                    <span class="model-tag">Apps</span>
+                </div>
+            </div>
+            <div class="model-footer">
+                <div class="model-examples">
+                    <strong>Exempel:</strong> Dropbox, LinkedIn, Canva
+                </div>
+            </div>
+        </div>
+
+        <!-- Affiliate -->
+        <div class="model-card" data-category="content">
+            <div class="model-header">
+                <div class="model-icon affiliate">🔗</div>
+                <div>
+                    <div class="model-title">Affiliate Marketing</div>
+                    <div class="model-subtitle">Provision för rekommendationer</div>
+                </div>
+            </div>
+            <div class="model-body">
+                <p class="model-desc">Marknadsför andras produkter och få provision för varje försäljning du genererar.</p>
+                <div class="model-metrics">
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Skalbarhet</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value low">Låg</div>
+                        <div class="metric-label">Marginal</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value low">Låg</div>
+                        <div class="metric-label">Startkostnad</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <ul class="pros-list">
+                        <li>Ingen egen produkt</li>
+                        <li>Passiv inkomst</li>
+                        <li>Låg risk</li>
+                    </ul>
+                    <ul class="cons-list">
+                        <li>Beroende av andra</li>
+                        <li>Låga provisioner</li>
+                        <li>Hög konkurrens</li>
+                    </ul>
+                </div>
+                <div class="model-tags">
+                    <span class="model-tag">Innehåll</span>
+                    <span class="model-tag">Passiv</span>
+                </div>
+            </div>
+            <div class="model-footer">
+                <div class="model-examples">
+                    <strong>Exempel:</strong> Amazon Associates, Adtraction
+                </div>
+            </div>
+        </div>
+
+        <!-- Advertising -->
+        <div class="model-card" data-category="content">
+            <div class="model-header">
+                <div class="model-icon advertising">📺</div>
+                <div>
+                    <div class="model-title">Reklamfinansierad</div>
+                    <div class="model-subtitle">Gratis för användare, betalt av annonsörer</div>
+                </div>
+            </div>
+            <div class="model-body">
+                <p class="model-desc">Bygg stor publik och sälj annonsplats till företag som vill nå din målgrupp.</p>
+                <div class="model-metrics">
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Skalbarhet</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value low">Låg</div>
+                        <div class="metric-label">Marginal</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value medium">Medium</div>
+                        <div class="metric-label">Startkostnad</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <ul class="pros-list">
+                        <li>Gratis för användare</li>
+                        <li>Hög tillväxt möjlig</li>
+                        <li>Skalbart</li>
+                    </ul>
+                    <ul class="cons-list">
+                        <li>Kräver stor volym</li>
+                        <li>Användarupplevelse</li>
+                        <li>Ad-blockers</li>
+                    </ul>
+                </div>
+                <div class="model-tags">
+                    <span class="model-tag">Media</span>
+                    <span class="model-tag">Volym</span>
+                </div>
+            </div>
+            <div class="model-footer">
+                <div class="model-examples">
+                    <strong>Exempel:</strong> YouTube, Facebook, nyhetsajter
+                </div>
+            </div>
+        </div>
+
+        <!-- E-commerce -->
+        <div class="model-card" data-category="transactional">
+            <div class="model-header">
+                <div class="model-icon services">🛒</div>
+                <div>
+                    <div class="model-title">E-handel</div>
+                    <div class="model-subtitle">Sälj produkter online</div>
+                </div>
+            </div>
+            <div class="model-body">
+                <p class="model-desc">Sälj fysiska eller digitala produkter direkt till konsumenter via webshop.</p>
+                <div class="model-metrics">
+                    <div class="model-metric">
+                        <div class="metric-value medium">Medium</div>
+                        <div class="metric-label">Skalbarhet</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value medium">Medium</div>
+                        <div class="metric-label">Marginal</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value medium">Medium</div>
+                        <div class="metric-label">Startkostnad</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <ul class="pros-list">
+                        <li>Enkel att förstå</li>
+                        <li>Snabb start</li>
+                        <li>Direkt intäkt</li>
+                    </ul>
+                    <ul class="cons-list">
+                        <li>Lagerhantering</li>
+                        <li>Logistik</li>
+                        <li>Priskonkurrens</li>
+                    </ul>
+                </div>
+                <div class="model-tags">
+                    <span class="model-tag">B2C</span>
+                    <span class="model-tag">Produkt</span>
+                </div>
+            </div>
+            <div class="model-footer">
+                <div class="model-examples">
+                    <strong>Exempel:</strong> Zalando, CDON, egna webshops
+                </div>
+            </div>
+        </div>
+
+        <!-- Subscription Box -->
+        <div class="model-card" data-category="recurring">
+            <div class="model-header">
+                <div class="model-icon subscription">📦</div>
+                <div>
+                    <div class="model-title">Prenumerationsbox</div>
+                    <div class="model-subtitle">Regelbunden leverans av produkter</div>
+                </div>
+            </div>
+            <div class="model-body">
+                <p class="model-desc">Kunder prenumererar på regelbundna leveranser av kurerade produkter.</p>
+                <div class="model-metrics">
+                    <div class="model-metric">
+                        <div class="metric-value medium">Medium</div>
+                        <div class="metric-label">Skalbarhet</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value medium">Medium</div>
+                        <div class="metric-label">Marginal</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value medium">Medium</div>
+                        <div class="metric-label">Startkostnad</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <ul class="pros-list">
+                        <li>Förutsägbar intäkt</li>
+                        <li>Kundlojalitet</li>
+                        <li>Bra marginaler</li>
+                    </ul>
+                    <ul class="cons-list">
+                        <li>Logistik-krävande</li>
+                        <li>Hög churn</li>
+                        <li>Innehållstryck</li>
+                    </ul>
+                </div>
+                <div class="model-tags">
+                    <span class="model-tag">B2C</span>
+                    <span class="model-tag">Prenumeration</span>
+                </div>
+            </div>
+            <div class="model-footer">
+                <div class="model-examples">
+                    <strong>Exempel:</strong> Glossybox, Dollar Shave Club
+                </div>
+            </div>
+        </div>
+
+        <!-- Licensing -->
+        <div class="model-card" data-category="transactional">
+            <div class="model-header">
+                <div class="model-icon licensing">📜</div>
+                <div>
+                    <div class="model-title">Licensiering</div>
+                    <div class="model-subtitle">Sälj rättigheter att använda</div>
+                </div>
+            </div>
+            <div class="model-body">
+                <p class="model-desc">Licensiera ut din IP, teknologi, varumärke eller innehåll till andra företag.</p>
+                <div class="model-metrics">
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Skalbarhet</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Marginal</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Startkostnad</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <ul class="pros-list">
+                        <li>Passiv inkomst</li>
+                        <li>Skalbart</li>
+                        <li>Höga marginaler</li>
+                    </ul>
+                    <ul class="cons-list">
+                        <li>Kräver stark IP</li>
+                        <li>Juridiskt komplext</li>
+                        <li>Kontrollförlust</li>
+                    </ul>
+                </div>
+                <div class="model-tags">
+                    <span class="model-tag">B2B</span>
+                    <span class="model-tag">IP</span>
+                </div>
+            </div>
+            <div class="model-footer">
+                <div class="model-examples">
+                    <strong>Exempel:</strong> Microsoft Office, Adobe, patentlicenser
+                </div>
+            </div>
+        </div>
+
+        <!-- Consulting -->
+        <div class="model-card" data-category="service">
+            <div class="model-header">
+                <div class="model-icon services">💼</div>
+                <div>
+                    <div class="model-title">Konsulting/Tjänster</div>
+                    <div class="model-subtitle">Sälj expertis och tid</div>
+                </div>
+            </div>
+            <div class="model-body">
+                <p class="model-desc">Fakturera för din expertis, rådgivning eller arbete på tim- eller projektbasis.</p>
+                <div class="model-metrics">
+                    <div class="model-metric">
+                        <div class="metric-value low">Låg</div>
+                        <div class="metric-label">Skalbarhet</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Marginal</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value low">Låg</div>
+                        <div class="metric-label">Startkostnad</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <ul class="pros-list">
+                        <li>Snabb start</li>
+                        <li>Hög intäkt/timme</li>
+                        <li>Flexibelt</li>
+                    </ul>
+                    <ul class="cons-list">
+                        <li>Tid = pengar</li>
+                        <li>Svårt skala</li>
+                        <li>Beroende av dig</li>
+                    </ul>
+                </div>
+                <div class="model-tags">
+                    <span class="model-tag">B2B</span>
+                    <span class="model-tag">Expertis</span>
+                </div>
+            </div>
+            <div class="model-footer">
+                <div class="model-examples">
+                    <strong>Exempel:</strong> McKinsey, frilansare, byråer
+                </div>
+            </div>
+        </div>
+
+        <!-- Data/API -->
+        <div class="model-card" data-category="platform">
+            <div class="model-header">
+                <div class="model-icon saas">📊</div>
+                <div>
+                    <div class="model-title">Data/API-försäljning</div>
+                    <div class="model-subtitle">Sälj tillgång till data eller API</div>
+                </div>
+            </div>
+            <div class="model-body">
+                <p class="model-desc">Monetarisera unik data eller teknisk infrastruktur genom API-access.</p>
+                <div class="model-metrics">
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Skalbarhet</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Marginal</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="metric-value high">Hög</div>
+                        <div class="metric-label">Startkostnad</div>
+                    </div>
+                </div>
+                <div class="pros-cons">
+                    <ul class="pros-list">
+                        <li>Extremt skalbart</li>
+                        <li>Höga marginaler</li>
+                        <li>Svår att kopiera</li>
+                    </ul>
+                    <ul class="cons-list">
+                        <li>Tekniskt avancerat</li>
+                        <li>Datainsamling svår</li>
+                        <li>GDPR-komplext</li>
+                    </ul>
+                </div>
+                <div class="model-tags">
+                    <span class="model-tag">B2B</span>
+                    <span class="model-tag">Tech</span>
+                </div>
+            </div>
+            <div class="model-footer">
+                <div class="model-examples">
+                    <strong>Exempel:</strong> Stripe, Twilio, Google Maps API
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Break-even Calculator -->
+    <div class="calculator-section">
+        <h5 class="mb-4">🧮 Break-even Kalkylator</h5>
+        <div class="calc-grid">
+            <div class="calc-inputs">
+                <div>
+                    <label class="form-label">Fasta kostnader per månad (kr)</label>
+                    <input type="number" class="form-control" id="fixedCosts" value="15000" onchange="calculateBreakeven()">
+                    <small class="text-muted">Lokalhyra, löner, verktyg, etc.</small>
+                </div>
+                <div>
+                    <label class="form-label">Pris per enhet/kund (kr)</label>
+                    <input type="number" class="form-control" id="pricePerUnit" value="500" onchange="calculateBreakeven()">
+                </div>
+                <div>
+                    <label class="form-label">Rörlig kostnad per enhet (kr)</label>
+                    <input type="number" class="form-control" id="variableCost" value="100" onchange="calculateBreakeven()">
+                    <small class="text-muted">Produktkostnad, provision, frakt</small>
+                </div>
+                <div>
+                    <label class="form-label">Målvinst per månad (kr)</label>
+                    <input type="number" class="form-control" id="targetProfit" value="30000" onchange="calculateBreakeven()">
+                </div>
+            </div>
+            <div class="calc-results">
+                <h6 class="mb-3">Resultat</h6>
+                <div class="calc-result-item">
+                    <span class="label">Täckningsbidrag per enhet</span>
+                    <span class="value" id="contributionMargin">400 kr</span>
+                </div>
+                <div class="calc-result-item">
+                    <span class="label">Täckningsgrad</span>
+                    <span class="value" id="marginPercent">80%</span>
+                </div>
+                <div class="calc-result-item highlight">
+                    <span class="label">Break-even (enheter)</span>
+                    <span class="value" id="breakEvenUnits">38 st</span>
+                </div>
+                <div class="calc-result-item highlight">
+                    <span class="label">Break-even (omsättning)</span>
+                    <span class="value" id="breakEvenRevenue">18 750 kr</span>
+                </div>
+                <div class="calc-result-item">
+                    <span class="label">För att nå målvinst</span>
+                    <span class="value positive" id="targetUnits">113 st</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tips -->
+    <h5 class="mb-3">💡 Tips för att välja rätt modell</h5>
+    <div class="tips-grid">
+        <div class="tip-card">
+            <div class="tip-icon">🎯</div>
+            <div class="tip-title">Matcha med din styrka</div>
+            <div class="tip-text">Välj en modell som passar dina befintliga kompetenser och resurser. Teknisk bakgrund? SaaS. Stor publik? Reklam/Affiliate.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-icon">💰</div>
+            <div class="tip-title">Tänk på kassaflöde</div>
+            <div class="tip-text">Prenumerationsmodeller ger förutsägbart kassaflöde. Transaktionsmodeller kan vara mer volatila men ge snabbare intäkter.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-icon">📈</div>
+            <div class="tip-title">Kombinera modeller</div>
+            <div class="tip-text">Många framgångsrika företag använder flera modeller. T.ex. freemium + premium + enterprise.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-icon">🔄</div>
+            <div class="tip-title">Iterera</div>
+            <div class="tip-text">Din första modell behöver inte vara den slutliga. Börja enkelt, lär dig av marknaden, och anpassa.</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let quizAnswers = {};
+
+    function selectQuizOption(element) {
+        const question = element.closest('.quiz-question');
+        question.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+        element.classList.add('selected');
+
+        const questionNum = question.dataset.question;
+        quizAnswers[questionNum] = element.dataset.value;
+    }
+
+    function getRecommendation() {
+        const product = quizAnswers['1'];
+        const frequency = quizAnswers['2'];
+        const price = quizAnswers['3'];
+
+        let model = '';
+        let reason = '';
+
+        if (product === 'software' && frequency === 'recurring') {
+            model = '☁️ SaaS (Software as a Service)';
+            reason = 'Perfekt för programvara med återkommande behov. Fokusera på att bygga funktioner som skapar långsiktigt värde.';
+        } else if (product === 'service') {
+            if (frequency === 'recurring') {
+                model = '💼 Retainer/Månadsavtal';
+                reason = 'Kombinera din expertis med förutsägbar intäkt genom månatliga avtal istället för timdebitering.';
+            } else {
+                model = '💼 Konsulting/Tjänster';
+                reason = 'Sälj din expertis direkt. Börja med timdebitering, utveckla sedan till paketpriser.';
+            }
+        } else if (product === 'digital' && frequency === 'once') {
+            model = '📚 Digital produktförsäljning';
+            reason = 'Skapa en gång, sälj många gånger. E-böcker, kurser, mallar eller plugins passar perfekt.';
+        } else if (product === 'content') {
+            if (price === 'low') {
+                model = '📺 Reklamfinansierad + Affiliate';
+                reason = 'Bygg publik och monetarisera genom annonser och affiliate-länkar. Kräver volym.';
+            } else {
+                model = '🎁 Freemium + Premium';
+                reason = 'Ge bort grundinnehåll gratis, ta betalt för premium-innehåll eller community.';
+            }
+        } else if (product === 'product') {
+            if (frequency === 'recurring') {
+                model = '📦 Prenumerationsbox';
+                reason = 'Perfekt för produkter som förbrukas regelbundet. Bygg lojalitet med kurerat innehåll.';
+            } else {
+                model = '🛒 E-handel';
+                reason = 'Klassisk modell som fungerar. Överväg dropshipping för att minimera risk.';
+            }
+        } else {
+            model = '🎯 Hybridmodell';
+            reason = 'Baserat på dina svar rekommenderar vi att kombinera flera modeller. Börja med en och expandera.';
+        }
+
+        document.getElementById('recommendedModel').textContent = model;
+        document.getElementById('recommendedReason').textContent = reason;
+        document.getElementById('quizResult').classList.add('show');
+    }
+
+    function filterModels(category) {
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        document.querySelectorAll('.model-card').forEach(card => {
+            if (category === 'all' || card.dataset.category === category) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    function calculateBreakeven() {
+        const fixedCosts = parseFloat(document.getElementById('fixedCosts').value) || 0;
+        const pricePerUnit = parseFloat(document.getElementById('pricePerUnit').value) || 0;
+        const variableCost = parseFloat(document.getElementById('variableCost').value) || 0;
+        const targetProfit = parseFloat(document.getElementById('targetProfit').value) || 0;
+
+        const contributionMargin = pricePerUnit - variableCost;
+        const marginPercent = pricePerUnit > 0 ? (contributionMargin / pricePerUnit) * 100 : 0;
+        const breakEvenUnits = contributionMargin > 0 ? Math.ceil(fixedCosts / contributionMargin) : 0;
+        const breakEvenRevenue = breakEvenUnits * pricePerUnit;
+        const targetUnits = contributionMargin > 0 ? Math.ceil((fixedCosts + targetProfit) / contributionMargin) : 0;
+
+        document.getElementById('contributionMargin').textContent = formatCurrency(contributionMargin);
+        document.getElementById('marginPercent').textContent = marginPercent.toFixed(0) + '%';
+        document.getElementById('breakEvenUnits').textContent = breakEvenUnits + ' st';
+        document.getElementById('breakEvenRevenue').textContent = formatCurrency(breakEvenRevenue);
+        document.getElementById('targetUnits').textContent = targetUnits + ' st';
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('sv-SE', {
+            style: 'decimal',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount) + ' kr';
+    }
+
+    // Initialize calculator
+    document.addEventListener('DOMContentLoaded', function() {
+        calculateBreakeven();
+    });
+</script>
+{% endblock %}

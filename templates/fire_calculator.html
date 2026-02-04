@@ -1,0 +1,824 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}FIRE-kalkylator - AI Wealth Agent{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1><i class="fas fa-fire-alt"></i> FIRE-kalkylator</h1>
+        <p>Financial Independence, Retire Early - Berakna din vag till ekonomisk frihet</p>
+    </div>
+</div>
+
+<!-- FIRE Status Banner -->
+<div class="fire-status-banner mb-4" id="fireStatus">
+    <div class="fire-icon">
+        <i class="fas fa-fire-alt"></i>
+    </div>
+    <div class="fire-info">
+        <span class="fire-label">Tid till FIRE</span>
+        <span class="fire-value" id="fireYears">12 ar 4 manader</span>
+        <span class="fire-date" id="fireDate">Uppnas: Juli 2038</span>
+    </div>
+    <div class="fire-progress-ring">
+        <svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="8"/>
+            <circle id="progressCircle" cx="50" cy="50" r="45" fill="none" stroke="#fff" stroke-width="8"
+                    stroke-dasharray="283" stroke-dashoffset="226" stroke-linecap="round"
+                    transform="rotate(-90 50 50)"/>
+        </svg>
+        <div class="progress-text">
+            <span class="progress-value" id="fireProgress">20%</span>
+            <span class="progress-label">av malet</span>
+        </div>
+    </div>
+</div>
+
+<!-- Calculator -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3><i class="fas fa-calculator"></i> Dina siffror</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group mb-3">
+                    <label class="form-label">Nuvarande nettoformogenhet (kr)</label>
+                    <input type="number" id="currentWealth" class="form-control" value="500000">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Arlig inkomst (kr)</label>
+                    <input type="number" id="annualIncome" class="form-control" value="600000">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Arliga utgifter (kr)</label>
+                    <input type="number" id="annualExpenses" class="form-control" value="360000">
+                    <small class="text-muted">Sparkvot: <strong id="savingsRate">40%</strong></small>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Forvatad investeringsavkastning (%)</label>
+                    <input type="range" id="investmentReturn" class="form-range" min="3" max="12" value="7" step="0.5">
+                    <div class="d-flex justify-content-between">
+                        <span>3%</span>
+                        <span class="badge bg-primary" id="returnValue">7%</span>
+                        <span>12%</span>
+                    </div>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Uttagsgrad vid FIRE (%)</label>
+                    <input type="range" id="withdrawalRate" class="form-range" min="2" max="5" value="4" step="0.25">
+                    <div class="d-flex justify-content-between">
+                        <span>2%</span>
+                        <span class="badge bg-success" id="withdrawalValue">4%</span>
+                        <span>5%</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary w-100" onclick="calculateFIRE()">
+                    <i class="fas fa-calculator"></i> Berakna FIRE
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3><i class="fas fa-chart-pie"></i> FIRE-malet</h3>
+            </div>
+            <div class="card-body">
+                <div class="fire-target-box">
+                    <div class="target-item">
+                        <span class="target-label">FIRE-nummer</span>
+                        <span class="target-value" id="fireNumber">9 000 000 kr</span>
+                        <span class="target-desc">25x arliga utgifter</span>
+                    </div>
+                    <div class="target-divider"></div>
+                    <div class="target-item">
+                        <span class="target-label">Passiv arsinkomst</span>
+                        <span class="target-value text-success" id="passiveIncome">360 000 kr</span>
+                        <span class="target-desc">30 000 kr/manad</span>
+                    </div>
+                </div>
+
+                <div class="fire-breakdown mt-4">
+                    <h5>Uppdelning</h5>
+                    <div class="breakdown-item">
+                        <span>Nuvarande formogenhet</span>
+                        <span id="breakdownCurrent">500 000 kr</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>Framtida sparande</span>
+                        <span id="breakdownSavings">4 800 000 kr</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span>Avkastning (ranterantan)</span>
+                        <span id="breakdownReturns">3 700 000 kr</span>
+                    </div>
+                    <div class="breakdown-item total">
+                        <span>Totalt vid FIRE</span>
+                        <span id="breakdownTotal">9 000 000 kr</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-area"></i> Vag till FIRE</h3>
+    </div>
+    <div class="card-body">
+        <canvas id="fireChart" height="350"></canvas>
+    </div>
+</div>
+
+<!-- FIRE Variations -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-fire"></i> FIRE-varianter</h3>
+    </div>
+    <div class="card-body">
+        <div class="fire-variants-grid">
+            <div class="variant-card lean">
+                <div class="variant-icon">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <h4>Lean FIRE</h4>
+                <div class="variant-amount" id="leanFire">-</div>
+                <p>Minimalistisk livsstil, 25 000 kr/manad</p>
+                <span class="variant-years" id="leanFireYears">-</span>
+            </div>
+            <div class="variant-card regular active">
+                <div class="variant-icon">
+                    <i class="fas fa-fire-alt"></i>
+                </div>
+                <h4>Regular FIRE</h4>
+                <div class="variant-amount" id="regularFire">-</div>
+                <p>Bekvaamt liv med nuvarande utgifter</p>
+                <span class="variant-years" id="regularFireYears">-</span>
+            </div>
+            <div class="variant-card fat">
+                <div class="variant-icon">
+                    <i class="fas fa-gem"></i>
+                </div>
+                <h4>Fat FIRE</h4>
+                <div class="variant-amount" id="fatFire">-</div>
+                <p>Lyxig livsstil, 50 000 kr/manad</p>
+                <span class="variant-years" id="fatFireYears">-</span>
+            </div>
+            <div class="variant-card coast">
+                <div class="variant-icon">
+                    <i class="fas fa-umbrella-beach"></i>
+                </div>
+                <h4>Coast FIRE</h4>
+                <div class="variant-amount" id="coastFire">-</div>
+                <p>Sluta spara, lat ranterantan jobba</p>
+                <span class="variant-years" id="coastFireYears">-</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sensitivity Analysis -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-sliders-h"></i> Kanslighetanalys</h3>
+    </div>
+    <div class="card-body">
+        <p class="text-muted mb-3">Hur paverkar forandringar din FIRE-tidslinje?</p>
+        <div class="sensitivity-grid">
+            <div class="sensitivity-item increase">
+                <div class="sensitivity-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <div class="sensitivity-info">
+                    <span class="sensitivity-action">Oka sparandet med 2000 kr/manad</span>
+                    <span class="sensitivity-result" id="sensitivitySave">Sparar 2 ar 3 manader</span>
+                </div>
+            </div>
+            <div class="sensitivity-item increase">
+                <div class="sensitivity-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="sensitivity-info">
+                    <span class="sensitivity-action">1% hogre avkastning</span>
+                    <span class="sensitivity-result" id="sensitivityReturn">Sparar 1 ar 8 manader</span>
+                </div>
+            </div>
+            <div class="sensitivity-item decrease">
+                <div class="sensitivity-icon">
+                    <i class="fas fa-minus-circle"></i>
+                </div>
+                <div class="sensitivity-info">
+                    <span class="sensitivity-action">Minska utgifter med 3000 kr/manad</span>
+                    <span class="sensitivity-result" id="sensitivityExpense">Sparar 3 ar 1 manad</span>
+                </div>
+            </div>
+            <div class="sensitivity-item decrease">
+                <div class="sensitivity-icon">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="sensitivity-info">
+                    <span class="sensitivity-action">Flytta till billigare bostad</span>
+                    <span class="sensitivity-result" id="sensitivityHousing">Sparar 2 ar 6 manader</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tips -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-lightbulb"></i> FIRE-strategier</h3>
+    </div>
+    <div class="card-body">
+        <div class="tips-accordion" id="tipsAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#tip1">
+                        <i class="fas fa-piggy-bank me-2"></i> Oka sparkvoten - den viktigaste faktorn
+                    </button>
+                </h2>
+                <div id="tip1" class="accordion-collapse collapse show" data-bs-parent="#tipsAccordion">
+                    <div class="accordion-body">
+                        <p>Sparkvoten ar den enskilt viktigaste faktorn for FIRE. Med 50% sparkvot nar du FIRE pa cirka 17 ar, med 70% pa cirka 8 ar.</p>
+                        <ul>
+                            <li>Granska alla utgifter - var kritisk</li>
+                            <li>Automatisera sparande forst, spendera sedan</li>
+                            <li>Undvik livsstilsinflation vid loneokningar</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tip2">
+                        <i class="fas fa-chart-line me-2"></i> Indexfonder - enkelhet och effektivitet
+                    </button>
+                </h2>
+                <div id="tip2" class="accordion-collapse collapse" data-bs-parent="#tipsAccordion">
+                    <div class="accordion-body">
+                        <p>For de flesta FIRE-aspiranter ar breda indexfonder det basta valet:</p>
+                        <ul>
+                            <li>Laga avgifter (under 0.2%)</li>
+                            <li>Automatisk diversifiering</li>
+                            <li>Historiskt 7-10% arlig avkastning</li>
+                            <li>Exempel: Avanza Zero, Lansforsakringar Global Index</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tip3">
+                        <i class="fas fa-shield-alt me-2"></i> 4%-regeln och sakerhetsmarginal
+                    </button>
+                </h2>
+                <div id="tip3" class="accordion-collapse collapse" data-bs-parent="#tipsAccordion">
+                    <div class="accordion-body">
+                        <p>Trinity-studien visade att 4% uttag har historiskt hallbart i 30+ ar. For extra sakerhet:</p>
+                        <ul>
+                            <li>Anvand 3.5% uttagsgrad for langre tidshorisonter</li>
+                            <li>Ha flexibilitet att minska uttag i daliga ar</li>
+                            <li>Behal en liten sidoinkomst de forsta aren</li>
+                            <li>Bygg en kontantbuffert pa 2-3 ars utgifter</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.fire-status-banner {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.fire-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+}
+
+.fire-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.fire-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.fire-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.fire-date {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+.fire-progress-ring {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
+.fire-progress-ring svg {
+    width: 100%;
+    height: 100%;
+}
+
+.progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.progress-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.progress-label {
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+.fire-target-box {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+}
+
+.target-item {
+    flex: 1;
+    text-align: center;
+}
+
+.target-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.target-value {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0.25rem 0;
+}
+
+.target-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.target-divider {
+    width: 2px;
+    background: var(--border);
+}
+
+.fire-breakdown {
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.fire-breakdown h5 {
+    margin-bottom: 1rem;
+}
+
+.breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.breakdown-item:last-child {
+    border-bottom: none;
+}
+
+.breakdown-item.total {
+    font-weight: 700;
+    border-top: 2px solid var(--border);
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+}
+
+.fire-variants-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.variant-card {
+    text-align: center;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    transition: all 0.3s ease;
+}
+
+.variant-card:hover {
+    transform: translateY(-4px);
+}
+
+.variant-card.active {
+    border-color: #f97316;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.05), transparent);
+}
+
+.variant-card.lean .variant-icon {
+    background: #22c55e;
+}
+
+.variant-card.regular .variant-icon {
+    background: #f97316;
+}
+
+.variant-card.fat .variant-icon {
+    background: #8b5cf6;
+}
+
+.variant-card.coast .variant-icon {
+    background: #3b82f6;
+}
+
+.variant-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.variant-card h4 {
+    margin-bottom: 0.5rem;
+}
+
+.variant-amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.variant-card p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0.5rem 0;
+}
+
+.variant-years {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: var(--border);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.sensitivity-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.sensitivity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.sensitivity-item.increase {
+    border-left: 4px solid #22c55e;
+}
+
+.sensitivity-item.decrease {
+    border-left: 4px solid #3b82f6;
+}
+
+.sensitivity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.sensitivity-item.increase .sensitivity-icon {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.sensitivity-item.decrease .sensitivity-icon {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.sensitivity-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.sensitivity-action {
+    font-weight: 500;
+}
+
+.sensitivity-result {
+    color: var(--success);
+    font-weight: 600;
+}
+
+@media (max-width: 992px) {
+    .fire-variants-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .fire-status-banner {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .fire-variants-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sensitivity-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .fire-target-box {
+        flex-direction: column;
+    }
+
+    .target-divider {
+        width: 100%;
+        height: 2px;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let fireChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Slider listeners
+    document.getElementById('investmentReturn').addEventListener('input', function() {
+        document.getElementById('returnValue').textContent = this.value + '%';
+        calculateFIRE();
+    });
+
+    document.getElementById('withdrawalRate').addEventListener('input', function() {
+        document.getElementById('withdrawalValue').textContent = this.value + '%';
+        calculateFIRE();
+    });
+
+    // Input listeners
+    ['currentWealth', 'annualIncome', 'annualExpenses'].forEach(id => {
+        document.getElementById(id).addEventListener('change', calculateFIRE);
+    });
+
+    calculateFIRE();
+});
+
+function calculateFIRE() {
+    const currentWealth = parseFloat(document.getElementById('currentWealth').value) || 0;
+    const annualIncome = parseFloat(document.getElementById('annualIncome').value) || 0;
+    const annualExpenses = parseFloat(document.getElementById('annualExpenses').value) || 0;
+    const investmentReturn = parseFloat(document.getElementById('investmentReturn').value) / 100;
+    const withdrawalRate = parseFloat(document.getElementById('withdrawalRate').value) / 100;
+
+    const annualSavings = annualIncome - annualExpenses;
+    const savingsRate = annualIncome > 0 ? (annualSavings / annualIncome) * 100 : 0;
+    const fireNumber = annualExpenses / withdrawalRate;
+
+    document.getElementById('savingsRate').textContent = savingsRate.toFixed(0) + '%';
+    document.getElementById('fireNumber').textContent = formatCurrency(fireNumber);
+    document.getElementById('passiveIncome').textContent = formatCurrency(annualExpenses);
+
+    // Calculate years to FIRE
+    let years = 0;
+    let wealth = currentWealth;
+    let totalSavings = currentWealth;
+    let chartData = [{ year: 0, wealth: currentWealth, savings: currentWealth }];
+
+    while (wealth < fireNumber && years < 100) {
+        wealth = wealth * (1 + investmentReturn) + annualSavings;
+        totalSavings += annualSavings;
+        years++;
+        chartData.push({ year: years, wealth: wealth, savings: totalSavings });
+    }
+
+    const months = Math.round((years % 1) * 12);
+    const fullYears = Math.floor(years);
+
+    // Update banner
+    document.getElementById('fireYears').textContent = `${fullYears} ar ${months} manader`;
+
+    const fireDate = new Date();
+    fireDate.setFullYear(fireDate.getFullYear() + fullYears);
+    fireDate.setMonth(fireDate.getMonth() + months);
+    document.getElementById('fireDate').textContent = 'Uppnas: ' + fireDate.toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' });
+
+    const progress = Math.min(100, (currentWealth / fireNumber) * 100);
+    document.getElementById('fireProgress').textContent = progress.toFixed(0) + '%';
+
+    // Update progress circle
+    const circumference = 2 * Math.PI * 45;
+    const offset = circumference - (progress / 100) * circumference;
+    document.getElementById('progressCircle').style.strokeDashoffset = offset;
+
+    // Update breakdown
+    const returns = wealth - totalSavings;
+    document.getElementById('breakdownCurrent').textContent = formatCurrency(currentWealth);
+    document.getElementById('breakdownSavings').textContent = formatCurrency(totalSavings - currentWealth);
+    document.getElementById('breakdownReturns').textContent = formatCurrency(returns);
+    document.getElementById('breakdownTotal').textContent = formatCurrency(wealth);
+
+    // Update variants
+    calculateVariants(currentWealth, annualSavings, investmentReturn);
+
+    // Update chart
+    updateChart(chartData, fireNumber);
+
+    // Update sensitivity
+    calculateSensitivity(currentWealth, annualSavings, annualExpenses, investmentReturn, withdrawalRate, years);
+}
+
+function calculateVariants(currentWealth, annualSavings, returnRate) {
+    const variants = [
+        { id: 'lean', monthly: 25000 },
+        { id: 'regular', monthly: null }, // Uses current expenses
+        { id: 'fat', monthly: 50000 },
+        { id: 'coast', monthly: null, isCoast: true }
+    ];
+
+    const currentExpenses = parseFloat(document.getElementById('annualExpenses').value) || 0;
+
+    variants.forEach(v => {
+        let target, years;
+
+        if (v.isCoast) {
+            // Coast FIRE: How much do you need now so that it grows to regular FIRE by 65?
+            const age = 35; // Assume 35 for now
+            const retirementAge = 65;
+            const yearsToRetirement = retirementAge - age;
+            const regularFire = (currentExpenses) / 0.04;
+            target = regularFire / Math.pow(1 + returnRate, yearsToRetirement);
+            years = calculateYearsToTarget(currentWealth, annualSavings, returnRate, target);
+        } else {
+            const annualExpenses = v.monthly ? v.monthly * 12 : currentExpenses;
+            target = annualExpenses / 0.04;
+            years = calculateYearsToTarget(currentWealth, annualSavings, returnRate, target);
+        }
+
+        document.getElementById(v.id + 'Fire').textContent = formatCurrency(target);
+        document.getElementById(v.id + 'FireYears').textContent = years < 100 ? years.toFixed(1) + ' ar' : '100+ ar';
+    });
+}
+
+function calculateYearsToTarget(current, annualSavings, returnRate, target) {
+    let wealth = current;
+    let years = 0;
+
+    while (wealth < target && years < 100) {
+        wealth = wealth * (1 + returnRate) + annualSavings;
+        years++;
+    }
+
+    return years;
+}
+
+function calculateSensitivity(current, savings, expenses, returnRate, withdrawalRate, baseYears) {
+    // Extra 2000/month saving
+    const extraSaving = calculateYearsToTarget(current, savings + 24000, returnRate, expenses / withdrawalRate);
+    const saveDiff = baseYears - extraSaving;
+    document.getElementById('sensitivitySave').textContent = `Sparar ${Math.floor(saveDiff)} ar ${Math.round((saveDiff % 1) * 12)} manader`;
+
+    // 1% higher return
+    const higherReturn = calculateYearsToTarget(current, savings, returnRate + 0.01, expenses / withdrawalRate);
+    const returnDiff = baseYears - higherReturn;
+    document.getElementById('sensitivityReturn').textContent = `Sparar ${Math.floor(returnDiff)} ar ${Math.round((returnDiff % 1) * 12)} manader`;
+
+    // 3000/month less expenses
+    const lowerExpenses = calculateYearsToTarget(current, savings + 36000, returnRate, (expenses - 36000) / withdrawalRate);
+    const expenseDiff = baseYears - lowerExpenses;
+    document.getElementById('sensitivityExpense').textContent = `Sparar ${Math.floor(expenseDiff)} ar ${Math.round((expenseDiff % 1) * 12)} manader`;
+
+    // Housing (assume 4000/month savings)
+    const housing = calculateYearsToTarget(current, savings + 48000, returnRate, (expenses - 48000) / withdrawalRate);
+    const housingDiff = baseYears - housing;
+    document.getElementById('sensitivityHousing').textContent = `Sparar ${Math.floor(housingDiff)} ar ${Math.round((housingDiff % 1) * 12)} manader`;
+}
+
+function updateChart(data, fireNumber) {
+    const ctx = document.getElementById('fireChart').getContext('2d');
+
+    if (fireChart) {
+        fireChart.destroy();
+    }
+
+    fireChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => 'Ar ' + d.year),
+            datasets: [
+                {
+                    label: 'Formogenhet',
+                    data: data.map(d => d.wealth),
+                    borderColor: '#f97316',
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: 'Insatt kapital',
+                    data: data.map(d => d.savings),
+                    borderColor: '#6b7280',
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.3
+                },
+                {
+                    label: 'FIRE-mal',
+                    data: data.map(() => fireNumber),
+                    borderColor: '#22c55e',
+                    borderDash: [10, 5],
+                    fill: false,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ctx.dataset.label + ': ' + formatCurrency(ctx.raw)
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: v => formatCurrency(v)
+                    }
+                }
+            }
+        }
+    });
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('sv-SE', {
+        style: 'currency',
+        currency: 'SEK',
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,1402 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Miljonärskalkylatorn - AI Wealth Agent{% endblock %}
+{% block page_title %}Din Väg Till Miljonen{% endblock %}
+
+{% block content %}
+<div class="millionaire-page">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1>Hur snabbt kan DU bli miljonär?</h1>
+            <p>Räkna ut din personliga väg till ekonomisk frihet</p>
+        </div>
+        <div class="hero-visual">
+            <div class="big-number" id="yearsToMillion">-</div>
+            <span>år till miljonen</span>
+        </div>
+    </div>
+
+    <!-- Risk Profile Selector -->
+    <div class="risk-profile-section">
+        <h3><i class="fas fa-shield-alt"></i> Välj din riskprofil</h3>
+        <p class="section-subtitle">Din riskprofil påverkar förväntad avkastning och investeringsstrategi</p>
+
+        <div class="risk-profiles" id="riskProfiles">
+            <div class="risk-card" data-risk="conservative" onclick="selectRiskProfile('conservative')">
+                <div class="risk-icon conservative">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="risk-info">
+                    <h4>Försiktig</h4>
+                    <div class="risk-return">4-5% / år</div>
+                    <p>Obligationer, sparkonto, stabila fonder</p>
+                </div>
+                <div class="risk-meter">
+                    <div class="meter-fill" style="width: 25%;"></div>
+                </div>
+                <ul class="risk-investments">
+                    <li>Räntefonder</li>
+                    <li>Statsobligationer</li>
+                    <li>Sparkonto</li>
+                </ul>
+            </div>
+
+            <div class="risk-card active" data-risk="balanced" onclick="selectRiskProfile('balanced')">
+                <div class="risk-badge">Rekommenderad</div>
+                <div class="risk-icon balanced">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+                <div class="risk-info">
+                    <h4>Balanserad</h4>
+                    <div class="risk-return">7-8% / år</div>
+                    <p>Blandning av aktier och obligationer</p>
+                </div>
+                <div class="risk-meter">
+                    <div class="meter-fill" style="width: 50%;"></div>
+                </div>
+                <ul class="risk-investments">
+                    <li>Globalfonder</li>
+                    <li>Blandfonder</li>
+                    <li>ISK-sparande</li>
+                </ul>
+            </div>
+
+            <div class="risk-card" data-risk="aggressive" onclick="selectRiskProfile('aggressive')">
+                <div class="risk-icon aggressive">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <div class="risk-info">
+                    <h4>Aggressiv</h4>
+                    <div class="risk-return">10-12% / år</div>
+                    <p>Fokus på tillväxtaktier och emerging markets</p>
+                </div>
+                <div class="risk-meter">
+                    <div class="meter-fill" style="width: 75%;"></div>
+                </div>
+                <ul class="risk-investments">
+                    <li>Teknikaktier</li>
+                    <li>Småbolagsfonder</li>
+                    <li>Emerging markets</li>
+                </ul>
+            </div>
+
+            <div class="risk-card" data-risk="extreme" onclick="selectRiskProfile('extreme')">
+                <div class="risk-warning">Hög risk!</div>
+                <div class="risk-icon extreme">
+                    <i class="fas fa-fire-alt"></i>
+                </div>
+                <div class="risk-info">
+                    <h4>Extrem</h4>
+                    <div class="risk-return">15-20% / år</div>
+                    <p>Krypto, optioner, högriskaktier</p>
+                </div>
+                <div class="risk-meter">
+                    <div class="meter-fill" style="width: 100%;"></div>
+                </div>
+                <ul class="risk-investments">
+                    <li>Bitcoin/Ethereum</li>
+                    <li>Hävstångsprodukter</li>
+                    <li>Spekulativa aktier</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="risk-comparison" id="riskComparison">
+            <div class="comparison-header">
+                <h4>Jämförelse: 10 000 kr/mån under 10 år</h4>
+            </div>
+            <div class="comparison-bars">
+                <div class="comparison-bar conservative">
+                    <span class="bar-label">Försiktig (5%)</span>
+                    <div class="bar-track"><div class="bar-fill" style="width: 55%;"></div></div>
+                    <span class="bar-value">1,55 M kr</span>
+                </div>
+                <div class="comparison-bar balanced">
+                    <span class="bar-label">Balanserad (8%)</span>
+                    <div class="bar-track"><div class="bar-fill" style="width: 72%;"></div></div>
+                    <span class="bar-value">1,83 M kr</span>
+                </div>
+                <div class="comparison-bar aggressive">
+                    <span class="bar-label">Aggressiv (11%)</span>
+                    <div class="bar-track"><div class="bar-fill" style="width: 88%;"></div></div>
+                    <span class="bar-value">2,17 M kr</span>
+                </div>
+                <div class="comparison-bar extreme">
+                    <span class="bar-label">Extrem (17%)</span>
+                    <div class="bar-track"><div class="bar-fill" style="width: 100%;"></div></div>
+                    <span class="bar-value">3,15 M kr*</span>
+                </div>
+            </div>
+            <p class="comparison-note">* Historisk avkastning är ingen garanti. Extrem risk innebär också risk för stora förluster.</p>
+        </div>
+    </div>
+
+    <!-- Calculator Section -->
+    <div class="calculator-grid">
+        <!-- Input Panel -->
+        <div class="card calculator-inputs">
+            <div class="card-header">
+                <h3><i class="fas fa-sliders-h"></i> Dina siffror</h3>
+                <button class="btn btn-ghost btn-sm" id="loadFromProfile">
+                    <i class="fas fa-user"></i> Från profil
+                </button>
+            </div>
+            <div class="card-content">
+                <div class="input-group">
+                    <label for="currentSavings">Nuvarande sparande</label>
+                    <div class="input-with-suffix">
+                        <input type="number" id="currentSavings" value="100000" min="0">
+                        <span class="suffix">kr</span>
+                    </div>
+                    <input type="range" id="currentSavingsRange" min="0" max="2000000" step="10000" value="100000">
+                </div>
+
+                <div class="input-group">
+                    <label for="monthlyContribution">Månadssparande</label>
+                    <div class="input-with-suffix">
+                        <input type="number" id="monthlyContribution" value="8000" min="0">
+                        <span class="suffix">kr/mån</span>
+                    </div>
+                    <input type="range" id="monthlyContributionRange" min="0" max="50000" step="500" value="8000">
+                </div>
+
+                <div class="input-group">
+                    <label for="annualReturn">Förväntad avkastning</label>
+                    <div class="input-with-suffix">
+                        <input type="number" id="annualReturn" value="8" min="0" max="20" step="0.5">
+                        <span class="suffix">%/år</span>
+                    </div>
+                    <input type="range" id="annualReturnRange" min="2" max="15" step="0.5" value="8">
+                </div>
+
+                <div class="input-group">
+                    <label for="targetAmount">Målbelopp</label>
+                    <div class="input-with-suffix">
+                        <input type="number" id="targetAmount" value="1000000" min="100000">
+                        <span class="suffix">kr</span>
+                    </div>
+                    <div class="quick-targets">
+                        <button class="target-btn" data-target="500000">500k</button>
+                        <button class="target-btn active" data-target="1000000">1M</button>
+                        <button class="target-btn" data-target="2000000">2M</button>
+                        <button class="target-btn" data-target="5000000">5M</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="card results-panel">
+            <div class="card-header">
+                <h3><i class="fas fa-chart-line"></i> Resultat</h3>
+            </div>
+            <div class="card-content">
+                <div class="result-stats">
+                    <div class="stat">
+                        <span class="stat-value" id="resultYears">-</span>
+                        <span class="stat-label">År till målet</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="resultDate">-</span>
+                        <span class="stat-label">Målår</span>
+                    </div>
+                    <div class="stat highlight">
+                        <span class="stat-value" id="resultInterest">-</span>
+                        <span class="stat-label">Ränta-på-ränta vinst</span>
+                    </div>
+                </div>
+
+                <!-- Progress Chart -->
+                <div class="chart-container">
+                    <canvas id="projectionChart"></canvas>
+                </div>
+
+                <!-- Milestones -->
+                <div class="milestones-section">
+                    <h4>Milstolpar</h4>
+                    <div class="milestones" id="milestonesList">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- What If Section -->
+    <div class="card whatif-section">
+        <div class="card-header">
+            <h3><i class="fas fa-magic"></i> Tänk om...</h3>
+        </div>
+        <div class="card-content">
+            <div class="whatif-scenarios" id="whatifScenarios">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Tips -->
+    <div class="card action-section">
+        <div class="card-header">
+            <h3><i class="fas fa-rocket"></i> Accelerera din resa</h3>
+        </div>
+        <div class="card-content">
+            <div class="action-grid">
+                <div class="action-card" onclick="window.location='/wealth/chat'">
+                    <i class="fas fa-comments"></i>
+                    <h4>Fråga AI</h4>
+                    <p>Få personlig rådgivning</p>
+                </div>
+                <div class="action-card" onclick="window.location='/wealth/goals'">
+                    <i class="fas fa-bullseye"></i>
+                    <h4>Sätt mål</h4>
+                    <p>Skapa ditt miljonmål</p>
+                </div>
+                <div class="action-card" onclick="showSideIncomeModal()">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <h4>Öka inkomst</h4>
+                    <p>Se sidoinkomster</p>
+                </div>
+                <div class="action-card" onclick="showOpportunitiesModal()">
+                    <i class="fas fa-lightbulb"></i>
+                    <h4>Möjligheter</h4>
+                    <p>Hitta optimeringar</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Side Income Modal -->
+<div class="modal" id="sideIncomeModal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2><i class="fas fa-hand-holding-usd"></i> Sidoinkomster för dig</h2>
+            <button class="modal-close" onclick="closeSideIncomeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="sideIncomeContent">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Analyserar din profil...
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Opportunities Modal -->
+<div class="modal" id="opportunitiesModal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2><i class="fas fa-lightbulb"></i> Möjligheter för dig</h2>
+            <button class="modal-close" onclick="closeOpportunitiesModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="opportunitiesContent">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Skannar möjligheter...
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let projectionChart = null;
+    let calculationResult = null;
+    let selectedRiskProfile = 'balanced';
+
+    // Risk profile configurations
+    const riskProfiles = {
+        conservative: {
+            name: 'Försiktig',
+            returnMin: 4,
+            returnMax: 5,
+            defaultReturn: 4.5,
+            color: '#22c55e',
+            description: 'Lägre risk, stabil tillväxt',
+            investments: ['Räntefonder', 'Statsobligationer', 'Sparkonto', 'Investment grade bonds'],
+            strategy: 'Fokusera på kapitalbevarande med modest tillväxt. Perfekt om du har kort tidshorisont eller låg risktolerans.'
+        },
+        balanced: {
+            name: 'Balanserad',
+            returnMin: 7,
+            returnMax: 8,
+            defaultReturn: 8,
+            color: '#3b82f6',
+            description: 'Bra balans mellan risk och avkastning',
+            investments: ['Globalfonder', 'Blandfonder (60/40)', 'ISK med indexfonder', 'Utdelningsaktier'],
+            strategy: 'Den klassiska "köp och behåll"-strategin. Diversifierad portfölj som ger stabil tillväxt över tid.'
+        },
+        aggressive: {
+            name: 'Aggressiv',
+            returnMin: 10,
+            returnMax: 12,
+            defaultReturn: 11,
+            color: '#f59e0b',
+            description: 'Högre risk för potentiellt högre avkastning',
+            investments: ['Teknikfonder', 'Småbolagsfonder', 'Emerging markets', 'Tillväxtaktier'],
+            strategy: 'Fokus på tillväxt. Kräver längre tidshorisont och förmåga att hantera volatilitet.'
+        },
+        extreme: {
+            name: 'Extrem',
+            returnMin: 15,
+            returnMax: 20,
+            defaultReturn: 17,
+            color: '#ef4444',
+            description: 'Mycket hög risk - kan både dubbleras och halveras',
+            investments: ['Bitcoin/Ethereum', 'Hävstångsprodukter', 'Spekulativa aktier', 'Optioner'],
+            strategy: 'VARNING: Endast för pengar du har råd att förlora helt. Extrem volatilitet.'
+        }
+    };
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        calculateProjection();
+        setupInputListeners();
+        updateRiskComparison();
+    });
+
+    function selectRiskProfile(profile) {
+        selectedRiskProfile = profile;
+        const config = riskProfiles[profile];
+
+        // Update UI
+        document.querySelectorAll('.risk-card').forEach(card => {
+            card.classList.remove('active');
+        });
+        document.querySelector(`.risk-card[data-risk="${profile}"]`).classList.add('active');
+
+        // Update return slider and input
+        const returnInput = document.getElementById('annualReturn');
+        const returnRange = document.getElementById('annualReturnRange');
+        returnInput.value = config.defaultReturn;
+        returnRange.value = config.defaultReturn;
+
+        // Show strategy recommendation
+        showStrategyRecommendation(profile);
+
+        // Recalculate
+        calculateProjection();
+
+        // Show toast
+        if (typeof WealthAgent !== 'undefined') {
+            WealthAgent.showToast(`${config.name} profil vald - ${config.defaultReturn}% förväntad avkastning`, 'info');
+        }
+    }
+
+    function showStrategyRecommendation(profile) {
+        const config = riskProfiles[profile];
+        let strategyBox = document.getElementById('strategyRecommendation');
+
+        if (!strategyBox) {
+            strategyBox = document.createElement('div');
+            strategyBox.id = 'strategyRecommendation';
+            strategyBox.className = 'strategy-recommendation';
+            document.querySelector('.calculator-inputs .card-content').appendChild(strategyBox);
+        }
+
+        strategyBox.innerHTML = `
+            <div class="strategy-header" style="color: ${config.color}">
+                <i class="fas fa-lightbulb"></i> Rekommenderad strategi: ${config.name}
+            </div>
+            <p>${config.strategy}</p>
+            <div class="strategy-investments">
+                <strong>Investeringar att överväga:</strong>
+                <ul>
+                    ${config.investments.map(inv => `<li>${inv}</li>`).join('')}
+                </ul>
+            </div>
+            ${profile === 'extreme' ? '<div class="strategy-warning"><i class="fas fa-exclamation-triangle"></i> Investera aldrig mer än du har råd att förlora helt!</div>' : ''}
+        `;
+    }
+
+    function updateRiskComparison() {
+        // Calculate actual values for comparison
+        const monthlyAmount = 10000;
+        const years = 10;
+        const profiles = ['conservative', 'balanced', 'aggressive', 'extreme'];
+
+        profiles.forEach(profile => {
+            const rate = riskProfiles[profile].defaultReturn / 100;
+            const monthlyRate = rate / 12;
+            const months = years * 12;
+
+            // Future value of annuity formula
+            const futureValue = monthlyAmount * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
+
+            const barEl = document.querySelector(`.comparison-bar.${profile} .bar-value`);
+            if (barEl) {
+                const formatted = (futureValue / 1000000).toFixed(2);
+                barEl.textContent = `${formatted} M kr${profile === 'extreme' ? '*' : ''}`;
+            }
+        });
+    }
+
+    function setupInputListeners() {
+        // Sync range and number inputs
+        const pairs = [
+            ['currentSavings', 'currentSavingsRange'],
+            ['monthlyContribution', 'monthlyContributionRange'],
+            ['annualReturn', 'annualReturnRange']
+        ];
+
+        pairs.forEach(([num, range]) => {
+            document.getElementById(num).addEventListener('input', function() {
+                document.getElementById(range).value = this.value;
+                calculateProjection();
+            });
+            document.getElementById(range).addEventListener('input', function() {
+                document.getElementById(num).value = this.value;
+                calculateProjection();
+            });
+        });
+
+        // Target buttons
+        document.querySelectorAll('.target-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.target-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById('targetAmount').value = this.dataset.target;
+                calculateProjection();
+            });
+        });
+
+        // Target input
+        document.getElementById('targetAmount').addEventListener('input', calculateProjection);
+
+        // Load from profile button
+        document.getElementById('loadFromProfile').addEventListener('click', loadFromProfile);
+    }
+
+    async function loadFromProfile() {
+        try {
+            const response = await fetch('/wealth/api/millionaire-calculator/quick');
+            const data = await response.json();
+
+            if (data.success) {
+                const calc = data.calculation;
+                document.getElementById('currentSavings').value = calc.current_savings;
+                document.getElementById('currentSavingsRange').value = calc.current_savings;
+                document.getElementById('monthlyContribution').value = calc.monthly_contribution;
+                document.getElementById('monthlyContributionRange').value = calc.monthly_contribution;
+                calculateProjection();
+            }
+        } catch (error) {
+            console.error('Error loading profile data:', error);
+        }
+    }
+
+    async function calculateProjection() {
+        const data = {
+            current_savings: parseFloat(document.getElementById('currentSavings').value) || 0,
+            monthly_contribution: parseFloat(document.getElementById('monthlyContribution').value) || 0,
+            annual_return: parseFloat(document.getElementById('annualReturn').value) / 100 || 0.08,
+            target: parseFloat(document.getElementById('targetAmount').value) || 1000000
+        };
+
+        try {
+            const response = await fetch('/wealth/api/millionaire-calculator', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                calculationResult = result.calculation;
+                updateUI(result.calculation);
+                updateChart(result.calculation);
+                updateMilestones(result.calculation);
+                updateWhatIf(data);
+            }
+        } catch (error) {
+            console.error('Error calculating projection:', error);
+        }
+    }
+
+    function updateUI(calc) {
+        document.getElementById('yearsToMillion').textContent = calc.years_to_target;
+        document.getElementById('resultYears').textContent = calc.years_to_target + ' år';
+        document.getElementById('resultDate').textContent = calc.target_date;
+        document.getElementById('resultInterest').textContent = formatCurrency(calc.total_interest_earned);
+    }
+
+    function updateChart(calc) {
+        const ctx = document.getElementById('projectionChart').getContext('2d');
+
+        const labels = calc.yearly_projection.map(p => 'År ' + p.year);
+        const balances = calc.yearly_projection.map(p => p.balance);
+        const contributions = calc.yearly_projection.map((p, i) => {
+            return calc.current_savings + (calc.monthly_contribution * 12 * i);
+        });
+
+        if (projectionChart) {
+            projectionChart.destroy();
+        }
+
+        projectionChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Total förmögenhet',
+                        data: balances,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Dina insättningar',
+                        data: contributions,
+                        borderColor: '#94a3b8',
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#f1f5f9' }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + formatCurrency(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#94a3b8' },
+                        grid: { color: '#334155' }
+                    },
+                    y: {
+                        ticks: {
+                            color: '#94a3b8',
+                            callback: value => formatCurrency(value)
+                        },
+                        grid: { color: '#334155' }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateMilestones(calc) {
+        const container = document.getElementById('milestonesList');
+        container.innerHTML = '';
+
+        calc.milestones.forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'milestone';
+            div.innerHTML = `
+                <div class="milestone-marker"></div>
+                <div class="milestone-info">
+                    <span class="milestone-target">${formatCurrency(m.target)}</span>
+                    <span class="milestone-date">${m.date} (${m.years} år)</span>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function updateWhatIf(currentData) {
+        const container = document.getElementById('whatifScenarios');
+        const scenarios = [
+            {
+                title: 'Öka sparande med 2,000 kr/mån',
+                monthly: currentData.monthly_contribution + 2000
+            },
+            {
+                title: 'Hitta sidoinkomst på 5,000 kr/mån',
+                monthly: currentData.monthly_contribution + 5000
+            },
+            {
+                title: 'Byt till jobb med 10,000 kr mer/mån',
+                monthly: currentData.monthly_contribution + 10000
+            }
+        ];
+
+        container.innerHTML = '';
+
+        scenarios.forEach(async scenario => {
+            const newData = { ...currentData, monthly_contribution: scenario.monthly };
+
+            try {
+                const response = await fetch('/wealth/api/millionaire-calculator', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newData)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    const savedYears = calculationResult.years_to_target - result.calculation.years_to_target;
+                    const div = document.createElement('div');
+                    div.className = 'whatif-card';
+                    div.innerHTML = `
+                        <h4>${scenario.title}</h4>
+                        <div class="whatif-result">
+                            <span class="whatif-years">${result.calculation.years_to_target} år</span>
+                            <span class="whatif-saved">Sparar ${savedYears.toFixed(1)} år!</span>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                }
+            } catch (error) {
+                console.error('Error calculating scenario:', error);
+            }
+        });
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('sv-SE', {
+            style: 'decimal',
+            maximumFractionDigits: 0
+        }).format(amount) + ' kr';
+    }
+
+    // Side Income Modal
+    async function showSideIncomeModal() {
+        document.getElementById('sideIncomeModal').classList.add('active');
+
+        try {
+            const response = await fetch('/wealth/api/side-income');
+            const data = await response.json();
+
+            if (data.success) {
+                const content = document.getElementById('sideIncomeContent');
+                content.innerHTML = data.suggestions.map(s => `
+                    <div class="suggestion-card">
+                        <div class="suggestion-icon"><i class="fas ${s.icon}"></i></div>
+                        <div class="suggestion-content">
+                            <h4>${s.title}</h4>
+                            <p>${s.description}</p>
+                            <div class="suggestion-meta">
+                                <span><i class="fas fa-coins"></i> ${s.potential_monthly}</span>
+                                <span><i class="fas fa-clock"></i> ${s.time_required}</span>
+                            </div>
+                            <div class="suggestion-step">
+                                <strong>Första steget:</strong> ${s.first_step}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch (error) {
+            document.getElementById('sideIncomeContent').innerHTML = '<p>Kunde inte ladda förslag.</p>';
+        }
+    }
+
+    function closeSideIncomeModal() {
+        document.getElementById('sideIncomeModal').classList.remove('active');
+    }
+
+    // Opportunities Modal
+    async function showOpportunitiesModal() {
+        document.getElementById('opportunitiesModal').classList.add('active');
+
+        try {
+            const response = await fetch('/wealth/api/opportunities');
+            const data = await response.json();
+
+            if (data.success) {
+                const content = document.getElementById('opportunitiesContent');
+                content.innerHTML = data.opportunities.map(o => `
+                    <div class="opportunity-card ${o.category}">
+                        <div class="opportunity-header">
+                            <h4>${o.title}</h4>
+                            <span class="opportunity-impact">+${o.annual_impact_sek.toLocaleString()} kr/år</span>
+                        </div>
+                        <p>${o.description}</p>
+                        <div class="opportunity-step">
+                            <strong>Gör detta:</strong> ${o.first_step}
+                        </div>
+                        <div class="opportunity-meta">
+                            <span class="difficulty">Svårighet: ${'★'.repeat(o.difficulty)}${'☆'.repeat(5-o.difficulty)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch (error) {
+            document.getElementById('opportunitiesContent').innerHTML = '<p>Kunde inte ladda möjligheter.</p>';
+        }
+    }
+
+    function closeOpportunitiesModal() {
+        document.getElementById('opportunitiesModal').classList.remove('active');
+    }
+
+    // Close modals on outside click
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('active');
+        });
+    });
+</script>
+
+<style>
+    .millionaire-page {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .hero-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 3rem;
+        background: linear-gradient(135deg, var(--primary), #10b981);
+        border-radius: 16px;
+        margin-bottom: 2rem;
+    }
+
+    .hero-content h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-visual {
+        text-align: center;
+    }
+
+    .big-number {
+        font-size: 5rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .hero-visual span {
+        font-size: 1.25rem;
+        opacity: 0.9;
+    }
+
+    .calculator-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .calculator-inputs .input-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .calculator-inputs label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .input-with-suffix {
+        position: relative;
+        margin-bottom: 0.5rem;
+    }
+
+    .input-with-suffix input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        padding-right: 80px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--background);
+        color: var(--text);
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .input-with-suffix .suffix {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+    }
+
+    input[type="range"] {
+        width: 100%;
+        -webkit-appearance: none;
+        height: 6px;
+        background: var(--surface-light);
+        border-radius: 3px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--primary);
+        cursor: pointer;
+    }
+
+    .quick-targets {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    .target-btn {
+        flex: 1;
+        padding: 0.5rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--surface);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .target-btn:hover, .target-btn.active {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+    }
+
+    .result-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat {
+        text-align: center;
+        padding: 1rem;
+        background: var(--surface-light);
+        border-radius: 8px;
+    }
+
+    .stat.highlight {
+        background: rgba(16, 185, 129, 0.1);
+    }
+
+    .stat-value {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .stat.highlight .stat-value {
+        color: #10b981;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .chart-container {
+        height: 300px;
+        margin-bottom: 1.5rem;
+    }
+
+    .milestones-section h4 {
+        margin-bottom: 1rem;
+    }
+
+    .milestones {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .milestone {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        background: var(--surface-light);
+        border-radius: 8px;
+    }
+
+    .milestone-marker {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--primary);
+    }
+
+    .milestone-target {
+        display: block;
+        font-weight: 600;
+    }
+
+    .milestone-date {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .whatif-scenarios {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .whatif-card {
+        padding: 1.25rem;
+        background: var(--surface-light);
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .whatif-card h4 {
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+        color: var(--text-muted);
+    }
+
+    .whatif-years {
+        display: block;
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+
+    .whatif-saved {
+        display: block;
+        color: #10b981;
+        font-weight: 500;
+        margin-top: 0.25rem;
+    }
+
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+    }
+
+    .action-card {
+        padding: 1.5rem;
+        background: var(--surface-light);
+        border-radius: 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .action-card:hover {
+        background: var(--border);
+        transform: translateY(-2px);
+    }
+
+    .action-card i {
+        font-size: 2rem;
+        color: var(--primary);
+        margin-bottom: 0.75rem;
+    }
+
+    .action-card h4 {
+        margin-bottom: 0.25rem;
+    }
+
+    .action-card p {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    /* Modal styles */
+    .modal-large {
+        max-width: 700px;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted);
+    }
+
+    .suggestion-card, .opportunity-card {
+        display: flex;
+        gap: 1rem;
+        padding: 1.25rem;
+        background: var(--surface-light);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .suggestion-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .suggestion-content h4, .opportunity-header h4 {
+        margin-bottom: 0.25rem;
+    }
+
+    .suggestion-meta {
+        display: flex;
+        gap: 1rem;
+        margin: 0.5rem 0;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .suggestion-meta i {
+        margin-right: 0.25rem;
+        color: var(--primary);
+    }
+
+    .suggestion-step, .opportunity-step {
+        font-size: 0.85rem;
+        padding: 0.75rem;
+        background: var(--background);
+        border-radius: 6px;
+        margin-top: 0.75rem;
+    }
+
+    .opportunity-card {
+        flex-direction: column;
+    }
+
+    .opportunity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .opportunity-impact {
+        color: #10b981;
+        font-weight: 600;
+    }
+
+    .opportunity-meta {
+        margin-top: 0.75rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    /* Risk Profile Section */
+    .risk-profile-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .risk-profile-section h3 {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .risk-profile-section h3 i {
+        color: var(--primary);
+    }
+
+    .section-subtitle {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .risk-profiles {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .risk-card {
+        position: relative;
+        padding: 1.25rem;
+        background: var(--background);
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .risk-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .risk-card.active {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    .risk-badge {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, var(--primary), #7c3aed);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .risk-warning {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .risk-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .risk-icon.conservative { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+    .risk-icon.balanced { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+    .risk-icon.aggressive { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    .risk-icon.extreme { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+    .risk-info h4 {
+        margin-bottom: 0.25rem;
+        font-size: 1.1rem;
+    }
+
+    .risk-return {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .risk-card[data-risk="conservative"] .risk-return { color: #22c55e; }
+    .risk-card[data-risk="balanced"] .risk-return { color: #3b82f6; }
+    .risk-card[data-risk="aggressive"] .risk-return { color: #f59e0b; }
+    .risk-card[data-risk="extreme"] .risk-return { color: #ef4444; }
+
+    .risk-info p {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+        line-height: 1.4;
+    }
+
+    .risk-meter {
+        height: 6px;
+        background: var(--border);
+        border-radius: 3px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    .risk-meter .meter-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+
+    .risk-card[data-risk="conservative"] .meter-fill { background: linear-gradient(90deg, #22c55e, #16a34a); }
+    .risk-card[data-risk="balanced"] .meter-fill { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+    .risk-card[data-risk="aggressive"] .meter-fill { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .risk-card[data-risk="extreme"] .meter-fill { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+    .risk-investments {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .risk-investments li {
+        padding: 0.2rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .risk-investments li::before {
+        content: "•";
+        color: var(--primary);
+    }
+
+    /* Risk Comparison */
+    .risk-comparison {
+        background: var(--background);
+        border-radius: 12px;
+        padding: 1.25rem;
+    }
+
+    .comparison-header h4 {
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+    }
+
+    .comparison-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .comparison-bar {
+        display: grid;
+        grid-template-columns: 140px 1fr 100px;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .bar-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .bar-track {
+        height: 20px;
+        background: var(--surface);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .bar-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.5s ease;
+    }
+
+    .comparison-bar.conservative .bar-fill { background: linear-gradient(90deg, #22c55e, #16a34a); }
+    .comparison-bar.balanced .bar-fill { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+    .comparison-bar.aggressive .bar-fill { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .comparison-bar.extreme .bar-fill { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+    .bar-value {
+        font-weight: 600;
+        text-align: right;
+    }
+
+    .comparison-note {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 1rem;
+        font-style: italic;
+    }
+
+    /* Strategy Recommendation */
+    .strategy-recommendation {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background: var(--background);
+        border-radius: 10px;
+        border-left: 4px solid var(--primary);
+    }
+
+    .strategy-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .strategy-recommendation p {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+    }
+
+    .strategy-investments {
+        font-size: 0.85rem;
+    }
+
+    .strategy-investments ul {
+        margin: 0.5rem 0 0 1rem;
+        padding: 0;
+    }
+
+    .strategy-investments li {
+        padding: 0.15rem 0;
+    }
+
+    .strategy-warning {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(239, 68, 68, 0.1);
+        border-radius: 6px;
+        color: #ef4444;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    @media (max-width: 1200px) {
+        .risk-profiles {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .calculator-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hero-section {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .result-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .whatif-scenarios {
+            grid-template-columns: 1fr;
+        }
+
+        .action-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .risk-profiles {
+            grid-template-columns: 1fr;
+        }
+
+        .comparison-bar {
+            grid-template-columns: 1fr;
+            gap: 0.25rem;
+        }
+
+        .bar-value {
+            text-align: left;
+        }
+    }
+</style>
+{% endblock %}

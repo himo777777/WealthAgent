@@ -1,0 +1,847 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Nettoformogenhet Tidslinje - AI Wealth Agent{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1><i class="fas fa-history"></i> Nettoformogenhet Tidslinje</h1>
+        <p>Folj din formogenhetsutveckling over tid</p>
+    </div>
+    <div class="page-actions">
+        <button class="btn btn-primary" onclick="openAddSnapshotModal()">
+            <i class="fas fa-plus"></i> Registrera snapshot
+        </button>
+    </div>
+</div>
+
+<!-- Current Net Worth Card -->
+<div class="networth-hero mb-4">
+    <div class="networth-main">
+        <span class="networth-label">Aktuell nettoformogenhet</span>
+        <span class="networth-value" id="currentNetWorth">1 245 000 kr</span>
+        <div class="networth-change positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>+125 000 kr (+11.2%) senaste 12 manaderna</span>
+        </div>
+    </div>
+    <div class="networth-breakdown">
+        <div class="breakdown-item">
+            <div class="breakdown-bar assets" style="height: 70%"></div>
+            <span class="breakdown-value">1 845 000 kr</span>
+            <span class="breakdown-label">Tillgangar</span>
+        </div>
+        <div class="breakdown-item">
+            <div class="breakdown-bar liabilities" style="height: 40%"></div>
+            <span class="breakdown-value">600 000 kr</span>
+            <span class="breakdown-label">Skulder</span>
+        </div>
+    </div>
+</div>
+
+<!-- Timeline Chart -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3><i class="fas fa-chart-line"></i> Formogenhetsutveckling</h3>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary" onclick="setTimeRange('6m')">6M</button>
+            <button class="btn btn-outline-primary" onclick="setTimeRange('1y')">1 Ar</button>
+            <button class="btn btn-outline-primary active" onclick="setTimeRange('3y')">3 Ar</button>
+            <button class="btn btn-outline-primary" onclick="setTimeRange('all')">Allt</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <canvas id="timelineChart" height="350"></canvas>
+    </div>
+</div>
+
+<!-- Milestones Timeline -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-flag-checkered"></i> Milstolpar</h3>
+    </div>
+    <div class="card-body">
+        <div class="milestones-timeline">
+            <div class="timeline-track"></div>
+
+            <div class="milestone reached" style="left: 5%">
+                <div class="milestone-marker">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="milestone-content">
+                    <span class="milestone-amount">100 000 kr</span>
+                    <span class="milestone-date">Jan 2022</span>
+                </div>
+            </div>
+
+            <div class="milestone reached" style="left: 20%">
+                <div class="milestone-marker">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="milestone-content">
+                    <span class="milestone-amount">250 000 kr</span>
+                    <span class="milestone-date">Aug 2022</span>
+                </div>
+            </div>
+
+            <div class="milestone reached" style="left: 35%">
+                <div class="milestone-marker">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="milestone-content">
+                    <span class="milestone-amount">500 000 kr</span>
+                    <span class="milestone-date">Mar 2023</span>
+                </div>
+            </div>
+
+            <div class="milestone reached" style="left: 55%">
+                <div class="milestone-marker">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="milestone-content">
+                    <span class="milestone-amount">1 000 000 kr</span>
+                    <span class="milestone-date">Nov 2024</span>
+                </div>
+            </div>
+
+            <div class="milestone current" style="left: 62%">
+                <div class="milestone-marker pulse">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="milestone-content">
+                    <span class="milestone-amount">1 245 000 kr</span>
+                    <span class="milestone-date">Idag</span>
+                </div>
+            </div>
+
+            <div class="milestone upcoming" style="left: 80%">
+                <div class="milestone-marker">
+                    <i class="fas fa-flag"></i>
+                </div>
+                <div class="milestone-content">
+                    <span class="milestone-amount">2 000 000 kr</span>
+                    <span class="milestone-date">Est. Dec 2026</span>
+                </div>
+            </div>
+
+            <div class="milestone upcoming final" style="left: 95%">
+                <div class="milestone-marker">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <div class="milestone-content">
+                    <span class="milestone-amount">10 000 000 kr</span>
+                    <span class="milestone-date">Miljonar</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Snapshots -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-table"></i> Manatliga snapshots</h3>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Datum</th>
+                        <th class="text-end">Tillgangar</th>
+                        <th class="text-end">Skulder</th>
+                        <th class="text-end">Nettoformogenhet</th>
+                        <th class="text-center">Forandring</th>
+                        <th class="text-center">Aktioner</th>
+                    </tr>
+                </thead>
+                <tbody id="snapshotsTable">
+                    <tr>
+                        <td><strong>Feb 2026</strong></td>
+                        <td class="text-end">1 845 000 kr</td>
+                        <td class="text-end text-danger">600 000 kr</td>
+                        <td class="text-end fw-bold">1 245 000 kr</td>
+                        <td class="text-center text-success">+45 000 kr (+3.7%)</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></button>
+                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Jan 2026</td>
+                        <td class="text-end">1 780 000 kr</td>
+                        <td class="text-end text-danger">580 000 kr</td>
+                        <td class="text-end fw-bold">1 200 000 kr</td>
+                        <td class="text-center text-success">+50 000 kr (+4.3%)</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></button>
+                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Dec 2025</td>
+                        <td class="text-end">1 710 000 kr</td>
+                        <td class="text-end text-danger">560 000 kr</td>
+                        <td class="text-end fw-bold">1 150 000 kr</td>
+                        <td class="text-center text-success">+35 000 kr (+3.1%)</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></button>
+                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Nov 2025</td>
+                        <td class="text-end">1 655 000 kr</td>
+                        <td class="text-end text-danger">540 000 kr</td>
+                        <td class="text-end fw-bold">1 115 000 kr</td>
+                        <td class="text-center text-danger">-25 000 kr (-2.2%)</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></button>
+                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Assets & Liabilities Breakdown -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h3><i class="fas fa-plus-circle"></i> Tillgangar</h3>
+            </div>
+            <div class="card-body">
+                <div class="breakdown-list">
+                    <div class="breakdown-row">
+                        <div class="breakdown-info">
+                            <i class="fas fa-chart-line text-primary"></i>
+                            <span>Aktier & fonder</span>
+                        </div>
+                        <span class="breakdown-value">845 000 kr</span>
+                        <div class="breakdown-progress">
+                            <div class="progress-fill bg-primary" style="width: 46%"></div>
+                        </div>
+                    </div>
+                    <div class="breakdown-row">
+                        <div class="breakdown-info">
+                            <i class="fas fa-home text-secondary"></i>
+                            <span>Bostad (marknadsvarde)</span>
+                        </div>
+                        <span class="breakdown-value">650 000 kr</span>
+                        <div class="breakdown-progress">
+                            <div class="progress-fill bg-secondary" style="width: 35%"></div>
+                        </div>
+                    </div>
+                    <div class="breakdown-row">
+                        <div class="breakdown-info">
+                            <i class="fas fa-piggy-bank text-success"></i>
+                            <span>Sparkonto</span>
+                        </div>
+                        <span class="breakdown-value">250 000 kr</span>
+                        <div class="breakdown-progress">
+                            <div class="progress-fill bg-success" style="width: 14%"></div>
+                        </div>
+                    </div>
+                    <div class="breakdown-row">
+                        <div class="breakdown-info">
+                            <i class="fas fa-coins text-warning"></i>
+                            <span>Pension</span>
+                        </div>
+                        <span class="breakdown-value">100 000 kr</span>
+                        <div class="breakdown-progress">
+                            <div class="progress-fill bg-warning" style="width: 5%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="breakdown-total mt-3">
+                    <span>Totala tillgangar</span>
+                    <span class="text-success fw-bold">1 845 000 kr</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-danger text-white">
+                <h3><i class="fas fa-minus-circle"></i> Skulder</h3>
+            </div>
+            <div class="card-body">
+                <div class="breakdown-list">
+                    <div class="breakdown-row">
+                        <div class="breakdown-info">
+                            <i class="fas fa-home text-danger"></i>
+                            <span>Bolan</span>
+                        </div>
+                        <span class="breakdown-value">500 000 kr</span>
+                        <div class="breakdown-progress">
+                            <div class="progress-fill bg-danger" style="width: 83%"></div>
+                        </div>
+                    </div>
+                    <div class="breakdown-row">
+                        <div class="breakdown-info">
+                            <i class="fas fa-car text-warning"></i>
+                            <span>Billån</span>
+                        </div>
+                        <span class="breakdown-value">80 000 kr</span>
+                        <div class="breakdown-progress">
+                            <div class="progress-fill bg-warning" style="width: 13%"></div>
+                        </div>
+                    </div>
+                    <div class="breakdown-row">
+                        <div class="breakdown-info">
+                            <i class="fas fa-graduation-cap text-info"></i>
+                            <span>Studielan</span>
+                        </div>
+                        <span class="breakdown-value">20 000 kr</span>
+                        <div class="breakdown-progress">
+                            <div class="progress-fill bg-info" style="width: 4%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="breakdown-total mt-3">
+                    <span>Totala skulder</span>
+                    <span class="text-danger fw-bold">600 000 kr</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-bar"></i> Statistik</h3>
+    </div>
+    <div class="card-body">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon bg-success">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value">+845 000 kr</span>
+                    <span class="stat-label">Total tillvaxt</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-primary">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value">+211%</span>
+                    <span class="stat-label">Procentuell tillvaxt</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-info">
+                    <i class="fas fa-calendar"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value">36 manader</span>
+                    <span class="stat-label">Tid sparad</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon bg-warning">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value">+23 472 kr</span>
+                    <span class="stat-label">Genomsnitt/manad</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Snapshot Modal -->
+<div class="modal fade" id="snapshotModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-camera"></i> Registrera snapshot</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Tillgangar</h6>
+                        <div class="form-group mb-2">
+                            <label class="form-label">Aktier & fonder</label>
+                            <input type="number" class="form-control" placeholder="0 kr">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-label">Sparkonto</label>
+                            <input type="number" class="form-control" placeholder="0 kr">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-label">Pension</label>
+                            <input type="number" class="form-control" placeholder="0 kr">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-label">Fastighet (marknadsvarde)</label>
+                            <input type="number" class="form-control" placeholder="0 kr">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-label">Ovrigt</label>
+                            <input type="number" class="form-control" placeholder="0 kr">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-danger mb-3">Skulder</h6>
+                        <div class="form-group mb-2">
+                            <label class="form-label">Bolan</label>
+                            <input type="number" class="form-control" placeholder="0 kr">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-label">Billan</label>
+                            <input type="number" class="form-control" placeholder="0 kr">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-label">Studielan</label>
+                            <input type="number" class="form-control" placeholder="0 kr">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-label">Kreditkort</label>
+                            <input type="number" class="form-control" placeholder="0 kr">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-label">Ovrigt</label>
+                            <input type="number" class="form-control" placeholder="0 kr">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                <button type="button" class="btn btn-primary">Spara snapshot</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.networth-hero {
+    background: linear-gradient(135deg, var(--primary), #4f46e5);
+    color: white;
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.networth-main {
+    display: flex;
+    flex-direction: column;
+}
+
+.networth-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.networth-value {
+    font-size: 3rem;
+    font-weight: 700;
+    margin: 0.25rem 0;
+}
+
+.networth-change {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    width: fit-content;
+}
+
+.networth-change.positive {
+    background: rgba(34, 197, 94, 0.3);
+}
+
+.networth-change.negative {
+    background: rgba(239, 68, 68, 0.3);
+}
+
+.networth-breakdown {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-end;
+    height: 120px;
+}
+
+.breakdown-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.breakdown-bar {
+    width: 60px;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.5s ease;
+}
+
+.breakdown-bar.assets {
+    background: rgba(34, 197, 94, 0.8);
+}
+
+.breakdown-bar.liabilities {
+    background: rgba(239, 68, 68, 0.8);
+}
+
+.breakdown-value {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.breakdown-label {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.milestones-timeline {
+    position: relative;
+    height: 140px;
+    margin: 2rem 0;
+}
+
+.timeline-track {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    transform: translateY(-50%);
+}
+
+.milestone {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.milestone-marker {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+    z-index: 1;
+}
+
+.milestone.reached .milestone-marker {
+    background: var(--success);
+}
+
+.milestone.current .milestone-marker {
+    background: var(--primary);
+}
+
+.milestone.current .milestone-marker.pulse {
+    animation: pulse 2s infinite;
+}
+
+.milestone.upcoming .milestone-marker {
+    background: var(--border);
+    color: var(--text-muted);
+}
+
+.milestone.upcoming.final .milestone-marker {
+    background: #f59e0b;
+    color: white;
+}
+
+.milestone-content {
+    position: absolute;
+    top: 100%;
+    margin-top: 0.5rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.milestone:nth-child(odd) .milestone-content {
+    top: auto;
+    bottom: 100%;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+.milestone-amount {
+    display: block;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.milestone-date {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.breakdown-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.breakdown-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.breakdown-info i {
+    width: 20px;
+}
+
+.breakdown-progress {
+    grid-column: span 2;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.breakdown-progress .progress-fill {
+    height: 100%;
+}
+
+.breakdown-total {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 1rem;
+    border-top: 2px solid var(--border);
+    font-size: 1.1rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+    .networth-hero {
+        flex-direction: column;
+        gap: 2rem;
+        text-align: center;
+    }
+
+    .networth-value {
+        font-size: 2rem;
+    }
+
+    .networth-change {
+        margin: 0 auto;
+    }
+
+    .milestones-timeline {
+        height: auto;
+        padding: 1rem 0;
+    }
+
+    .timeline-track {
+        display: none;
+    }
+
+    .milestone {
+        position: relative;
+        transform: none;
+        flex-direction: row;
+        width: 100%;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .milestone-content {
+        position: relative;
+        top: auto;
+        bottom: auto;
+        margin: 0;
+        text-align: left;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let timelineChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initChart();
+});
+
+function initChart() {
+    const ctx = document.getElementById('timelineChart').getContext('2d');
+
+    const data = generateHistoricalData();
+
+    timelineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => d.date),
+            datasets: [
+                {
+                    label: 'Nettoformogenhet',
+                    data: data.map(d => d.netWorth),
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                },
+                {
+                    label: 'Tillgangar',
+                    data: data.map(d => d.assets),
+                    borderColor: '#22c55e',
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Skulder',
+                    data: data.map(d => d.liabilities),
+                    borderColor: '#ef4444',
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ctx.dataset.label + ': ' + formatCurrency(ctx.raw)
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: v => formatCurrency(v)
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+}
+
+function generateHistoricalData() {
+    const data = [];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
+
+    let assets = 600000;
+    let liabilities = 400000;
+
+    for (let y = 2023; y <= 2026; y++) {
+        const maxMonth = y === 2026 ? 2 : 12;
+        for (let m = 1; m <= maxMonth; m++) {
+            // Simulate growth
+            assets += Math.random() * 50000 + 20000;
+            liabilities -= Math.random() * 5000 + 5000;
+            if (liabilities < 0) liabilities = 0;
+
+            data.push({
+                date: `${months[m-1]} ${y}`,
+                assets: Math.round(assets),
+                liabilities: Math.round(liabilities),
+                netWorth: Math.round(assets - liabilities)
+            });
+        }
+    }
+
+    return data;
+}
+
+function setTimeRange(range) {
+    document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    // In real implementation, filter data based on range
+    console.log('Setting range:', range);
+}
+
+function openAddSnapshotModal() {
+    new bootstrap.Modal(document.getElementById('snapshotModal')).show();
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('sv-SE', {
+        style: 'currency',
+        currency: 'SEK',
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+</script>
+{% endblock %}

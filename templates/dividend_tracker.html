@@ -1,0 +1,700 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Utdelningsspårare - AI Wealth Agent{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1><i class="fas fa-hand-holding-usd"></i> Utdelningsspårare</h1>
+        <p>Bygg passiv inkomst genom utdelningsaktier</p>
+    </div>
+    <div class="page-actions">
+        <button class="btn btn-primary" onclick="openAddDividendModal()">
+            <i class="fas fa-plus"></i> Lagg till utdelning
+        </button>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="summary-grid mb-4">
+    <div class="summary-card">
+        <div class="summary-icon bg-success">
+            <i class="fas fa-coins"></i>
+        </div>
+        <div class="summary-content">
+            <span class="summary-label">Total utdelning (i ar)</span>
+            <span class="summary-value" id="totalDividends">12 450 kr</span>
+        </div>
+    </div>
+    <div class="summary-card">
+        <div class="summary-icon bg-primary">
+            <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="summary-content">
+            <span class="summary-label">Genomsnitt/manad</span>
+            <span class="summary-value" id="monthlyAvg">1 037 kr</span>
+        </div>
+    </div>
+    <div class="summary-card">
+        <div class="summary-icon bg-warning">
+            <i class="fas fa-percentage"></i>
+        </div>
+        <div class="summary-content">
+            <span class="summary-label">Direktavkastning</span>
+            <span class="summary-value" id="yieldPercent">3.8%</span>
+        </div>
+    </div>
+    <div class="summary-card">
+        <div class="summary-icon bg-info">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="summary-content">
+            <span class="summary-label">Tillvaxt (YoY)</span>
+            <span class="summary-value text-success" id="yoyGrowth">+24%</span>
+        </div>
+    </div>
+</div>
+
+<!-- Dividend Goal -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3><i class="fas fa-bullseye"></i> Utdelningsmål</h3>
+        <button class="btn btn-outline-primary btn-sm" onclick="editDividendGoal()">
+            <i class="fas fa-edit"></i> Redigera mal
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="goal-progress-container">
+            <div class="goal-info">
+                <span class="goal-current" id="goalCurrent">12 450 kr</span>
+                <span class="goal-separator">/</span>
+                <span class="goal-target" id="goalTarget">50 000 kr</span>
+                <span class="goal-label">arlig utdelning</span>
+            </div>
+            <div class="progress-bar-large">
+                <div class="progress-fill" id="goalProgress" style="width: 24.9%"></div>
+            </div>
+            <div class="goal-stats">
+                <span><strong>24.9%</strong> av malet</span>
+                <span>Behover <strong id="neededInvestment">990 000 kr</strong> mer for att na malet</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3><i class="fas fa-chart-bar"></i> Utdelning per manad</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyDividendChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3><i class="fas fa-chart-pie"></i> Fordelning per innehav</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="dividendPieChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dividend Holdings -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-list"></i> Utdelningsaktier</h3>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Innehav</th>
+                        <th class="text-center">Antal</th>
+                        <th class="text-end">Utd/aktie</th>
+                        <th class="text-end">Arlig utdelning</th>
+                        <th class="text-center">Direktavk.</th>
+                        <th class="text-center">Nasta utd.</th>
+                        <th class="text-center">Aktioner</th>
+                    </tr>
+                </thead>
+                <tbody id="dividendHoldings">
+                    <tr>
+                        <td>
+                            <div class="holding-info">
+                                <span class="holding-name">Investor B</span>
+                                <span class="holding-ticker">INVE-B.ST</span>
+                            </div>
+                        </td>
+                        <td class="text-center">50</td>
+                        <td class="text-end">4.50 kr</td>
+                        <td class="text-end fw-bold">225 kr</td>
+                        <td class="text-center"><span class="badge bg-success">3.2%</span></td>
+                        <td class="text-center">Maj 2025</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="holding-info">
+                                <span class="holding-name">H&M B</span>
+                                <span class="holding-ticker">HM-B.ST</span>
+                            </div>
+                        </td>
+                        <td class="text-center">100</td>
+                        <td class="text-end">6.50 kr</td>
+                        <td class="text-end fw-bold">650 kr</td>
+                        <td class="text-center"><span class="badge bg-success">4.5%</span></td>
+                        <td class="text-center">Nov 2025</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="holding-info">
+                                <span class="holding-name">SEB A</span>
+                                <span class="holding-ticker">SEB-A.ST</span>
+                            </div>
+                        </td>
+                        <td class="text-center">75</td>
+                        <td class="text-end">7.00 kr</td>
+                        <td class="text-end fw-bold">525 kr</td>
+                        <td class="text-center"><span class="badge bg-warning">4.8%</span></td>
+                        <td class="text-center">Apr 2025</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="holding-info">
+                                <span class="holding-name">Castellum</span>
+                                <span class="holding-ticker">CAST.ST</span>
+                            </div>
+                        </td>
+                        <td class="text-center">200</td>
+                        <td class="text-end">7.10 kr</td>
+                        <td class="text-end fw-bold">1 420 kr</td>
+                        <td class="text-center"><span class="badge bg-warning">5.2%</span></td>
+                        <td class="text-center">Mar 2025</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- DRIP Calculator -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-sync-alt"></i> DRIP-simulator (aterinvestera utdelningar)</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group mb-3">
+                    <label class="form-label">Startportfolj (kr)</label>
+                    <input type="number" id="dripStart" class="form-control" value="100000">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Direktavkastning (%)</label>
+                    <input type="number" id="dripYield" class="form-control" value="4" step="0.1">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Utdelningstillvaxt/ar (%)</label>
+                    <input type="number" id="dripGrowth" class="form-control" value="5" step="0.5">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Ar</label>
+                    <input type="number" id="dripYears" class="form-control" value="20" min="1" max="50">
+                </div>
+                <button class="btn btn-primary w-100" onclick="calculateDRIP()">
+                    <i class="fas fa-calculator"></i> Berakna DRIP
+                </button>
+            </div>
+            <div class="col-md-8">
+                <div class="drip-results">
+                    <div class="drip-result-card">
+                        <div class="drip-label">Arlig utdelning efter <span id="dripYearsResult">20</span> ar</div>
+                        <div class="drip-value text-success" id="dripAnnualDiv">32 071 kr</div>
+                    </div>
+                    <div class="drip-result-card">
+                        <div class="drip-label">Portfoljvarde</div>
+                        <div class="drip-value" id="dripPortfolioValue">801 778 kr</div>
+                    </div>
+                    <div class="drip-result-card">
+                        <div class="drip-label">Total utdelning mottagits</div>
+                        <div class="drip-value text-primary" id="dripTotalReceived">265 330 kr</div>
+                    </div>
+                </div>
+                <canvas id="dripChart" height="200" class="mt-3"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upcoming Dividends -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-calendar-check"></i> Kommande utdelningar</h3>
+    </div>
+    <div class="card-body">
+        <div class="upcoming-dividends">
+            <div class="upcoming-item">
+                <div class="upcoming-date">
+                    <span class="month">MAR</span>
+                    <span class="day">15</span>
+                </div>
+                <div class="upcoming-info">
+                    <span class="upcoming-name">Castellum</span>
+                    <span class="upcoming-amount">1 420 kr</span>
+                </div>
+                <span class="badge bg-success">Om 42 dagar</span>
+            </div>
+            <div class="upcoming-item">
+                <div class="upcoming-date">
+                    <span class="month">APR</span>
+                    <span class="day">10</span>
+                </div>
+                <div class="upcoming-info">
+                    <span class="upcoming-name">SEB A</span>
+                    <span class="upcoming-amount">525 kr</span>
+                </div>
+                <span class="badge bg-info">Om 68 dagar</span>
+            </div>
+            <div class="upcoming-item">
+                <div class="upcoming-date">
+                    <span class="month">MAJ</span>
+                    <span class="day">05</span>
+                </div>
+                <div class="upcoming-info">
+                    <span class="upcoming-name">Investor B</span>
+                    <span class="upcoming-amount">225 kr</span>
+                </div>
+                <span class="badge bg-secondary">Om 93 dagar</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Dividend Modal -->
+<div class="modal fade" id="addDividendModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Lagg till utdelningsaktie</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addDividendForm">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Aktie</label>
+                        <input type="text" class="form-control" placeholder="Sok efter aktie...">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Antal aktier</label>
+                        <input type="number" class="form-control" min="1">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Utdelning per aktie (kr)</label>
+                        <input type="number" class="form-control" step="0.01">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Utdelningsfrekvens</label>
+                        <select class="form-select">
+                            <option value="yearly">Arlig</option>
+                            <option value="quarterly">Kvartalsvis</option>
+                            <option value="monthly">Manatlig</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                <button type="button" class="btn btn-primary">Lagg till</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.summary-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.summary-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.summary-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.summary-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.goal-progress-container {
+    text-align: center;
+}
+
+.goal-info {
+    margin-bottom: 1rem;
+}
+
+.goal-current {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--success);
+}
+
+.goal-separator {
+    margin: 0 0.5rem;
+    color: var(--text-muted);
+}
+
+.goal-target {
+    font-size: 1.5rem;
+    color: var(--text-muted);
+}
+
+.goal-label {
+    display: block;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.progress-bar-large {
+    height: 24px;
+    background: var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success), #4ade80);
+    border-radius: 12px;
+    transition: width 0.5s ease;
+}
+
+.goal-stats {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.holding-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.holding-name {
+    font-weight: 600;
+}
+
+.holding-ticker {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.drip-results {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.drip-result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.drip-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.drip-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.upcoming-dividends {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.upcoming-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.upcoming-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px;
+    min-width: 60px;
+}
+
+.upcoming-date .month {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.upcoming-date .day {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.upcoming-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.upcoming-name {
+    font-weight: 600;
+}
+
+.upcoming-amount {
+    color: var(--success);
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    .drip-results {
+        grid-template-columns: 1fr;
+    }
+
+    .goal-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let monthlyChart = null;
+let pieChart = null;
+let dripChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initCharts();
+    calculateDRIP();
+});
+
+function initCharts() {
+    // Monthly dividend chart
+    const monthlyCtx = document.getElementById('monthlyDividendChart').getContext('2d');
+    monthlyChart = new Chart(monthlyCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'],
+            datasets: [{
+                label: 'Utdelning',
+                data: [0, 0, 1420, 525, 225, 0, 0, 0, 0, 0, 650, 0],
+                backgroundColor: '#22c55e'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: value => value + ' kr'
+                    }
+                }
+            }
+        }
+    });
+
+    // Pie chart
+    const pieCtx = document.getElementById('dividendPieChart').getContext('2d');
+    pieChart = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Castellum', 'H&M', 'SEB', 'Investor'],
+            datasets: [{
+                data: [1420, 650, 525, 225],
+                backgroundColor: ['#6366f1', '#22c55e', '#f59e0b', '#3b82f6']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function calculateDRIP() {
+    const startValue = parseFloat(document.getElementById('dripStart').value) || 100000;
+    const yield_ = parseFloat(document.getElementById('dripYield').value) / 100 || 0.04;
+    const growth = parseFloat(document.getElementById('dripGrowth').value) / 100 || 0.05;
+    const years = parseInt(document.getElementById('dripYears').value) || 20;
+
+    let portfolioValue = startValue;
+    let currentYield = yield_;
+    let totalDividendsReceived = 0;
+    let annualDividends = [];
+
+    for (let i = 0; i < years; i++) {
+        const yearDividend = portfolioValue * currentYield;
+        totalDividendsReceived += yearDividend;
+        portfolioValue += yearDividend; // Reinvest
+        currentYield *= (1 + growth); // Dividend growth
+        annualDividends.push({
+            year: i + 1,
+            dividend: yearDividend,
+            portfolio: portfolioValue
+        });
+    }
+
+    const finalAnnualDividend = portfolioValue * currentYield;
+
+    document.getElementById('dripYearsResult').textContent = years;
+    document.getElementById('dripAnnualDiv').textContent = formatCurrency(finalAnnualDividend);
+    document.getElementById('dripPortfolioValue').textContent = formatCurrency(portfolioValue);
+    document.getElementById('dripTotalReceived').textContent = formatCurrency(totalDividendsReceived);
+
+    updateDRIPChart(annualDividends);
+}
+
+function updateDRIPChart(data) {
+    const ctx = document.getElementById('dripChart').getContext('2d');
+
+    if (dripChart) {
+        dripChart.destroy();
+    }
+
+    dripChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => 'Ar ' + d.year),
+            datasets: [
+                {
+                    label: 'Arlig utdelning',
+                    data: data.map(d => d.dividend),
+                    borderColor: '#22c55e',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    fill: true,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Portfoljvarde',
+                    data: data.map(d => d.portfolio),
+                    borderColor: '#6366f1',
+                    borderDash: [5, 5],
+                    fill: false,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    title: { display: true, text: 'Utdelning (kr)' },
+                    ticks: { callback: v => formatCurrency(v) }
+                },
+                y1: {
+                    type: 'linear',
+                    position: 'right',
+                    title: { display: true, text: 'Portfolj (kr)' },
+                    grid: { drawOnChartArea: false },
+                    ticks: { callback: v => formatCurrency(v) }
+                }
+            }
+        }
+    });
+}
+
+function openAddDividendModal() {
+    new bootstrap.Modal(document.getElementById('addDividendModal')).show();
+}
+
+function editDividendGoal() {
+    alert('Redigera utdelningsmål - implementeras');
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('sv-SE', {
+        style: 'currency',
+        currency: 'SEK',
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,889 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Peer-jamforelse - AI Wealth Agent{% endblock %}
+{% block page_title %}Peer-jamforelse{% endblock %}
+
+{% block content %}
+<div class="benchmark-page">
+    <!-- Profile Setup -->
+    <div class="profile-setup">
+        <h3><i class="fas fa-user-cog"></i> Din profil</h3>
+        <div class="profile-fields">
+            <div class="profile-field">
+                <label>Aldersgrupp</label>
+                <select id="ageGroup" onchange="updateBenchmarks()">
+                    <option value="18-24">18-24 ar</option>
+                    <option value="25-34" selected>25-34 ar</option>
+                    <option value="35-44">35-44 ar</option>
+                    <option value="45-54">45-54 ar</option>
+                    <option value="55-64">55-64 ar</option>
+                    <option value="65+">65+ ar</option>
+                </select>
+            </div>
+            <div class="profile-field">
+                <label>Inkomstniva</label>
+                <select id="incomeLevel" onchange="updateBenchmarks()">
+                    <option value="low">Under 30 000 kr/man</option>
+                    <option value="medium" selected>30 000 - 50 000 kr/man</option>
+                    <option value="high">50 000 - 80 000 kr/man</option>
+                    <option value="very_high">Over 80 000 kr/man</option>
+                </select>
+            </div>
+            <div class="profile-field">
+                <label>Bostadstyp</label>
+                <select id="housingType" onchange="updateBenchmarks()">
+                    <option value="rent">Hyr lagenhet</option>
+                    <option value="own_apt" selected>Ager bostadsratt</option>
+                    <option value="own_house">Ager villa</option>
+                    <option value="parents">Bor hemma</option>
+                </select>
+            </div>
+            <div class="profile-field">
+                <label>Familjesituation</label>
+                <select id="familyStatus" onchange="updateBenchmarks()">
+                    <option value="single" selected>Ensamstaende</option>
+                    <option value="couple">Par utan barn</option>
+                    <option value="family_small">Familj (1-2 barn)</option>
+                    <option value="family_large">Stor familj (3+ barn)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Comparison Cards -->
+    <div class="comparison-grid">
+        <div class="comparison-card">
+            <div class="card-header">
+                <div class="card-icon savings">
+                    <i class="fas fa-piggy-bank"></i>
+                </div>
+                <h4>Sparkvot</h4>
+            </div>
+            <div class="card-body">
+                <div class="your-value">
+                    <span class="label">Din sparkvot</span>
+                    <span class="value" id="yourSavingsRate">15%</span>
+                </div>
+                <div class="comparison-bar">
+                    <div class="bar-container">
+                        <div class="peer-range" id="savingsRange"></div>
+                        <div class="your-marker" id="savingsMarker"></div>
+                    </div>
+                    <div class="bar-labels">
+                        <span>0%</span>
+                        <span>Median: <strong id="savingsMedian">12%</strong></span>
+                        <span>50%</span>
+                    </div>
+                </div>
+                <div class="comparison-result" id="savingsResult"></div>
+            </div>
+        </div>
+
+        <div class="comparison-card">
+            <div class="card-header">
+                <div class="card-icon wealth">
+                    <i class="fas fa-gem"></i>
+                </div>
+                <h4>Nettoformogenhet</h4>
+            </div>
+            <div class="card-body">
+                <div class="your-value">
+                    <span class="label">Din formogenhet</span>
+                    <span class="value" id="yourNetWorth">450 000 kr</span>
+                </div>
+                <div class="percentile-display">
+                    <div class="percentile-circle" id="wealthPercentile">
+                        <span class="percentile-value">65</span>
+                        <span class="percentile-label">percentil</span>
+                    </div>
+                </div>
+                <div class="comparison-stats">
+                    <div class="stat">
+                        <span class="stat-label">Median i din grupp</span>
+                        <span class="stat-value" id="wealthMedian">320 000 kr</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Topp 25%</span>
+                        <span class="stat-value" id="wealthTop25">650 000 kr</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-card">
+            <div class="card-header">
+                <div class="card-icon debt">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <h4>Skuldkvot</h4>
+            </div>
+            <div class="card-body">
+                <div class="your-value">
+                    <span class="label">Din skuldkvot</span>
+                    <span class="value" id="yourDebtRatio">2.5x</span>
+                </div>
+                <div class="gauge-container">
+                    <div class="gauge" id="debtGauge">
+                        <div class="gauge-fill"></div>
+                        <div class="gauge-markers">
+                            <span>0x</span>
+                            <span>3x</span>
+                            <span>6x</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-result" id="debtResult"></div>
+            </div>
+        </div>
+
+        <div class="comparison-card">
+            <div class="card-header">
+                <div class="card-icon emergency">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h4>Buffert</h4>
+            </div>
+            <div class="card-body">
+                <div class="your-value">
+                    <span class="label">Din buffert</span>
+                    <span class="value" id="yourEmergencyFund">2.5 manaders utgifter</span>
+                </div>
+                <div class="months-display">
+                    <div class="month-bar" id="emergencyBar">
+                        <div class="month-fill"></div>
+                        <div class="month-target"></div>
+                    </div>
+                    <div class="month-labels">
+                        <span>0</span>
+                        <span>3 man (min)</span>
+                        <span>6 man (rek)</span>
+                    </div>
+                </div>
+                <div class="comparison-stats">
+                    <div class="stat">
+                        <span class="stat-label">% med 3+ manaders buffert</span>
+                        <span class="stat-value" id="emergencyPercent">45%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Breakdown -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-chart-bar"></i> Utgiftsfordelning jamfort med peers</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="expenseComparisonChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="section-card insights-section">
+        <div class="section-header">
+            <h3><i class="fas fa-lightbulb"></i> Insikter</h3>
+        </div>
+        <div id="benchmarkInsights" class="insights-list">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+        <i class="fas fa-info-circle"></i>
+        <p>Jamforelserna baseras pa anonymiserad statistik fran SCB och branschrapporter. Individuella forhallanden varierar och dessa siffror ar endast vägledande.</p>
+    </div>
+</div>
+
+<style>
+.benchmark-page { max-width: 1100px; }
+
+.profile-setup {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.profile-setup h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.profile-setup h3 i { color: var(--primary); }
+
+.profile-fields {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.profile-field label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.profile-field select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+}
+
+.comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.comparison-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.card-icon.savings { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+.card-icon.wealth { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
+.card-icon.debt { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+.card-icon.emergency { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+
+.card-header h4 { font-size: 1rem; }
+
+.card-body {
+    padding: 1.25rem;
+}
+
+.your-value {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.your-value .label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.your-value .value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.comparison-bar {
+    margin-bottom: 1rem;
+}
+
+.bar-container {
+    height: 24px;
+    background: var(--border);
+    border-radius: 12px;
+    position: relative;
+    overflow: visible;
+    margin-bottom: 0.5rem;
+}
+
+.peer-range {
+    position: absolute;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.5));
+    border-radius: 12px;
+}
+
+.your-marker {
+    position: absolute;
+    width: 4px;
+    height: 32px;
+    background: var(--primary);
+    border-radius: 2px;
+    top: -4px;
+    transform: translateX(-50%);
+}
+
+.your-marker::after {
+    content: 'Du';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.comparison-result {
+    padding: 0.75rem;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.comparison-result.good {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success);
+}
+
+.comparison-result.average {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--warning);
+}
+
+.comparison-result.needs-work {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.percentile-display {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.percentile-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #a855f7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.percentile-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.percentile-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.comparison-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.comparison-stats .stat {
+    text-align: center;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.comparison-stats .stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.comparison-stats .stat-value {
+    font-weight: 600;
+}
+
+.gauge-container {
+    margin-bottom: 1rem;
+}
+
+.gauge {
+    height: 16px;
+    background: linear-gradient(90deg, var(--success), var(--warning), var(--danger));
+    border-radius: 8px;
+    position: relative;
+    margin-bottom: 0.5rem;
+}
+
+.gauge-fill {
+    position: absolute;
+    width: 8px;
+    height: 24px;
+    background: white;
+    border: 2px solid var(--text);
+    border-radius: 4px;
+    top: -4px;
+}
+
+.gauge-markers {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.months-display {
+    margin-bottom: 1rem;
+}
+
+.month-bar {
+    height: 24px;
+    background: var(--border);
+    border-radius: 12px;
+    position: relative;
+    margin-bottom: 0.5rem;
+}
+
+.month-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success), var(--primary));
+    border-radius: 12px;
+}
+
+.month-target {
+    position: absolute;
+    width: 3px;
+    height: 100%;
+    background: var(--text);
+    top: 0;
+    left: 50%;
+}
+
+.month-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.section-header h3 i { color: var(--primary); }
+
+.chart-container {
+    padding: 1.25rem;
+    height: 300px;
+}
+
+.insights-list {
+    padding: 1rem;
+}
+
+.insight-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+}
+
+.insight-item:last-child { margin-bottom: 0; }
+
+.insight-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.insight-icon.positive { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+.insight-icon.neutral { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
+.insight-icon.negative { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+.insight-content h4 {
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.insight-content p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.disclaimer {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.disclaimer i {
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+}
+
+.disclaimer p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+@media (max-width: 1024px) {
+    .profile-fields { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .profile-fields { grid-template-columns: 1fr; }
+    .comparison-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let expenseChart = null;
+
+// Benchmark data (mock data based on Swedish statistics)
+const benchmarkData = {
+    '25-34': {
+        medium: {
+            savingsRateMedian: 12,
+            savingsRateRange: [5, 25],
+            netWorthMedian: 320000,
+            netWorthTop25: 650000,
+            debtRatioAvg: 3.2,
+            emergencyFundPercent: 45,
+            expenses: {
+                housing: 35,
+                food: 15,
+                transport: 12,
+                entertainment: 10,
+                other: 28
+            }
+        }
+    }
+};
+
+// User data (would come from API)
+let userData = {
+    savingsRate: 15,
+    netWorth: 450000,
+    debtRatio: 2.5,
+    emergencyFundMonths: 2.5,
+    expenses: {
+        housing: 38,
+        food: 12,
+        transport: 10,
+        entertainment: 15,
+        other: 25
+    }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadUserData();
+    updateBenchmarks();
+});
+
+async function loadUserData() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/benchmark/user-data');
+        if (response.success) {
+            userData = response.data;
+            updateBenchmarks();
+        }
+    } catch (error) {
+        // Use default data
+        updateBenchmarks();
+    }
+}
+
+function updateBenchmarks() {
+    const ageGroup = document.getElementById('ageGroup').value;
+    const incomeLevel = document.getElementById('incomeLevel').value;
+
+    // Get benchmark for this profile (simplified - would use more complex lookup)
+    const benchmark = benchmarkData['25-34']?.medium || benchmarkData['25-34'].medium;
+
+    updateSavingsComparison(benchmark);
+    updateWealthComparison(benchmark);
+    updateDebtComparison(benchmark);
+    updateEmergencyComparison(benchmark);
+    renderExpenseChart(benchmark);
+    renderInsights(benchmark);
+}
+
+function updateSavingsComparison(benchmark) {
+    const yourRate = userData.savingsRate;
+    const median = benchmark.savingsRateMedian;
+    const range = benchmark.savingsRateRange;
+
+    document.getElementById('yourSavingsRate').textContent = yourRate + '%';
+    document.getElementById('savingsMedian').textContent = median + '%';
+
+    // Position the range (25th to 75th percentile)
+    const rangeEl = document.getElementById('savingsRange');
+    rangeEl.style.left = (range[0] / 50 * 100) + '%';
+    rangeEl.style.width = ((range[1] - range[0]) / 50 * 100) + '%';
+
+    // Position marker
+    const markerEl = document.getElementById('savingsMarker');
+    markerEl.style.left = (yourRate / 50 * 100) + '%';
+
+    // Result text
+    const resultEl = document.getElementById('savingsResult');
+    if (yourRate >= median * 1.2) {
+        resultEl.textContent = 'Utmarkt! Du sparar mer an de flesta i din grupp.';
+        resultEl.className = 'comparison-result good';
+    } else if (yourRate >= median * 0.8) {
+        resultEl.textContent = 'Bra! Du ligger nara genomsnittet.';
+        resultEl.className = 'comparison-result average';
+    } else {
+        resultEl.textContent = 'Det finns utrymme att oka sparandet.';
+        resultEl.className = 'comparison-result needs-work';
+    }
+}
+
+function updateWealthComparison(benchmark) {
+    const yourWealth = userData.netWorth;
+    const median = benchmark.netWorthMedian;
+    const top25 = benchmark.netWorthTop25;
+
+    document.getElementById('yourNetWorth').textContent = WealthAgent.formatCurrency(yourWealth);
+    document.getElementById('wealthMedian').textContent = WealthAgent.formatCurrency(median);
+    document.getElementById('wealthTop25').textContent = WealthAgent.formatCurrency(top25);
+
+    // Calculate percentile (simplified)
+    let percentile;
+    if (yourWealth >= top25) {
+        percentile = 75 + (25 * (yourWealth - top25) / top25);
+        percentile = Math.min(99, percentile);
+    } else if (yourWealth >= median) {
+        percentile = 50 + (25 * (yourWealth - median) / (top25 - median));
+    } else {
+        percentile = 50 * yourWealth / median;
+    }
+    percentile = Math.round(percentile);
+
+    document.querySelector('#wealthPercentile .percentile-value').textContent = percentile;
+}
+
+function updateDebtComparison(benchmark) {
+    const yourRatio = userData.debtRatio;
+    const avgRatio = benchmark.debtRatioAvg;
+
+    document.getElementById('yourDebtRatio').textContent = yourRatio + 'x arsinkomst';
+
+    // Position gauge marker (0-6x scale)
+    const gaugePercent = Math.min(100, (yourRatio / 6) * 100);
+    document.querySelector('#debtGauge .gauge-fill').style.left = gaugePercent + '%';
+
+    const resultEl = document.getElementById('debtResult');
+    if (yourRatio <= 2) {
+        resultEl.textContent = 'Lag skuldniva - bra jobbat!';
+        resultEl.className = 'comparison-result good';
+    } else if (yourRatio <= 4) {
+        resultEl.textContent = 'Normal skuldniva for din grupp.';
+        resultEl.className = 'comparison-result average';
+    } else {
+        resultEl.textContent = 'Hog skuldniva - fokusera pa amortering.';
+        resultEl.className = 'comparison-result needs-work';
+    }
+}
+
+function updateEmergencyComparison(benchmark) {
+    const yourMonths = userData.emergencyFundMonths;
+    const percent = benchmark.emergencyFundPercent;
+
+    document.getElementById('yourEmergencyFund').textContent = yourMonths.toFixed(1) + ' manaders utgifter';
+    document.getElementById('emergencyPercent').textContent = percent + '%';
+
+    // Position bar (0-6 months scale)
+    const fillPercent = Math.min(100, (yourMonths / 6) * 100);
+    document.querySelector('#emergencyBar .month-fill').style.width = fillPercent + '%';
+}
+
+function renderExpenseChart(benchmark) {
+    const ctx = document.getElementById('expenseComparisonChart').getContext('2d');
+
+    if (expenseChart) expenseChart.destroy();
+
+    const categories = ['Boende', 'Mat', 'Transport', 'Nojen', 'Ovrigt'];
+    const yourData = [
+        userData.expenses.housing,
+        userData.expenses.food,
+        userData.expenses.transport,
+        userData.expenses.entertainment,
+        userData.expenses.other
+    ];
+    const peerData = [
+        benchmark.expenses.housing,
+        benchmark.expenses.food,
+        benchmark.expenses.transport,
+        benchmark.expenses.entertainment,
+        benchmark.expenses.other
+    ];
+
+    expenseChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: categories,
+            datasets: [
+                {
+                    label: 'Din fordelning',
+                    data: yourData,
+                    backgroundColor: '#6366f1',
+                    borderRadius: 8
+                },
+                {
+                    label: 'Peers genomsnitt',
+                    data: peerData,
+                    backgroundColor: 'rgba(99, 102, 241, 0.3)',
+                    borderRadius: 8
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { color: getComputedStyle(document.body).getPropertyValue('--text').trim() }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ctx.dataset.label + ': ' + ctx.raw + '%'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-muted').trim() }
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: {
+                        color: getComputedStyle(document.body).getPropertyValue('--text-muted').trim(),
+                        callback: val => val + '%'
+                    },
+                    max: 50
+                }
+            }
+        }
+    });
+}
+
+function renderInsights(benchmark) {
+    const insights = [];
+
+    // Savings insight
+    if (userData.savingsRate >= benchmark.savingsRateMedian) {
+        insights.push({
+            type: 'positive',
+            icon: 'piggy-bank',
+            title: 'Stark sparare',
+            text: `Du sparar ${userData.savingsRate}% av din inkomst, vilket ar over medianen (${benchmark.savingsRateMedian}%) for din grupp.`
+        });
+    } else {
+        insights.push({
+            type: 'negative',
+            icon: 'piggy-bank',
+            title: 'Sparandet kan forbattras',
+            text: `Din sparkvot (${userData.savingsRate}%) ar under medianen. Forsok oka med 2-3 procentenheter.`
+        });
+    }
+
+    // Net worth insight
+    if (userData.netWorth >= benchmark.netWorthMedian) {
+        insights.push({
+            type: 'positive',
+            icon: 'gem',
+            title: 'Over genomsnittet',
+            text: `Din nettoformogenhet ar hogre an medianen for din aldersgrupp. Fortsatt sa!`
+        });
+    }
+
+    // Debt insight
+    if (userData.debtRatio <= 3) {
+        insights.push({
+            type: 'positive',
+            icon: 'credit-card',
+            title: 'Hanterbar skuld',
+            text: `Din skuldkvot pa ${userData.debtRatio}x ar under den kritiska gransen.`
+        });
+    } else {
+        insights.push({
+            type: 'negative',
+            icon: 'credit-card',
+            title: 'Fokusera pa skulden',
+            text: `En skuldkvot pa ${userData.debtRatio}x ar hog. Prioritera amortering.`
+        });
+    }
+
+    // Emergency fund insight
+    if (userData.emergencyFundMonths < 3) {
+        insights.push({
+            type: 'neutral',
+            icon: 'shield-alt',
+            title: 'Bygg bufferten',
+            text: `Du har ${userData.emergencyFundMonths} manaders buffert. Mal ar minst 3 manader.`
+        });
+    }
+
+    document.getElementById('benchmarkInsights').innerHTML = insights.map(i => `
+        <div class="insight-item">
+            <div class="insight-icon ${i.type}">
+                <i class="fas fa-${i.icon}"></i>
+            </div>
+            <div class="insight-content">
+                <h4>${i.title}</h4>
+                <p>${i.text}</p>
+            </div>
+        </div>
+    `).join('');
+}
+</script>
+{% endblock %}

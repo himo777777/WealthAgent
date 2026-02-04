@@ -1,0 +1,1350 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Passiv Inkomst Tracker - Wealth Agent{% endblock %}
+
+{% block extra_css %}
+<style>
+    .passive-hero {
+        background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .passive-hero h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .hero-stat {
+        text-align: center;
+    }
+
+    .hero-stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .hero-stat-label {
+        opacity: 0.9;
+        font-size: 0.875rem;
+    }
+
+    .freedom-meter {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .freedom-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .freedom-title {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .freedom-percentage {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .freedom-bar {
+        height: 24px;
+        background: var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .freedom-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), #8b5cf6);
+        border-radius: 12px;
+        transition: width 0.5s ease;
+        position: relative;
+    }
+
+    .freedom-milestones {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .milestone {
+        text-align: center;
+    }
+
+    .milestone.achieved {
+        color: var(--success);
+        font-weight: 600;
+    }
+
+    .streams-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stream-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+        transition: all 0.2s ease;
+    }
+
+    .stream-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    .stream-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .stream-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .stream-icon.royalty { background: rgba(59, 130, 246, 0.1); }
+    .stream-icon.affiliate { background: rgba(16, 185, 129, 0.1); }
+    .stream-icon.digital { background: rgba(139, 92, 246, 0.1); }
+    .stream-icon.dividend { background: rgba(245, 158, 11, 0.1); }
+    .stream-icon.rental { background: rgba(239, 68, 68, 0.1); }
+    .stream-icon.subscription { background: rgba(236, 72, 153, 0.1); }
+
+    .stream-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .stream-action {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 4px;
+    }
+
+    .stream-action:hover {
+        background: var(--border);
+        color: var(--text);
+    }
+
+    .stream-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .stream-source {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+
+    .stream-amount {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--success);
+    }
+
+    .stream-amount span {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-weight: 400;
+    }
+
+    .stream-trend {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .stream-trend.up {
+        color: var(--success);
+    }
+
+    .stream-trend.down {
+        color: var(--danger);
+    }
+
+    .stream-trend.stable {
+        color: var(--text-muted);
+    }
+
+    .add-stream-card {
+        background: var(--surface);
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-height: 180px;
+    }
+
+    .add-stream-card:hover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    .add-stream-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: rgba(99, 102, 241, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--primary);
+        margin-bottom: 0.75rem;
+    }
+
+    .chart-container {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .chart-title {
+        font-weight: 600;
+    }
+
+    .chart-filters {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .chart-filter {
+        padding: 0.375rem 0.75rem;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 6px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        color: var(--text);
+    }
+
+    .chart-filter.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    .goals-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .goals-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .goal-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: var(--background);
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+    }
+
+    .goal-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .goal-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .goal-icon.achieved {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .goal-icon.pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+    }
+
+    .goal-info {
+        flex: 1;
+    }
+
+    .goal-name {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+
+    .goal-progress-text {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .goal-progress-bar {
+        height: 6px;
+        background: var(--border);
+        border-radius: 3px;
+        margin-top: 0.5rem;
+        overflow: hidden;
+    }
+
+    .goal-progress-fill {
+        height: 100%;
+        background: var(--primary);
+        border-radius: 3px;
+    }
+
+    .goal-progress-fill.achieved {
+        background: var(--success);
+    }
+
+    .breakdown-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .breakdown-item {
+        background: var(--background);
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .breakdown-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .breakdown-label {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .breakdown-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .tips-section {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    .tips-title {
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .tip-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .tip-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .tip-number {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    .tip-text {
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    /* Stream Type Select */
+    .stream-type-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .stream-type-option {
+        padding: 1rem;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .stream-type-option:hover {
+        border-color: var(--primary);
+    }
+
+    .stream-type-option.selected {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    .stream-type-option .icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stream-type-option .label {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Hero Section -->
+    <div class="passive-hero">
+        <h1>Passiv Inkomst Tracker</h1>
+        <p class="mb-0 opacity-75">Spåra och väx dina passiva inkomstströmmar mot ekonomisk frihet</p>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-value" id="totalMonthlyPassive">0 kr</div>
+                <div class="hero-stat-label">Passiv inkomst/mån</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value" id="totalYearlyPassive">0 kr</div>
+                <div class="hero-stat-label">Projicerad årsinkomst</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value" id="streamCount">0</div>
+                <div class="hero-stat-label">Inkomstströmmar</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value" id="avgGrowth">0%</div>
+                <div class="hero-stat-label">Snitt tillväxt</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Freedom Meter -->
+    <div class="freedom-meter">
+        <div class="freedom-header">
+            <div class="freedom-title">
+                <i class="fas fa-flag-checkered"></i>
+                Vägen till ekonomisk frihet
+            </div>
+            <div class="freedom-percentage" id="freedomPercentage">0%</div>
+        </div>
+        <div class="freedom-bar">
+            <div class="freedom-fill" id="freedomFill" style="width: 0%"></div>
+        </div>
+        <div class="freedom-milestones">
+            <div class="milestone" data-target="25">
+                <div>25%</div>
+                <div>Kaffe täckt</div>
+            </div>
+            <div class="milestone" data-target="50">
+                <div>50%</div>
+                <div>Halvvägs</div>
+            </div>
+            <div class="milestone" data-target="75">
+                <div>75%</div>
+                <div>Nästan där</div>
+            </div>
+            <div class="milestone" data-target="100">
+                <div>100%</div>
+                <div>FI!</div>
+            </div>
+        </div>
+        <div class="mt-3 text-center">
+            <small class="text-muted">
+                Månadskostnad: <strong id="monthlyExpenses">25 000 kr</strong>
+                <button class="btn btn-link btn-sm p-0 ms-2" onclick="editMonthlyExpenses()">
+                    <i class="fas fa-edit"></i> Ändra
+                </button>
+            </small>
+        </div>
+    </div>
+
+    <!-- Income Streams -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Dina Inkomstströmmar</h5>
+    </div>
+
+    <div class="streams-grid" id="streamsGrid">
+        <!-- Streams will be rendered here -->
+        <div class="add-stream-card" onclick="openAddStreamModal()">
+            <div class="add-stream-icon">
+                <i class="fas fa-plus"></i>
+            </div>
+            <div class="fw-500">Lägg till inkomstström</div>
+            <small class="text-muted">Royalties, affiliate, digitala produkter...</small>
+        </div>
+    </div>
+
+    <!-- Monthly Trend Chart -->
+    <div class="chart-container">
+        <div class="chart-header">
+            <div class="chart-title">Passiv Inkomst Över Tid</div>
+            <div class="chart-filters">
+                <button class="chart-filter active" onclick="setChartPeriod('6m')">6 mån</button>
+                <button class="chart-filter" onclick="setChartPeriod('1y')">1 år</button>
+                <button class="chart-filter" onclick="setChartPeriod('all')">Allt</button>
+            </div>
+        </div>
+        <canvas id="incomeChart" height="250"></canvas>
+    </div>
+
+    <!-- Income Breakdown -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="chart-container mb-0">
+                <div class="chart-title mb-3">Inkomstfördelning per Typ</div>
+                <div class="breakdown-grid" id="breakdownGrid">
+                    <!-- Breakdown items will be rendered here -->
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="chart-container mb-0 h-100">
+                <div class="chart-title mb-3">Fördelning</div>
+                <canvas id="pieChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goals Section -->
+    <div class="goals-section">
+        <div class="goals-header">
+            <h5 class="mb-0">Mål för Passiv Inkomst</h5>
+            <button class="btn btn-outline-primary btn-sm" onclick="openGoalModal()">
+                <i class="fas fa-plus me-1"></i> Lägg till mål
+            </button>
+        </div>
+        <div id="goalsContainer">
+            <!-- Default goals -->
+            <div class="goal-item">
+                <div class="goal-icon pending">
+                    <i class="fas fa-coffee"></i>
+                </div>
+                <div class="goal-info">
+                    <div class="goal-name">Täck kaffekostnader</div>
+                    <div class="goal-progress-text">
+                        <span id="goal1Current">0</span> / 500 kr per månad
+                    </div>
+                    <div class="goal-progress-bar">
+                        <div class="goal-progress-fill" id="goal1Fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="goal-item">
+                <div class="goal-icon pending">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <div class="goal-info">
+                    <div class="goal-name">Täck mobilräkning</div>
+                    <div class="goal-progress-text">
+                        <span id="goal2Current">0</span> / 500 kr per månad
+                    </div>
+                    <div class="goal-progress-bar">
+                        <div class="goal-progress-fill" id="goal2Fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="goal-item">
+                <div class="goal-icon pending">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="goal-info">
+                    <div class="goal-name">Täck hyra/boende</div>
+                    <div class="goal-progress-text">
+                        <span id="goal3Current">0</span> / 10 000 kr per månad
+                    </div>
+                    <div class="goal-progress-bar">
+                        <div class="goal-progress-fill" id="goal3Fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="goal-item">
+                <div class="goal-icon pending">
+                    <i class="fas fa-umbrella-beach"></i>
+                </div>
+                <div class="goal-info">
+                    <div class="goal-name">Ekonomisk frihet (100%)</div>
+                    <div class="goal-progress-text">
+                        <span id="goal4Current">0</span> / <span id="goal4Target">25 000</span> kr per månad
+                    </div>
+                    <div class="goal-progress-bar">
+                        <div class="goal-progress-fill" id="goal4Fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tips Section -->
+    <div class="tips-section">
+        <div class="tips-title">
+            <i class="fas fa-lightbulb"></i>
+            Tips för att öka passiv inkomst
+        </div>
+        <div class="tip-item">
+            <div class="tip-number">1</div>
+            <div class="tip-text"><strong>Diversifiera:</strong> Ha minst 3-5 olika inkomstströmmar för stabilitet</div>
+        </div>
+        <div class="tip-item">
+            <div class="tip-number">2</div>
+            <div class="tip-text"><strong>Återinvestera:</strong> Lägg 50% av passiv inkomst i nya tillgångar</div>
+        </div>
+        <div class="tip-item">
+            <div class="tip-number">3</div>
+            <div class="tip-text"><strong>Automatisera:</strong> Sätt upp automatiska utbetalningar och rapporter</div>
+        </div>
+        <div class="tip-item">
+            <div class="tip-number">4</div>
+            <div class="tip-text"><strong>Skalbarhet:</strong> Fokusera på inkomster som kan växa utan mer tid</div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Stream Modal -->
+<div class="modal fade" id="addStreamModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Lägg till Inkomstström</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Typ av inkomst</label>
+                    <div class="stream-type-grid">
+                        <div class="stream-type-option" data-type="royalty" onclick="selectStreamType('royalty')">
+                            <div class="icon">📚</div>
+                            <div class="label">Royalties</div>
+                        </div>
+                        <div class="stream-type-option" data-type="affiliate" onclick="selectStreamType('affiliate')">
+                            <div class="icon">🔗</div>
+                            <div class="label">Affiliate</div>
+                        </div>
+                        <div class="stream-type-option" data-type="digital" onclick="selectStreamType('digital')">
+                            <div class="icon">💻</div>
+                            <div class="label">Digitala produkter</div>
+                        </div>
+                        <div class="stream-type-option" data-type="dividend" onclick="selectStreamType('dividend')">
+                            <div class="icon">📈</div>
+                            <div class="label">Utdelningar</div>
+                        </div>
+                        <div class="stream-type-option" data-type="rental" onclick="selectStreamType('rental')">
+                            <div class="icon">🏠</div>
+                            <div class="label">Uthyrning</div>
+                        </div>
+                        <div class="stream-type-option" data-type="subscription" onclick="selectStreamType('subscription')">
+                            <div class="icon">🔄</div>
+                            <div class="label">Prenumerationer</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="streamType" value="">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Namn på inkomstström</label>
+                    <input type="text" class="form-control" id="streamName" placeholder="T.ex. 'Kindle bokförsäljning'">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Källa/Plattform</label>
+                    <input type="text" class="form-control" id="streamSource" placeholder="T.ex. 'Amazon KDP'">
+                </div>
+
+                <div class="row">
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label class="form-label">Månadsbelopp (kr)</label>
+                            <input type="number" class="form-control" id="streamAmount" placeholder="0">
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label class="form-label">Startdatum</label>
+                            <input type="date" class="form-control" id="streamStartDate">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Anteckningar (valfritt)</label>
+                    <textarea class="form-control" id="streamNotes" rows="2" placeholder="Extra info om denna inkomstström..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                <button type="button" class="btn btn-primary" onclick="saveStream()">
+                    <i class="fas fa-plus me-1"></i> Lägg till
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Stream Modal -->
+<div class="modal fade" id="editStreamModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Redigera Inkomstström</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editStreamId">
+                <div class="mb-3">
+                    <label class="form-label">Namn</label>
+                    <input type="text" class="form-control" id="editStreamName">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Källa/Plattform</label>
+                    <input type="text" class="form-control" id="editStreamSource">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Aktuellt månadsbelopp (kr)</label>
+                    <input type="number" class="form-control" id="editStreamAmount">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Anteckningar</label>
+                    <textarea class="form-control" id="editStreamNotes" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                <button type="button" class="btn btn-primary" onclick="updateStream()">
+                    <i class="fas fa-save me-1"></i> Spara
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Income Modal -->
+<div class="modal fade" id="logIncomeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Logga Inkomst</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="logStreamId">
+                <div class="mb-3">
+                    <label class="form-label">Inkomstström</label>
+                    <input type="text" class="form-control" id="logStreamName" readonly>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label class="form-label">Belopp (kr)</label>
+                            <input type="number" class="form-control" id="logAmount" placeholder="0">
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-3">
+                            <label class="form-label">Datum</label>
+                            <input type="date" class="form-control" id="logDate">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Notering (valfritt)</label>
+                    <input type="text" class="form-control" id="logNote" placeholder="T.ex. 'Q4 utbetalning'">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                <button type="button" class="btn btn-success" onclick="saveIncomeLog()">
+                    <i class="fas fa-plus me-1"></i> Logga
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Data storage
+    let streams = JSON.parse(localStorage.getItem('passive_streams') || '[]');
+    let incomeLogs = JSON.parse(localStorage.getItem('passive_income_logs') || '[]');
+    let monthlyExpenses = parseInt(localStorage.getItem('monthly_expenses') || '25000');
+    let selectedStreamType = '';
+
+    // Charts
+    let incomeChart = null;
+    let pieChart = null;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('streamStartDate').valueAsDate = new Date();
+        document.getElementById('logDate').valueAsDate = new Date();
+        renderStreams();
+        updateStats();
+        initCharts();
+    });
+
+    // Stream type icons
+    const streamIcons = {
+        royalty: '📚',
+        affiliate: '🔗',
+        digital: '💻',
+        dividend: '📈',
+        rental: '🏠',
+        subscription: '🔄'
+    };
+
+    const streamLabels = {
+        royalty: 'Royalties',
+        affiliate: 'Affiliate',
+        digital: 'Digitala produkter',
+        dividend: 'Utdelningar',
+        rental: 'Uthyrning',
+        subscription: 'Prenumerationer'
+    };
+
+    function selectStreamType(type) {
+        selectedStreamType = type;
+        document.getElementById('streamType').value = type;
+        document.querySelectorAll('.stream-type-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        document.querySelector(`.stream-type-option[data-type="${type}"]`).classList.add('selected');
+    }
+
+    function openAddStreamModal() {
+        selectedStreamType = '';
+        document.getElementById('streamType').value = '';
+        document.getElementById('streamName').value = '';
+        document.getElementById('streamSource').value = '';
+        document.getElementById('streamAmount').value = '';
+        document.getElementById('streamNotes').value = '';
+        document.querySelectorAll('.stream-type-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        new bootstrap.Modal(document.getElementById('addStreamModal')).show();
+    }
+
+    function saveStream() {
+        const type = document.getElementById('streamType').value;
+        const name = document.getElementById('streamName').value;
+        const source = document.getElementById('streamSource').value;
+        const amount = parseFloat(document.getElementById('streamAmount').value) || 0;
+        const startDate = document.getElementById('streamStartDate').value;
+        const notes = document.getElementById('streamNotes').value;
+
+        if (!type || !name) {
+            alert('Välj typ och ange namn');
+            return;
+        }
+
+        const stream = {
+            id: Date.now().toString(),
+            type,
+            name,
+            source,
+            amount,
+            startDate,
+            notes,
+            history: [{
+                date: startDate || new Date().toISOString().split('T')[0],
+                amount
+            }],
+            createdAt: new Date().toISOString()
+        };
+
+        streams.push(stream);
+        localStorage.setItem('passive_streams', JSON.stringify(streams));
+
+        bootstrap.Modal.getInstance(document.getElementById('addStreamModal')).hide();
+        renderStreams();
+        updateStats();
+        updateCharts();
+    }
+
+    function renderStreams() {
+        const grid = document.getElementById('streamsGrid');
+
+        let html = streams.map(stream => {
+            const trend = calculateTrend(stream);
+            const trendClass = trend > 0 ? 'up' : trend < 0 ? 'down' : 'stable';
+            const trendIcon = trend > 0 ? 'fa-arrow-up' : trend < 0 ? 'fa-arrow-down' : 'fa-minus';
+
+            return `
+                <div class="stream-card">
+                    <div class="stream-header">
+                        <div class="stream-icon ${stream.type}">${streamIcons[stream.type]}</div>
+                        <div class="stream-actions">
+                            <button class="stream-action" onclick="openLogModal('${stream.id}')" title="Logga inkomst">
+                                <i class="fas fa-plus-circle"></i>
+                            </button>
+                            <button class="stream-action" onclick="editStream('${stream.id}')" title="Redigera">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="stream-action" onclick="deleteStream('${stream.id}')" title="Ta bort">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="stream-name">${stream.name}</div>
+                    <div class="stream-source">${stream.source || streamLabels[stream.type]}</div>
+                    <div class="stream-amount">${formatCurrency(stream.amount)} <span>/mån</span></div>
+                    <div class="stream-trend ${trendClass}">
+                        <i class="fas ${trendIcon}"></i>
+                        ${trend > 0 ? '+' : ''}${trend.toFixed(0)}% från föregående
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Add the "add stream" card
+        html += `
+            <div class="add-stream-card" onclick="openAddStreamModal()">
+                <div class="add-stream-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="fw-500">Lägg till inkomstström</div>
+                <small class="text-muted">Royalties, affiliate, digitala produkter...</small>
+            </div>
+        `;
+
+        grid.innerHTML = html;
+    }
+
+    function calculateTrend(stream) {
+        if (!stream.history || stream.history.length < 2) return 0;
+        const sorted = [...stream.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+        if (sorted.length < 2) return 0;
+        const current = sorted[0].amount;
+        const previous = sorted[1].amount;
+        if (previous === 0) return current > 0 ? 100 : 0;
+        return ((current - previous) / previous) * 100;
+    }
+
+    function updateStats() {
+        const totalMonthly = streams.reduce((sum, s) => sum + s.amount, 0);
+        const totalYearly = totalMonthly * 12;
+        const freedomPercent = Math.min(100, (totalMonthly / monthlyExpenses) * 100);
+
+        // Calculate average growth
+        let totalGrowth = 0;
+        let growthCount = 0;
+        streams.forEach(stream => {
+            const trend = calculateTrend(stream);
+            if (trend !== 0) {
+                totalGrowth += trend;
+                growthCount++;
+            }
+        });
+        const avgGrowth = growthCount > 0 ? totalGrowth / growthCount : 0;
+
+        document.getElementById('totalMonthlyPassive').textContent = formatCurrency(totalMonthly);
+        document.getElementById('totalYearlyPassive').textContent = formatCurrency(totalYearly);
+        document.getElementById('streamCount').textContent = streams.length;
+        document.getElementById('avgGrowth').textContent = (avgGrowth >= 0 ? '+' : '') + avgGrowth.toFixed(1) + '%';
+
+        // Update freedom meter
+        document.getElementById('freedomPercentage').textContent = freedomPercent.toFixed(0) + '%';
+        document.getElementById('freedomFill').style.width = freedomPercent + '%';
+        document.getElementById('monthlyExpenses').textContent = formatCurrency(monthlyExpenses);
+
+        // Update milestones
+        document.querySelectorAll('.milestone').forEach(milestone => {
+            const target = parseInt(milestone.dataset.target);
+            if (freedomPercent >= target) {
+                milestone.classList.add('achieved');
+            } else {
+                milestone.classList.remove('achieved');
+            }
+        });
+
+        // Update goals
+        document.getElementById('goal1Current').textContent = formatCurrency(Math.min(totalMonthly, 500));
+        document.getElementById('goal1Fill').style.width = Math.min(100, (totalMonthly / 500) * 100) + '%';
+        if (totalMonthly >= 500) {
+            document.getElementById('goal1Fill').classList.add('achieved');
+        }
+
+        document.getElementById('goal2Current').textContent = formatCurrency(Math.min(totalMonthly, 500));
+        document.getElementById('goal2Fill').style.width = Math.min(100, (totalMonthly / 500) * 100) + '%';
+        if (totalMonthly >= 500) {
+            document.getElementById('goal2Fill').classList.add('achieved');
+        }
+
+        document.getElementById('goal3Current').textContent = formatCurrency(Math.min(totalMonthly, 10000));
+        document.getElementById('goal3Fill').style.width = Math.min(100, (totalMonthly / 10000) * 100) + '%';
+        if (totalMonthly >= 10000) {
+            document.getElementById('goal3Fill').classList.add('achieved');
+        }
+
+        document.getElementById('goal4Current').textContent = formatCurrency(totalMonthly);
+        document.getElementById('goal4Target').textContent = formatCurrency(monthlyExpenses);
+        document.getElementById('goal4Fill').style.width = freedomPercent + '%';
+        if (freedomPercent >= 100) {
+            document.getElementById('goal4Fill').classList.add('achieved');
+        }
+
+        // Update breakdown grid
+        updateBreakdown();
+    }
+
+    function updateBreakdown() {
+        const breakdown = {};
+        Object.keys(streamLabels).forEach(type => {
+            breakdown[type] = 0;
+        });
+
+        streams.forEach(stream => {
+            breakdown[stream.type] = (breakdown[stream.type] || 0) + stream.amount;
+        });
+
+        const grid = document.getElementById('breakdownGrid');
+        grid.innerHTML = Object.entries(breakdown).map(([type, amount]) => `
+            <div class="breakdown-item">
+                <div class="breakdown-icon">${streamIcons[type]}</div>
+                <div class="breakdown-label">${streamLabels[type]}</div>
+                <div class="breakdown-value">${formatCurrency(amount)}</div>
+            </div>
+        `).join('');
+    }
+
+    function initCharts() {
+        // Line chart
+        const ctx = document.getElementById('incomeChart').getContext('2d');
+        const months = getLast6Months();
+        const data = getMonthlyData(months);
+
+        incomeChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: months.map(m => m.label),
+                datasets: [{
+                    label: 'Passiv Inkomst',
+                    data: data,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: value => formatCurrency(value)
+                        }
+                    }
+                }
+            }
+        });
+
+        // Pie chart
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        const pieData = getPieData();
+
+        pieChart = new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: pieData.labels,
+                datasets: [{
+                    data: pieData.values,
+                    backgroundColor: [
+                        '#3b82f6',
+                        '#10b981',
+                        '#8b5cf6',
+                        '#f59e0b',
+                        '#ef4444',
+                        '#ec4899'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 8
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function getLast6Months() {
+        const months = [];
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
+
+        for (let i = 5; i >= 0; i--) {
+            const date = new Date();
+            date.setMonth(date.getMonth() - i);
+            months.push({
+                label: monthNames[date.getMonth()],
+                year: date.getFullYear(),
+                month: date.getMonth()
+            });
+        }
+        return months;
+    }
+
+    function getMonthlyData(months) {
+        return months.map(m => {
+            // Sum up stream amounts for each month
+            // In a real app, this would look at historical data
+            const total = streams.reduce((sum, stream) => {
+                const startDate = new Date(stream.startDate);
+                const monthDate = new Date(m.year, m.month, 1);
+                if (startDate <= monthDate) {
+                    return sum + stream.amount;
+                }
+                return sum;
+            }, 0);
+            return total;
+        });
+    }
+
+    function getPieData() {
+        const breakdown = {};
+        streams.forEach(stream => {
+            breakdown[stream.type] = (breakdown[stream.type] || 0) + stream.amount;
+        });
+
+        const filtered = Object.entries(breakdown).filter(([_, amount]) => amount > 0);
+        return {
+            labels: filtered.map(([type, _]) => streamLabels[type]),
+            values: filtered.map(([_, amount]) => amount)
+        };
+    }
+
+    function updateCharts() {
+        if (incomeChart) {
+            const months = getLast6Months();
+            incomeChart.data.datasets[0].data = getMonthlyData(months);
+            incomeChart.update();
+        }
+
+        if (pieChart) {
+            const pieData = getPieData();
+            pieChart.data.labels = pieData.labels;
+            pieChart.data.datasets[0].data = pieData.values;
+            pieChart.update();
+        }
+    }
+
+    function setChartPeriod(period) {
+        document.querySelectorAll('.chart-filter').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        // In a full implementation, this would change the date range
+    }
+
+    function editStream(id) {
+        const stream = streams.find(s => s.id === id);
+        if (!stream) return;
+
+        document.getElementById('editStreamId').value = id;
+        document.getElementById('editStreamName').value = stream.name;
+        document.getElementById('editStreamSource').value = stream.source;
+        document.getElementById('editStreamAmount').value = stream.amount;
+        document.getElementById('editStreamNotes').value = stream.notes;
+
+        new bootstrap.Modal(document.getElementById('editStreamModal')).show();
+    }
+
+    function updateStream() {
+        const id = document.getElementById('editStreamId').value;
+        const stream = streams.find(s => s.id === id);
+        if (!stream) return;
+
+        stream.name = document.getElementById('editStreamName').value;
+        stream.source = document.getElementById('editStreamSource').value;
+        const newAmount = parseFloat(document.getElementById('editStreamAmount').value) || 0;
+
+        // Log amount change in history
+        if (newAmount !== stream.amount) {
+            stream.history.push({
+                date: new Date().toISOString().split('T')[0],
+                amount: newAmount
+            });
+            stream.amount = newAmount;
+        }
+
+        stream.notes = document.getElementById('editStreamNotes').value;
+
+        localStorage.setItem('passive_streams', JSON.stringify(streams));
+        bootstrap.Modal.getInstance(document.getElementById('editStreamModal')).hide();
+        renderStreams();
+        updateStats();
+        updateCharts();
+    }
+
+    function deleteStream(id) {
+        if (!confirm('Vill du ta bort denna inkomstström?')) return;
+
+        streams = streams.filter(s => s.id !== id);
+        localStorage.setItem('passive_streams', JSON.stringify(streams));
+        renderStreams();
+        updateStats();
+        updateCharts();
+    }
+
+    function openLogModal(id) {
+        const stream = streams.find(s => s.id === id);
+        if (!stream) return;
+
+        document.getElementById('logStreamId').value = id;
+        document.getElementById('logStreamName').value = stream.name;
+        document.getElementById('logAmount').value = stream.amount;
+        document.getElementById('logDate').valueAsDate = new Date();
+        document.getElementById('logNote').value = '';
+
+        new bootstrap.Modal(document.getElementById('logIncomeModal')).show();
+    }
+
+    function saveIncomeLog() {
+        const id = document.getElementById('logStreamId').value;
+        const stream = streams.find(s => s.id === id);
+        if (!stream) return;
+
+        const amount = parseFloat(document.getElementById('logAmount').value) || 0;
+        const date = document.getElementById('logDate').value;
+        const note = document.getElementById('logNote').value;
+
+        // Update stream amount and history
+        stream.history.push({ date, amount, note });
+        stream.amount = amount;
+
+        // Also log to income logs
+        incomeLogs.push({
+            id: Date.now().toString(),
+            streamId: id,
+            streamName: stream.name,
+            amount,
+            date,
+            note
+        });
+
+        localStorage.setItem('passive_streams', JSON.stringify(streams));
+        localStorage.setItem('passive_income_logs', JSON.stringify(incomeLogs));
+
+        bootstrap.Modal.getInstance(document.getElementById('logIncomeModal')).hide();
+        renderStreams();
+        updateStats();
+        updateCharts();
+    }
+
+    function editMonthlyExpenses() {
+        const newExpenses = prompt('Ange dina månatliga utgifter (kr):', monthlyExpenses);
+        if (newExpenses && !isNaN(newExpenses)) {
+            monthlyExpenses = parseInt(newExpenses);
+            localStorage.setItem('monthly_expenses', monthlyExpenses);
+            updateStats();
+        }
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('sv-SE', {
+            style: 'decimal',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount) + ' kr';
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,1445 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Digital Product Creator - Wealth Agent{% endblock %}
+
+{% block page_title %}Digital Product Creator{% endblock %}
+
+{% block content %}
+<div class="digital-products-page">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <div class="hero-icon">
+                <i class="fas fa-laptop-code"></i>
+            </div>
+            <div class="hero-text">
+                <h2>Skapa digitala produkter som saljer medan du sover</h2>
+                <p>Bygg passiva inkomststrommar genom att paketera din kunskap i digitala produkter.</p>
+            </div>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <span class="stat-value">∞</span>
+                <span class="stat-label">Skalbarhet</span>
+            </div>
+            <div class="hero-stat">
+                <span class="stat-value">90%+</span>
+                <span class="stat-label">Vinstmarginal</span>
+            </div>
+            <div class="hero-stat">
+                <span class="stat-value">24/7</span>
+                <span class="stat-label">Forsaljning</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Idea Generator -->
+    <div class="section">
+        <div class="section-header">
+            <h3><i class="fas fa-magic"></i> Produktide-generator</h3>
+            <p>Svara pa fragor for att fa personliga forslag</p>
+        </div>
+
+        <div class="generator-card">
+            <div class="generator-step active" id="step1">
+                <div class="step-header">
+                    <span class="step-number">1</span>
+                    <h4>Vad ar du bra pa?</h4>
+                </div>
+                <div class="skills-grid" id="skillsGrid">
+                    <button class="skill-btn" data-skill="writing">Skrivande</button>
+                    <button class="skill-btn" data-skill="design">Design</button>
+                    <button class="skill-btn" data-skill="coding">Programmering</button>
+                    <button class="skill-btn" data-skill="marketing">Marknadsforing</button>
+                    <button class="skill-btn" data-skill="teaching">Undervisning</button>
+                    <button class="skill-btn" data-skill="photography">Foto/Video</button>
+                    <button class="skill-btn" data-skill="music">Musik/Ljud</button>
+                    <button class="skill-btn" data-skill="business">Affarsutveckling</button>
+                    <button class="skill-btn" data-skill="health">Halsa/Fitness</button>
+                    <button class="skill-btn" data-skill="finance">Ekonomi</button>
+                    <button class="skill-btn" data-skill="crafts">Hantverk/DIY</button>
+                    <button class="skill-btn" data-skill="languages">Sprak</button>
+                </div>
+            </div>
+
+            <div class="generator-step" id="step2">
+                <div class="step-header">
+                    <span class="step-number">2</span>
+                    <h4>Hur mycket tid kan du investera?</h4>
+                </div>
+                <div class="time-options">
+                    <button class="time-btn" data-time="weekend">
+                        <i class="fas fa-clock"></i>
+                        <span>1 helg</span>
+                        <small>Snabb produkt</small>
+                    </button>
+                    <button class="time-btn" data-time="week">
+                        <i class="fas fa-calendar-week"></i>
+                        <span>1 vecka</span>
+                        <small>Enkel produkt</small>
+                    </button>
+                    <button class="time-btn" data-time="month">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>1 manad</span>
+                        <small>Komplett produkt</small>
+                    </button>
+                    <button class="time-btn" data-time="quarter">
+                        <i class="fas fa-calendar"></i>
+                        <span>3 manader</span>
+                        <small>Premium produkt</small>
+                    </button>
+                </div>
+            </div>
+
+            <div class="generator-step" id="step3">
+                <div class="step-header">
+                    <span class="step-number">3</span>
+                    <h4>Vad ar ditt prismol?</h4>
+                </div>
+                <div class="price-options">
+                    <button class="price-btn" data-price="low">
+                        <span class="price-range">49-199 kr</span>
+                        <small>Lag tröskel, hög volym</small>
+                    </button>
+                    <button class="price-btn" data-price="medium">
+                        <span class="price-range">299-999 kr</span>
+                        <small>Balanserat</small>
+                    </button>
+                    <button class="price-btn" data-price="high">
+                        <span class="price-range">1000-4999 kr</span>
+                        <small>Premium, lagre volym</small>
+                    </button>
+                    <button class="price-btn" data-price="premium">
+                        <span class="price-range">5000+ kr</span>
+                        <small>High-ticket</small>
+                    </button>
+                </div>
+            </div>
+
+            <button class="btn-generate" id="generateBtn" onclick="generateIdeas()">
+                <i class="fas fa-magic"></i> Generera produktideer
+            </button>
+
+            <div class="generated-ideas" id="generatedIdeas" style="display: none;">
+                <!-- Ideas will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Types -->
+    <div class="section">
+        <div class="section-header">
+            <h3><i class="fas fa-boxes"></i> Produkttyper att valja mellan</h3>
+        </div>
+
+        <div class="product-types-grid">
+            <div class="product-type-card">
+                <div class="product-icon ebook">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h4>E-bocker & Guider</h4>
+                <p>PDF-guider, how-to-bocker, branschrapporter</p>
+                <div class="product-meta">
+                    <span><i class="fas fa-clock"></i> 1-4 veckor</span>
+                    <span><i class="fas fa-tag"></i> 49-499 kr</span>
+                </div>
+                <div class="difficulty">
+                    <span>Svarighetsgrad:</span>
+                    <div class="difficulty-bar"><div class="fill" style="width: 30%"></div></div>
+                </div>
+            </div>
+
+            <div class="product-type-card">
+                <div class="product-icon templates">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h4>Mallar & Templates</h4>
+                <p>Notion-mallar, Excel, Canva, kod-templates</p>
+                <div class="product-meta">
+                    <span><i class="fas fa-clock"></i> 1-2 veckor</span>
+                    <span><i class="fas fa-tag"></i> 99-999 kr</span>
+                </div>
+                <div class="difficulty">
+                    <span>Svarighetsgrad:</span>
+                    <div class="difficulty-bar"><div class="fill" style="width: 40%"></div></div>
+                </div>
+            </div>
+
+            <div class="product-type-card featured">
+                <div class="product-icon courses">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <h4>Onlinekurser</h4>
+                <p>Videokurser, workshops, masterclasses</p>
+                <div class="product-meta">
+                    <span><i class="fas fa-clock"></i> 1-3 manader</span>
+                    <span><i class="fas fa-tag"></i> 999-9999 kr</span>
+                </div>
+                <div class="difficulty">
+                    <span>Svarighetsgrad:</span>
+                    <div class="difficulty-bar"><div class="fill" style="width: 70%"></div></div>
+                </div>
+                <span class="featured-badge">Hogst potential</span>
+            </div>
+
+            <div class="product-type-card">
+                <div class="product-icon printables">
+                    <i class="fas fa-print"></i>
+                </div>
+                <h4>Printables</h4>
+                <p>Planerare, checklistor, wall art, stickers</p>
+                <div class="product-meta">
+                    <span><i class="fas fa-clock"></i> 1-7 dagar</span>
+                    <span><i class="fas fa-tag"></i> 29-199 kr</span>
+                </div>
+                <div class="difficulty">
+                    <span>Svarighetsgrad:</span>
+                    <div class="difficulty-bar"><div class="fill" style="width: 20%"></div></div>
+                </div>
+            </div>
+
+            <div class="product-type-card">
+                <div class="product-icon software">
+                    <i class="fas fa-code"></i>
+                </div>
+                <h4>Plugins & Verktyg</h4>
+                <p>WordPress plugins, Figma plugins, Chrome extensions</p>
+                <div class="product-meta">
+                    <span><i class="fas fa-clock"></i> 2-8 veckor</span>
+                    <span><i class="fas fa-tag"></i> 199-1999 kr</span>
+                </div>
+                <div class="difficulty">
+                    <span>Svarighetsgrad:</span>
+                    <div class="difficulty-bar"><div class="fill" style="width: 80%"></div></div>
+                </div>
+            </div>
+
+            <div class="product-type-card">
+                <div class="product-icon audio">
+                    <i class="fas fa-music"></i>
+                </div>
+                <h4>Ljud & Musik</h4>
+                <p>Sound effects, musik, ljudbocker, podcasts</p>
+                <div class="product-meta">
+                    <span><i class="fas fa-clock"></i> 1-4 veckor</span>
+                    <span><i class="fas fa-tag"></i> 49-499 kr</span>
+                </div>
+                <div class="difficulty">
+                    <span>Svarighetsgrad:</span>
+                    <div class="difficulty-bar"><div class="fill" style="width: 50%"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Platform Comparison -->
+    <div class="section">
+        <div class="section-header">
+            <h3><i class="fas fa-store"></i> Var ska du salja?</h3>
+        </div>
+
+        <div class="platforms-comparison">
+            <div class="platform-card">
+                <div class="platform-logo gumroad">G</div>
+                <h4>Gumroad</h4>
+                <div class="platform-pros">
+                    <span class="pro"><i class="fas fa-check"></i> Enkelt att borja</span>
+                    <span class="pro"><i class="fas fa-check"></i> Snygga checkout-sidor</span>
+                    <span class="pro"><i class="fas fa-check"></i> Affiliate-program</span>
+                </div>
+                <div class="platform-fee">
+                    <span class="fee-label">Avgift:</span>
+                    <span class="fee-value">10% + betalningsavgift</span>
+                </div>
+                <span class="best-for">Bast for: E-bocker, mallar, printables</span>
+            </div>
+
+            <div class="platform-card">
+                <div class="platform-logo teachable">T</div>
+                <h4>Teachable</h4>
+                <div class="platform-pros">
+                    <span class="pro"><i class="fas fa-check"></i> Kursplattform</span>
+                    <span class="pro"><i class="fas fa-check"></i> Drip content</span>
+                    <span class="pro"><i class="fas fa-check"></i> Certifikat</span>
+                </div>
+                <div class="platform-fee">
+                    <span class="fee-label">Avgift:</span>
+                    <span class="fee-value">$39-119/man + 5-10%</span>
+                </div>
+                <span class="best-for">Bast for: Videokurser, coaching</span>
+            </div>
+
+            <div class="platform-card">
+                <div class="platform-logo udemy">U</div>
+                <h4>Udemy</h4>
+                <div class="platform-pros">
+                    <span class="pro"><i class="fas fa-check"></i> Inbyggd trafik</span>
+                    <span class="pro"><i class="fas fa-check"></i> Ingen marknadsforingskostnad</span>
+                    <span class="pro"><i class="fas fa-check"></i> Stort kundunderlag</span>
+                </div>
+                <div class="platform-fee">
+                    <span class="fee-label">Avgift:</span>
+                    <span class="fee-value">37-97% (!)</span>
+                </div>
+                <span class="best-for">Bast for: Volym, nybörjare</span>
+            </div>
+
+            <div class="platform-card">
+                <div class="platform-logo etsy">E</div>
+                <h4>Etsy Digital</h4>
+                <div class="platform-pros">
+                    <span class="pro"><i class="fas fa-check"></i> Stor marknad</span>
+                    <span class="pro"><i class="fas fa-check"></i> SOK-trafik</span>
+                    <span class="pro"><i class="fas fa-check"></i> Automatisk leverans</span>
+                </div>
+                <div class="platform-fee">
+                    <span class="fee-label">Avgift:</span>
+                    <span class="fee-value">6.5% + $0.20/listing</span>
+                </div>
+                <span class="best-for">Bast for: Printables, mallar, grafik</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Your Products -->
+    <div class="section">
+        <div class="section-header">
+            <h3><i class="fas fa-box-open"></i> Dina produkter</h3>
+            <button class="btn-add" onclick="openAddProductModal()">
+                <i class="fas fa-plus"></i> Lagg till produkt
+            </button>
+        </div>
+
+        <div class="products-list" id="productsList">
+            <div class="empty-state">
+                <i class="fas fa-box-open"></i>
+                <h4>Inga produkter an</h4>
+                <p>Borja med att skapa din forsta digitala produkt</p>
+                <button class="btn-primary" onclick="openAddProductModal()">
+                    <i class="fas fa-plus"></i> Skapa produkt
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Tips -->
+    <div class="section">
+        <div class="section-header">
+            <h3><i class="fas fa-lightbulb"></i> Tips for framgang</h3>
+        </div>
+
+        <div class="tips-grid">
+            <div class="tip-card">
+                <div class="tip-icon"><i class="fas fa-bullseye"></i></div>
+                <h5>Los ett specifikt problem</h5>
+                <p>De basta produkterna loser ETT konkret problem. "Hur startar jag podcast?" ar battre an "Allt om ljud".</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-icon"><i class="fas fa-rocket"></i></div>
+                <h5>Lansera snabbt, iterera</h5>
+                <p>En "good enough" produkt som lanseras idag slår en perfekt produkt som aldrig lanseras.</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-icon"><i class="fas fa-envelope"></i></div>
+                <h5>Bygg en e-postlista</h5>
+                <p>Din e-postlista ar din viktigaste tillgang. Ge bort en gratisprodukt for att bygga den.</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-icon"><i class="fas fa-star"></i></div>
+                <h5>Samla testimonials</h5>
+                <p>Be tidiga kopare om omdomen. Socialt bevis okar konvertering dramatiskt.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal" id="addProductModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-plus-circle"></i> Lagg till produkt</h3>
+            <button class="modal-close" onclick="closeModal('addProductModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="productForm">
+                <div class="form-group">
+                    <label>Produktnamn *</label>
+                    <input type="text" id="productName" placeholder="t.ex. Instagram Growth Guide" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Typ</label>
+                        <select id="productType">
+                            <option value="ebook">E-bok/Guide</option>
+                            <option value="template">Mall/Template</option>
+                            <option value="course">Onlinekurs</option>
+                            <option value="printable">Printable</option>
+                            <option value="software">Plugin/Verktyg</option>
+                            <option value="audio">Ljud/Musik</option>
+                            <option value="other">Annat</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pris (kr)</label>
+                        <input type="number" id="productPrice" placeholder="299">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Plattform</label>
+                        <select id="productPlatform">
+                            <option value="gumroad">Gumroad</option>
+                            <option value="teachable">Teachable</option>
+                            <option value="udemy">Udemy</option>
+                            <option value="etsy">Etsy</option>
+                            <option value="own">Egen webbplats</option>
+                            <option value="other">Annat</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="productStatus">
+                            <option value="idea">Ide</option>
+                            <option value="creating">Under skapande</option>
+                            <option value="live">Lanserad</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Lank (om lanserad)</label>
+                    <input type="url" id="productUrl" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Anteckningar</label>
+                    <textarea id="productNotes" placeholder="Beskrivning, malgrupp, etc."></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeModal('addProductModal')">Avbryt</button>
+            <button class="btn-primary" onclick="saveProduct()">
+                <i class="fas fa-save"></i> Spara
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.digital-products-page {
+    padding: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    color: white;
+    margin-bottom: 2rem;
+}
+
+.hero-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.hero-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.hero-text h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+}
+
+.hero-text p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.hero-stats {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+}
+
+.hero-stat {
+    text-align: center;
+}
+
+.hero-stat .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    display: block;
+}
+
+.hero-stat .stat-label {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+/* Sections */
+.section {
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-header h3 i {
+    color: var(--primary);
+}
+
+.section-header p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    width: 100%;
+}
+
+/* Generator */
+.generator-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+}
+
+.generator-step {
+    display: none;
+    margin-bottom: 1.5rem;
+}
+
+.generator-step.active {
+    display: block;
+}
+
+.step-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.step-header h4 {
+    margin: 0;
+}
+
+.skills-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.skill-btn {
+    padding: 0.6rem 1rem;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.skill-btn:hover {
+    border-color: var(--primary);
+}
+
+.skill-btn.selected {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.time-options, .price-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.time-btn, .price-btn {
+    padding: 1rem;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.time-btn:hover, .price-btn:hover {
+    border-color: var(--primary);
+}
+
+.time-btn.selected, .price-btn.selected {
+    border-color: var(--primary);
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.time-btn i {
+    font-size: 1.5rem;
+    color: var(--primary);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.time-btn span, .price-btn .price-range {
+    font-weight: 600;
+    display: block;
+}
+
+.time-btn small, .price-btn small {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.btn-generate {
+    width: 100%;
+    padding: 1rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.btn-generate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.generated-ideas {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.idea-card {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--primary);
+}
+
+.idea-card h5 {
+    margin: 0 0 0.5rem 0;
+}
+
+.idea-card p {
+    margin: 0 0 1rem 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.idea-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+}
+
+.idea-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.idea-meta i {
+    color: var(--primary);
+}
+
+/* Product Types Grid */
+.product-types-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.product-type-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.product-type-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary);
+}
+
+.product-type-card.featured {
+    border-color: var(--primary);
+}
+
+.featured-badge {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    background: var(--primary);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.product-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.product-icon.ebook { background: #3b82f6; }
+.product-icon.templates { background: #10b981; }
+.product-icon.courses { background: #8b5cf6; }
+.product-icon.printables { background: #f59e0b; }
+.product-icon.software { background: #ef4444; }
+.product-icon.audio { background: #ec4899; }
+
+.product-type-card h4 {
+    margin: 0 0 0.5rem 0;
+}
+
+.product-type-card p {
+    margin: 0 0 1rem 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.product-meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.product-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.difficulty {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.difficulty-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.difficulty-bar .fill {
+    height: 100%;
+    background: var(--primary);
+}
+
+/* Platforms */
+.platforms-comparison {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.platform-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+}
+
+.platform-logo {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.platform-logo.gumroad { background: #ff90e8; }
+.platform-logo.teachable { background: #ff5a5f; }
+.platform-logo.udemy { background: #a435f0; }
+.platform-logo.etsy { background: #f56400; }
+
+.platform-card h4 {
+    margin: 0 0 1rem 0;
+}
+
+.platform-pros {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.platform-pros .pro {
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.platform-pros .pro i {
+    color: var(--success);
+}
+
+.platform-fee {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.fee-label {
+    color: var(--text-muted);
+}
+
+.fee-value {
+    font-weight: 600;
+}
+
+.best-for {
+    font-size: 0.8rem;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+/* Products List */
+.products-list {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+}
+
+.product-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+}
+
+.product-item:last-child {
+    margin-bottom: 0;
+}
+
+.product-item .item-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.product-item .item-info {
+    flex: 1;
+}
+
+.product-item .item-name {
+    font-weight: 600;
+}
+
+.product-item .item-meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.product-item .item-price {
+    font-weight: 600;
+    color: var(--success);
+}
+
+.product-item .item-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.product-item .item-status.idea {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.product-item .item-status.creating {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.product-item .item-status.live {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text);
+}
+
+.empty-state p {
+    margin: 0 0 1.5rem 0;
+}
+
+/* Tips Grid */
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.tip-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+}
+
+.tip-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+}
+
+.tip-card h5 {
+    margin: 0 0 0.5rem 0;
+}
+
+.tip-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Buttons */
+.btn-add {
+    padding: 0.5rem 1rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    padding: 0.75rem 1.5rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-secondary {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.modal-body {
+    padding: 1.25rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.form-group textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .hero-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .hero-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+let selectedSkills = [];
+let selectedTime = null;
+let selectedPrice = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadProducts();
+    initGenerator();
+});
+
+function initGenerator() {
+    // Skill buttons
+    document.querySelectorAll('.skill-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.classList.toggle('selected');
+            const skill = this.dataset.skill;
+            if (selectedSkills.includes(skill)) {
+                selectedSkills = selectedSkills.filter(s => s !== skill);
+            } else {
+                selectedSkills.push(skill);
+            }
+            updateGeneratorSteps();
+        });
+    });
+
+    // Time buttons
+    document.querySelectorAll('.time-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedTime = this.dataset.time;
+            updateGeneratorSteps();
+        });
+    });
+
+    // Price buttons
+    document.querySelectorAll('.price-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.price-btn').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedPrice = this.dataset.price;
+            updateGeneratorSteps();
+        });
+    });
+}
+
+function updateGeneratorSteps() {
+    document.getElementById('step1').classList.add('active');
+
+    if (selectedSkills.length > 0) {
+        document.getElementById('step2').classList.add('active');
+    }
+
+    if (selectedTime) {
+        document.getElementById('step3').classList.add('active');
+    }
+
+    document.getElementById('generateBtn').disabled = !(selectedSkills.length > 0 && selectedTime && selectedPrice);
+}
+
+function generateIdeas() {
+    const ideas = getProductIdeas(selectedSkills, selectedTime, selectedPrice);
+    const container = document.getElementById('generatedIdeas');
+
+    container.innerHTML = `
+        <h4><i class="fas fa-magic"></i> Produktideer for dig</h4>
+        ${ideas.map(idea => `
+            <div class="idea-card">
+                <h5>${idea.name}</h5>
+                <p>${idea.description}</p>
+                <div class="idea-meta">
+                    <span><i class="fas fa-tag"></i> ${idea.price}</span>
+                    <span><i class="fas fa-clock"></i> ${idea.time}</span>
+                    <span><i class="fas fa-store"></i> ${idea.platform}</span>
+                </div>
+            </div>
+        `).join('')}
+    `;
+
+    container.style.display = 'block';
+}
+
+function getProductIdeas(skills, time, price) {
+    const ideas = [];
+
+    // Writing skills
+    if (skills.includes('writing')) {
+        if (price === 'low' || price === 'medium') {
+            ideas.push({
+                name: 'Nischad E-bok',
+                description: 'Skriv en 30-50 sidig guide om ett specifikt amne du beharskar. Fokusera pa ett problem och ge konkreta losningar.',
+                price: '99-299 kr',
+                time: time === 'weekend' ? '1 helg' : '1-2 veckor',
+                platform: 'Gumroad'
+            });
+        }
+        if (price === 'medium' || price === 'high') {
+            ideas.push({
+                name: 'Mall-paket for [din nisch]',
+                description: 'Samla dina basta mallar: email-sekvenser, content-kalendrar, pitch-mallar. Spar kunderna tid.',
+                price: '299-999 kr',
+                time: '1-2 veckor',
+                platform: 'Gumroad/Etsy'
+            });
+        }
+    }
+
+    // Design skills
+    if (skills.includes('design')) {
+        ideas.push({
+            name: 'Canva Template Pack',
+            description: 'Skapa 20-50 mallar for Instagram, presentations eller marknadsforingmaterial. Salj som pakekurser.',
+            price: price === 'low' ? '49-149 kr' : '199-499 kr',
+            time: '1-2 veckor',
+            platform: 'Etsy/Gumroad'
+        });
+        if (price !== 'low') {
+            ideas.push({
+                name: 'Varumrkespaket',
+                description: 'Logo + visitkort + social media kit. Perfekt for smoetagare som vill se professionella ut.',
+                price: '999-2999 kr',
+                time: '1-2 veckor per kund',
+                platform: 'Gumroad/Egen'
+            });
+        }
+    }
+
+    // Teaching skills
+    if (skills.includes('teaching')) {
+        ideas.push({
+            name: 'Mini-kurs (1-2 timmar)',
+            description: 'Lär ut EN sak riktigt bra. "Kom igång med Excel" ar battre an "Allt om datorer".',
+            price: price === 'low' ? '199-499 kr' : '499-999 kr',
+            time: time === 'weekend' ? '1 helg inspelning' : '1-2 veckor',
+            platform: 'Teachable/Udemy'
+        });
+        if (time !== 'weekend') {
+            ideas.push({
+                name: 'Komplett videokurs',
+                description: 'En djupgaende kurs med moduler, ovningar och certifikat. Premium-prissattning mojlig.',
+                price: '1999-4999 kr',
+                time: '1-3 manader',
+                platform: 'Teachable'
+            });
+        }
+    }
+
+    // Coding skills
+    if (skills.includes('coding')) {
+        ideas.push({
+            name: 'Kod-templates & Boilerplates',
+            description: 'Spara andra utvecklare tid med fardiga starter-kits, komponenter eller scripts.',
+            price: '199-999 kr',
+            time: '1-2 veckor',
+            platform: 'Gumroad/GitHub Sponsors'
+        });
+        if (time !== 'weekend') {
+            ideas.push({
+                name: 'Notion/Airtable-verktyg',
+                description: 'Bygg avancerade templates med automation. Hog efterfragan, lag konkurrens.',
+                price: '299-1499 kr',
+                time: '2-4 veckor',
+                platform: 'Gumroad/Notion Marketplace'
+            });
+        }
+    }
+
+    // Add generic ideas if not enough
+    if (ideas.length < 3) {
+        ideas.push({
+            name: 'Checklistor & Guider',
+            description: 'Samla din kunskap i nedladdningsbara checklistor. Lag tröskel, enkel produktion.',
+            price: '49-149 kr',
+            time: '1-3 dagar',
+            platform: 'Gumroad/Etsy'
+        });
+    }
+
+    return ideas.slice(0, 4);
+}
+
+function loadProducts() {
+    const products = JSON.parse(localStorage.getItem('digital_products') || '[]');
+    renderProducts(products);
+}
+
+function renderProducts(products) {
+    const container = document.getElementById('productsList');
+
+    if (products.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-box-open"></i>
+                <h4>Inga produkter an</h4>
+                <p>Borja med att skapa din forsta digitala produkt</p>
+                <button class="btn-primary" onclick="openAddProductModal()">
+                    <i class="fas fa-plus"></i> Skapa produkt
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = products.map(p => `
+        <div class="product-item">
+            <div class="item-icon">
+                <i class="fas fa-${getTypeIcon(p.type)}"></i>
+            </div>
+            <div class="item-info">
+                <div class="item-name">${p.name}</div>
+                <div class="item-meta">${getTypeName(p.type)} • ${p.platform}</div>
+            </div>
+            <div class="item-price">${p.price ? formatCurrency(p.price) : '-'}</div>
+            <span class="item-status ${p.status}">${getStatusLabel(p.status)}</span>
+        </div>
+    `).join('');
+}
+
+function openAddProductModal() {
+    document.getElementById('productForm').reset();
+    document.getElementById('addProductModal').classList.add('active');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+function saveProduct() {
+    const product = {
+        id: Date.now(),
+        name: document.getElementById('productName').value,
+        type: document.getElementById('productType').value,
+        price: parseFloat(document.getElementById('productPrice').value) || null,
+        platform: document.getElementById('productPlatform').value,
+        status: document.getElementById('productStatus').value,
+        url: document.getElementById('productUrl').value,
+        notes: document.getElementById('productNotes').value,
+        createdAt: new Date().toISOString()
+    };
+
+    const products = JSON.parse(localStorage.getItem('digital_products') || '[]');
+    products.push(product);
+    localStorage.setItem('digital_products', JSON.stringify(products));
+
+    closeModal('addProductModal');
+    loadProducts();
+
+    if (window.WealthAgent) {
+        WealthAgent.showToast('Produkt tillagd!', 'success');
+    }
+}
+
+function getTypeIcon(type) {
+    const icons = {
+        ebook: 'book',
+        template: 'file-alt',
+        course: 'graduation-cap',
+        printable: 'print',
+        software: 'code',
+        audio: 'music',
+        other: 'box'
+    };
+    return icons[type] || 'box';
+}
+
+function getTypeName(type) {
+    const names = {
+        ebook: 'E-bok',
+        template: 'Mall',
+        course: 'Kurs',
+        printable: 'Printable',
+        software: 'Plugin',
+        audio: 'Ljud',
+        other: 'Annat'
+    };
+    return names[type] || type;
+}
+
+function getStatusLabel(status) {
+    const labels = {
+        idea: 'Ide',
+        creating: 'Skapas',
+        live: 'Lanserad'
+    };
+    return labels[status] || status;
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK', maximumFractionDigits: 0 }).format(amount);
+}
+</script>
+{% endblock %}

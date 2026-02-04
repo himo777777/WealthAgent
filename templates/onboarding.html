@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Välkommen - AI Wealth Agent</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #475569;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .onboarding-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+        }
+
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--surface-light);
+            transform: translateY(-50%);
+            z-index: 0;
+        }
+
+        .progress-step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .progress-step.completed {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .progress-step.completed i {
+            display: block;
+        }
+
+        .progress-step span {
+            display: block;
+        }
+
+        .progress-step.completed span {
+            display: none;
+        }
+
+        .progress-step i {
+            display: none;
+        }
+
+        .step-container {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .step-container.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .step-header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .step-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .checkbox-item:hover {
+            border-color: var(--primary);
+        }
+
+        .checkbox-item.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .checkbox-item input {
+            display: none;
+        }
+
+        .checkbox-item i {
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+            color: var(--primary);
+        }
+
+        .quiz-option {
+            display: block;
+            padding: 1rem 1.25rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--primary);
+        }
+
+        .quiz-option.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .quiz-option input {
+            display: none;
+        }
+
+        .quiz-question {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--surface);
+            border-radius: 12px;
+        }
+
+        .quiz-question h3 {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            padding: 0.875rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--surface-light);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .welcome-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            padding: 1.5rem;
+            background: var(--surface);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .feature-card i {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .input-with-suffix {
+            position: relative;
+        }
+
+        .input-with-suffix input {
+            padding-right: 60px;
+        }
+
+        .input-suffix {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .goals-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .result-card {
+            text-align: center;
+            padding: 2rem;
+            background: var(--surface);
+            border-radius: 16px;
+            margin: 2rem 0;
+        }
+
+        .result-card .risk-level {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 1rem 0;
+        }
+
+        .result-card p {
+            color: var(--text-muted);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .onboarding-container {
+                padding: 1rem;
+            }
+
+            .progress-step {
+                width: 32px;
+                height: 32px;
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="onboarding-container">
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-step active" data-step="1">
+                <span>1</span>
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="progress-step" data-step="2">
+                <span>2</span>
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="progress-step" data-step="3">
+                <span>3</span>
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="progress-step" data-step="4">
+                <span>4</span>
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="progress-step" data-step="5">
+                <span>5</span>
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="progress-step" data-step="6">
+                <span>6</span>
+                <i class="fas fa-check"></i>
+            </div>
+        </div>
+
+        <!-- Step 1: Welcome -->
+        <div class="step-container active" data-step="1">
+            <div class="step-header">
+                <div class="step-icon">
+                    <i class="fas fa-hand-sparkles"></i>
+                </div>
+                <h1>Välkommen till AI Wealth Agent</h1>
+                <p>Din personliga AI-rådgivare för ekonomisk framgång</p>
+            </div>
+
+            <div class="welcome-features">
+                <div class="feature-card">
+                    <i class="fas fa-comments"></i>
+                    <h3>AI Chat</h3>
+                    <p>Ställ frågor och få personaliserade råd 24/7</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-bullseye"></i>
+                    <h3>Målplanering</h3>
+                    <p>Sätt upp och följ dina ekonomiska mål</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-lightbulb"></i>
+                    <h3>Smarta Insikter</h3>
+                    <p>Få automatiska tips anpassade för dig</p>
+                </div>
+            </div>
+
+            <p style="text-align: center; color: var(--text-muted); margin-top: 2rem;">
+                Den här guiden tar cirka 15 minuter att genomföra. Din information används för att ge dig bättre råd och sparas säkert.
+            </p>
+
+            <div class="navigation-buttons">
+                <div></div>
+                <button class="btn btn-primary" onclick="nextStep()">
+                    Kom igång <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Background -->
+        <div class="step-container" data-step="2">
+            <div class="step-header">
+                <div class="step-icon">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <h1>Din Bakgrund</h1>
+                <p>Berätta om din yrkesbakgrund och utbildning</p>
+            </div>
+
+            <div class="form-group">
+                <label for="occupation">Nuvarande yrke *</label>
+                <input type="text" id="occupation" placeholder="T.ex. Sjuksköterska, Läkare, Undersköterska">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="employer">Arbetsgivare</label>
+                    <input type="text" id="employer" placeholder="T.ex. Karolinska Sjukhuset">
+                </div>
+                <div class="form-group">
+                    <label for="years_in_field">År i branschen</label>
+                    <input type="number" id="years_in_field" min="0" max="50" placeholder="T.ex. 5">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="industry">Bransch</label>
+                <select id="industry">
+                    <option value="">Välj bransch...</option>
+                    <option value="medicin_vard">Medicin & Vård</option>
+                    <option value="tech">Tech & IT</option>
+                    <option value="finans">Finans & Ekonomi</option>
+                    <option value="utbildning">Utbildning</option>
+                    <option value="offentlig">Offentlig sektor</option>
+                    <option value="handel">Handel & Service</option>
+                    <option value="bygg">Bygg & Industri</option>
+                    <option value="annat">Annat</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="education_level">Utbildningsnivå</label>
+                <select id="education_level">
+                    <option value="">Välj nivå...</option>
+                    <option value="gymnasium">Gymnasium</option>
+                    <option value="yrkeshogskola">Yrkeshögskola</option>
+                    <option value="kandidat">Kandidatexamen</option>
+                    <option value="master">Masterexamen</option>
+                    <option value="doktor">Doktorsexamen</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="specialization">Specialisering (valfritt)</label>
+                <input type="text" id="specialization" placeholder="T.ex. Intensivvård, Ortopedi">
+            </div>
+
+            <div class="navigation-buttons">
+                <button class="btn btn-secondary" onclick="prevStep()">
+                    <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i> Tillbaka
+                </button>
+                <button class="btn btn-primary" onclick="nextStep()">
+                    Fortsätt <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Skills & Interests -->
+        <div class="step-container" data-step="3">
+            <div class="step-header">
+                <div class="step-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <h1>Kunskaper & Intressen</h1>
+                <p>Hjälp oss förstå din erfarenhet och vad du vill lära dig</p>
+            </div>
+
+            <div class="form-group">
+                <label>Investeringserfarenhet</label>
+                <select id="investment_experience">
+                    <option value="">Välj nivå...</option>
+                    <option value="nybörjare">Nybörjare - Aldrig investerat</option>
+                    <option value="lite">Lite erfarenhet - Har ett sparkonto eller fond</option>
+                    <option value="mellan">Mellanliggande - Investerar regelbundet</option>
+                    <option value="erfaren">Erfaren - Aktiv investerare i flera år</option>
+                    <option value="expert">Expert - Professionell kunskap</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Erfarenhet av företagande</label>
+                <select id="entrepreneurship_experience">
+                    <option value="">Välj nivå...</option>
+                    <option value="ingen">Ingen erfarenhet</option>
+                    <option value="intresserad">Intresserad men aldrig testat</option>
+                    <option value="provat">Har provat att starta något</option>
+                    <option value="driver">Driver eller har drivit företag</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Vilka områden är du intresserad av? (välj flera)</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interests" value="aktier">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Aktier</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interests" value="fonder">
+                        <i class="fas fa-layer-group"></i>
+                        <span>Fonder</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interests" value="fastigheter">
+                        <i class="fas fa-home"></i>
+                        <span>Fastigheter</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interests" value="krypto">
+                        <i class="fab fa-bitcoin"></i>
+                        <span>Kryptovalutor</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interests" value="foretagande">
+                        <i class="fas fa-briefcase"></i>
+                        <span>Eget företag</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="interests" value="sidoinkomst">
+                        <i class="fas fa-hand-holding-usd"></i>
+                        <span>Sidoinkomster</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="hours_available">Tid tillgänglig per vecka</label>
+                    <div class="input-with-suffix">
+                        <input type="number" id="hours_available" min="0" max="40" placeholder="5">
+                        <span class="input-suffix">tim</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tech_savviness">Teknisk vana</label>
+                    <select id="tech_savviness">
+                        <option value="">Välj nivå...</option>
+                        <option value="låg">Grundläggande</option>
+                        <option value="medel">Bekväm med digitala verktyg</option>
+                        <option value="hög">Tekniskt kunnig</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="navigation-buttons">
+                <button class="btn btn-secondary" onclick="prevStep()">
+                    <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i> Tillbaka
+                </button>
+                <button class="btn btn-primary" onclick="nextStep()">
+                    Fortsätt <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 4: Financial Situation -->
+        <div class="step-container" data-step="4">
+            <div class="step-header">
+                <div class="step-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <h1>Ekonomisk Situation</h1>
+                <p>Detta hjälper oss ge mer relevanta råd. All data krypteras.</p>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="monthly_income">Månadsinkomst (netto)</label>
+                    <div class="input-with-suffix">
+                        <input type="number" id="monthly_income" min="0" placeholder="30000">
+                        <span class="input-suffix">kr</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="monthly_expenses">Fasta månadsutgifter</label>
+                    <div class="input-with-suffix">
+                        <input type="number" id="monthly_expenses" min="0" placeholder="15000">
+                        <span class="input-suffix">kr</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="current_savings">Nuvarande sparande/investeringar</label>
+                    <div class="input-with-suffix">
+                        <input type="number" id="current_savings" min="0" placeholder="100000">
+                        <span class="input-suffix">kr</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="total_debt">Total skuld (exkl. bolån)</label>
+                    <div class="input-with-suffix">
+                        <input type="number" id="total_debt" min="0" placeholder="0">
+                        <span class="input-suffix">kr</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="emergency_fund">Buffert (månaders utgifter)</label>
+                <select id="emergency_fund">
+                    <option value="">Välj...</option>
+                    <option value="0">Ingen buffert</option>
+                    <option value="1">1 månad</option>
+                    <option value="3">3 månader</option>
+                    <option value="6">6 månader</option>
+                    <option value="12">12+ månader</option>
+                </select>
+            </div>
+
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;">
+                <i class="fas fa-lock" style="margin-right: 0.5rem;"></i>
+                Din ekonomiska data krypteras och delas aldrig med tredje part.
+            </p>
+
+            <div class="navigation-buttons">
+                <button class="btn btn-secondary" onclick="prevStep()">
+                    <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i> Tillbaka
+                </button>
+                <button class="btn btn-primary" onclick="nextStep()">
+                    Fortsätt <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 5: Goals -->
+        <div class="step-container" data-step="5">
+            <div class="step-header">
+                <div class="step-icon">
+                    <i class="fas fa-flag-checkered"></i>
+                </div>
+                <h1>Dina Mål & Drömmar</h1>
+                <p>Vad vill du uppnå ekonomiskt?</p>
+            </div>
+
+            <div class="form-group">
+                <label for="short_term_goals">Kortsiktiga mål (inom 1 år)</label>
+                <textarea id="short_term_goals" class="goals-textarea" placeholder="T.ex. Bygga upp en buffert på 50 000 kr, betala av kreditkort..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="medium_term_goals">Medellånga mål (1-5 år)</label>
+                <textarea id="medium_term_goals" class="goals-textarea" placeholder="T.ex. Spara till kontantinsats, investera 500 000 kr..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="long_term_goals">Långsiktiga mål (5+ år)</label>
+                <textarea id="long_term_goals" class="goals-textarea" placeholder="T.ex. Köpa bostad, pensionssparande, ekonomisk frihet..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="dream_goal">Ditt drömmål</label>
+                <textarea id="dream_goal" class="goals-textarea" placeholder="Vad är ditt ultimata ekonomiska mål? T.ex. Gå i pension vid 55, starta eget företag..."></textarea>
+            </div>
+
+            <div class="navigation-buttons">
+                <button class="btn btn-secondary" onclick="prevStep()">
+                    <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i> Tillbaka
+                </button>
+                <button class="btn btn-primary" onclick="nextStep()">
+                    Fortsätt <i class="fas fa-arrow-right" style="margin-left: 0.5rem;"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 6: Risk Tolerance Quiz -->
+        <div class="step-container" data-step="6">
+            <div class="step-header">
+                <div class="step-icon">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+                <h1>Risktolerans</h1>
+                <p>Svara på frågorna för att förstå din riskprofil</p>
+            </div>
+
+            <div class="quiz-question">
+                <h3>1. Om dina investeringar sjönk med 20% på en månad, vad skulle du göra?</h3>
+                <label class="quiz-option">
+                    <input type="radio" name="q1" value="1">
+                    Sälja allt omedelbart för att undvika fler förluster
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q1" value="2">
+                    Sälja en del för att minska risken
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q1" value="3">
+                    Behålla och vänta på återhämtning
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q1" value="4">
+                    Köpa mer eftersom priserna är lägre
+                </label>
+            </div>
+
+            <div class="quiz-question">
+                <h3>2. Vilken avkastning/risk-kombination föredrar du?</h3>
+                <label class="quiz-option">
+                    <input type="radio" name="q2" value="1">
+                    2% årlig avkastning, nästan ingen risk
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q2" value="2">
+                    5% avkastning, möjlig 10% förlust
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q2" value="3">
+                    10% avkastning, möjlig 25% förlust
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q2" value="4">
+                    15%+ avkastning, möjlig 40%+ förlust
+                </label>
+            </div>
+
+            <div class="quiz-question">
+                <h3>3. När planerar du använda dina investeringar?</h3>
+                <label class="quiz-option">
+                    <input type="radio" name="q3" value="1">
+                    Inom 1-2 år
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q3" value="2">
+                    3-5 år
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q3" value="3">
+                    6-10 år
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q3" value="4">
+                    Mer än 10 år
+                </label>
+            </div>
+
+            <div class="quiz-question">
+                <h3>4. Hur skulle du beskriva din investeringsstil?</h3>
+                <label class="quiz-option">
+                    <input type="radio" name="q4" value="1">
+                    Försiktig - Jag vill skydda mitt kapital
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q4" value="2">
+                    Balanserad - Lagom tillväxt med begränsad risk
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q4" value="3">
+                    Tillväxt - Accepterar risk för högre avkastning
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q4" value="4">
+                    Aggressiv - Maximera avkastning, tål hög risk
+                </label>
+            </div>
+
+            <div class="quiz-question">
+                <h3>5. Hur stabil är din inkomst?</h3>
+                <label class="quiz-option">
+                    <input type="radio" name="q5" value="1">
+                    Osäker/Varierande
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q5" value="2">
+                    Ganska stabil
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q5" value="3">
+                    Stabil fast anställning
+                </label>
+                <label class="quiz-option">
+                    <input type="radio" name="q5" value="4">
+                    Mycket stabil med flera inkomstkällor
+                </label>
+            </div>
+
+            <div class="navigation-buttons">
+                <button class="btn btn-secondary" onclick="prevStep()">
+                    <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i> Tillbaka
+                </button>
+                <button class="btn btn-primary" onclick="submitOnboarding()">
+                    Slutför <i class="fas fa-check" style="margin-left: 0.5rem;"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = {{ current_step }};
+
+        // Initialize checkbox and quiz option interactions
+        document.querySelectorAll('.checkbox-item').forEach(item => {
+            item.addEventListener('click', () => {
+                item.classList.toggle('selected');
+                item.querySelector('input').checked = item.classList.contains('selected');
+            });
+        });
+
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const questionDiv = option.closest('.quiz-question');
+                questionDiv.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                option.querySelector('input').checked = true;
+            });
+        });
+
+        function updateProgressBar() {
+            document.querySelectorAll('.progress-step').forEach(step => {
+                const stepNum = parseInt(step.dataset.step);
+                step.classList.remove('active', 'completed');
+                if (stepNum < currentStep) {
+                    step.classList.add('completed');
+                } else if (stepNum === currentStep) {
+                    step.classList.add('active');
+                }
+            });
+        }
+
+        function showStep(step) {
+            document.querySelectorAll('.step-container').forEach(container => {
+                container.classList.remove('active');
+            });
+            document.querySelector(`.step-container[data-step="${step}"]`).classList.add('active');
+            updateProgressBar();
+            window.scrollTo(0, 0);
+        }
+
+        function collectStepData() {
+            const data = {};
+
+            // Step 2: Background
+            data.occupation = document.getElementById('occupation')?.value || '';
+            data.employer = document.getElementById('employer')?.value || '';
+            data.years_in_field = parseInt(document.getElementById('years_in_field')?.value) || null;
+            data.industry = document.getElementById('industry')?.value || '';
+            data.education_level = document.getElementById('education_level')?.value || '';
+            data.specialization = document.getElementById('specialization')?.value || '';
+
+            // Step 3: Skills & Interests
+            data.investment_experience = document.getElementById('investment_experience')?.value || '';
+            data.entrepreneurship_experience = document.getElementById('entrepreneurship_experience')?.value || '';
+            data.tech_savviness = document.getElementById('tech_savviness')?.value || '';
+            data.hours_per_week_available = parseInt(document.getElementById('hours_available')?.value) || null;
+
+            const interests = [];
+            document.querySelectorAll('input[name="interests"]:checked').forEach(cb => {
+                interests.push(cb.value);
+            });
+            data.investment_interests = interests;
+
+            // Step 4: Financial
+            data.monthly_income = parseInt(document.getElementById('monthly_income')?.value) || null;
+            data.monthly_expenses = parseInt(document.getElementById('monthly_expenses')?.value) || null;
+            data.current_savings = parseInt(document.getElementById('current_savings')?.value) || null;
+            data.total_debt = parseInt(document.getElementById('total_debt')?.value) || null;
+            data.emergency_fund_months = parseInt(document.getElementById('emergency_fund')?.value) || null;
+
+            // Step 5: Goals
+            data.short_term_goals = [document.getElementById('short_term_goals')?.value || ''].filter(g => g);
+            data.medium_term_goals = [document.getElementById('medium_term_goals')?.value || ''].filter(g => g);
+            data.long_term_goals = [document.getElementById('long_term_goals')?.value || ''].filter(g => g);
+            data.dream_goal = document.getElementById('dream_goal')?.value || '';
+
+            return data;
+        }
+
+        async function saveProgress() {
+            const data = collectStepData();
+            data.onboarding_step = currentStep;
+
+            try {
+                const response = await fetch('/wealth/api/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    console.error('Failed to save progress');
+                }
+            } catch (error) {
+                console.error('Error saving progress:', error);
+            }
+        }
+
+        async function nextStep() {
+            await saveProgress();
+            if (currentStep < 6) {
+                currentStep++;
+                showStep(currentStep);
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        }
+
+        async function submitOnboarding() {
+            // Collect quiz answers
+            const answers = [];
+            for (let i = 1; i <= 5; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                if (selected) {
+                    answers.push({
+                        question_id: i,
+                        answer_value: parseInt(selected.value)
+                    });
+                }
+            }
+
+            if (answers.length < 5) {
+                alert('Vänligen svara på alla frågor i risk-quizet.');
+                return;
+            }
+
+            // Submit risk quiz
+            try {
+                const quizResponse = await fetch('/wealth/api/risk-quiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ answers })
+                });
+
+                if (!quizResponse.ok) {
+                    throw new Error('Failed to submit quiz');
+                }
+
+                // Save final profile data
+                await saveProgress();
+
+                // Complete onboarding
+                const completeResponse = await fetch('/wealth/api/profile/complete-onboarding', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (completeResponse.ok) {
+                    window.location.href = '/wealth/';
+                } else {
+                    throw new Error('Failed to complete onboarding');
+                }
+            } catch (error) {
+                console.error('Error completing onboarding:', error);
+                alert('Ett fel uppstod. Försök igen.');
+            }
+        }
+
+        // Initialize
+        showStep(currentStep);
+    </script>
+</body>
+</html>

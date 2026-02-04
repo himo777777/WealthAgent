@@ -1,0 +1,545 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Budget - AI Wealth Agent{% endblock %}
+{% block page_title %}Budget{% endblock %}
+
+{% block content %}
+<div class="budget-page">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h2><i class="fas fa-wallet"></i> Budgetverktyg</h2>
+            <p>Holl koll pa dina inkomster och utgifter</p>
+        </div>
+        <button class="btn btn-primary" onclick="openTransactionModal()">
+            <i class="fas fa-plus"></i> Lagg till
+        </button>
+    </div>
+
+    <!-- Month Summary -->
+    <div class="summary-grid">
+        <div class="summary-card income">
+            <div class="summary-icon">
+                <i class="fas fa-arrow-down"></i>
+            </div>
+            <div class="summary-info">
+                <span class="summary-value" id="totalIncome">0 SEK</span>
+                <span class="summary-label">Inkomster</span>
+            </div>
+        </div>
+        <div class="summary-card expense">
+            <div class="summary-icon">
+                <i class="fas fa-arrow-up"></i>
+            </div>
+            <div class="summary-info">
+                <span class="summary-value" id="totalExpenses">0 SEK</span>
+                <span class="summary-label">Utgifter</span>
+            </div>
+        </div>
+        <div class="summary-card balance">
+            <div class="summary-icon">
+                <i class="fas fa-balance-scale"></i>
+            </div>
+            <div class="summary-info">
+                <span class="summary-value" id="balance">0 SEK</span>
+                <span class="summary-label">Balans</span>
+            </div>
+        </div>
+        <div class="summary-card savings">
+            <div class="summary-icon">
+                <i class="fas fa-piggy-bank"></i>
+            </div>
+            <div class="summary-info">
+                <span class="summary-value" id="savingsRate">0%</span>
+                <span class="summary-label">Sparkvot</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="budget-grid">
+        <!-- Categories -->
+        <div class="card categories-card">
+            <div class="card-header">
+                <h3>Kategorier</h3>
+                <span class="month-selector" id="currentMonth">Februari 2026</span>
+            </div>
+            <div class="card-content">
+                <div id="categoriesList" class="categories-list"></div>
+            </div>
+        </div>
+
+        <!-- Category Chart -->
+        <div class="card chart-card">
+            <div class="card-header">
+                <h3>Fordelning</h3>
+            </div>
+            <div class="card-content">
+                <canvas id="categoryChart" height="250"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="card transactions-card">
+            <div class="card-header">
+                <h3>Senaste transaktioner</h3>
+            </div>
+            <div class="card-content">
+                <div id="transactionsList" class="transactions-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Transaction Modal -->
+<div id="transactionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Lagg till transaktion</h3>
+            <button class="modal-close" onclick="closeTransactionModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="transactionForm">
+                <div class="form-group">
+                    <label>Typ</label>
+                    <div class="type-toggle">
+                        <button type="button" class="toggle-btn active" data-type="expense">Utgift</button>
+                        <button type="button" class="toggle-btn" data-type="income">Inkomst</button>
+                    </div>
+                    <input type="hidden" name="transaction_type" value="expense">
+                </div>
+
+                <div class="form-group">
+                    <label>Belopp (SEK)</label>
+                    <input type="number" name="amount" placeholder="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <select name="category_id" id="categorySelect" required></select>
+                </div>
+
+                <div class="form-group">
+                    <label>Beskrivning</label>
+                    <input type="text" name="description" placeholder="Vad galde det?">
+                </div>
+
+                <div class="form-group">
+                    <label>Datum</label>
+                    <input type="date" name="date" required>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeTransactionModal()">Avbryt</button>
+            <button class="btn btn-primary" onclick="saveTransaction()">Spara</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.budget-page { max-width: 1200px; }
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.header-content h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.header-content h2 i { color: var(--primary); }
+.header-content p { color: var(--text-muted); }
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid var(--border);
+}
+
+.summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.summary-card.income .summary-icon { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.summary-card.expense .summary-icon { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.summary-card.balance .summary-icon { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+.summary-card.savings .summary-icon { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+
+.summary-info { display: flex; flex-direction: column; }
+.summary-value { font-size: 1.25rem; font-weight: 700; }
+.summary-label { font-size: 0.8rem; color: var(--text-muted); }
+
+.budget-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.transactions-card {
+    grid-column: span 2;
+}
+
+.card {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+}
+
+.card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h3 { font-size: 1rem; }
+.month-selector { font-size: 0.85rem; color: var(--text-muted); }
+.card-content { padding: 1.25rem; }
+
+.categories-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.category-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.category-info { flex: 1; }
+.category-name { font-weight: 500; display: block; }
+.category-budget { font-size: 0.8rem; color: var(--text-muted); }
+.category-amount { font-weight: 600; }
+
+.transactions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.transaction-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.transaction-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.transaction-info { flex: 1; }
+.transaction-desc { font-weight: 500; display: block; }
+.transaction-date { font-size: 0.75rem; color: var(--text-muted); }
+.transaction-amount { font-weight: 600; }
+.transaction-amount.expense { color: var(--error); }
+.transaction-amount.income { color: var(--success); }
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.show { display: flex; }
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    max-width: 450px;
+    width: 100%;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.modal-body { padding: 1.5rem; }
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+}
+
+.type-toggle {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    background: var(--background);
+    color: var(--text-muted);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.toggle-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .budget-grid { grid-template-columns: 1fr; }
+    .transactions-card { grid-column: span 1; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let categories = [];
+let categoryChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadCategories();
+    loadTransactions();
+    initChart();
+
+    // Date default to today
+    document.querySelector('input[name="date"]').valueAsDate = new Date();
+
+    // Type toggle
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.querySelector('input[name="transaction_type"]').value = this.dataset.type;
+        });
+    });
+});
+
+function initChart() {
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    categoryChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: []
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'right' }
+            }
+        }
+    });
+}
+
+async function loadCategories() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/budget/categories');
+        if (response.success) {
+            categories = response.categories;
+            renderCategories();
+            populateCategorySelect();
+        }
+    } catch (error) {
+        console.error('Failed to load categories:', error);
+    }
+}
+
+function renderCategories() {
+    const list = document.getElementById('categoriesList');
+    list.innerHTML = categories.map(cat => `
+        <div class="category-item">
+            <div class="category-icon" style="background: ${cat.color}20; color: ${cat.color};">
+                <i class="fas ${cat.icon}"></i>
+            </div>
+            <div class="category-info">
+                <span class="category-name">${cat.name}</span>
+                <span class="category-budget">Budget: ${WealthAgent.formatCurrency(cat.monthly_budget || 0)}</span>
+            </div>
+            <span class="category-amount">0 SEK</span>
+        </div>
+    `).join('');
+}
+
+function populateCategorySelect() {
+    const select = document.getElementById('categorySelect');
+    select.innerHTML = categories.map(cat =>
+        `<option value="${cat.id}">${cat.name}</option>`
+    ).join('');
+}
+
+async function loadTransactions() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/budget/transactions');
+        if (response.success) {
+            renderTransactions(response.transactions);
+            updateSummary(response.transactions);
+            updateChart(response.transactions);
+        }
+    } catch (error) {
+        console.error('Failed to load transactions:', error);
+    }
+}
+
+function renderTransactions(transactions) {
+    const list = document.getElementById('transactionsList');
+
+    if (transactions.length === 0) {
+        list.innerHTML = '<div class="empty-state"><p>Inga transaktioner annu</p></div>';
+        return;
+    }
+
+    list.innerHTML = transactions.slice(0, 10).map(t => `
+        <div class="transaction-item">
+            <div class="transaction-icon" style="background: ${t.transaction_type === 'expense' ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)'}; color: ${t.transaction_type === 'expense' ? '#ef4444' : '#22c55e'};">
+                <i class="fas fa-${t.transaction_type === 'expense' ? 'arrow-up' : 'arrow-down'}"></i>
+            </div>
+            <div class="transaction-info">
+                <span class="transaction-desc">${t.description || t.category_name || 'Transaktion'}</span>
+                <span class="transaction-date">${t.transaction_date.substring(0, 10)}</span>
+            </div>
+            <span class="transaction-amount ${t.transaction_type}">${t.transaction_type === 'expense' ? '-' : '+'}${WealthAgent.formatCurrency(t.amount)}</span>
+        </div>
+    `).join('');
+}
+
+function updateSummary(transactions) {
+    const income = transactions.filter(t => t.transaction_type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const expenses = transactions.filter(t => t.transaction_type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    const balance = income - expenses;
+    const savingsRate = income > 0 ? ((balance / income) * 100).toFixed(0) : 0;
+
+    document.getElementById('totalIncome').textContent = WealthAgent.formatCurrency(income);
+    document.getElementById('totalExpenses').textContent = WealthAgent.formatCurrency(expenses);
+    document.getElementById('balance').textContent = WealthAgent.formatCurrency(balance);
+    document.getElementById('savingsRate').textContent = savingsRate + '%';
+}
+
+function updateChart(transactions) {
+    const expensesByCategory = {};
+    transactions.filter(t => t.transaction_type === 'expense').forEach(t => {
+        const name = t.category_name || 'Ovrigt';
+        expensesByCategory[name] = (expensesByCategory[name] || 0) + t.amount;
+    });
+
+    const labels = Object.keys(expensesByCategory);
+    const data = Object.values(expensesByCategory);
+    const colors = ['#6366f1', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6', '#ef4444', '#10b981'];
+
+    categoryChart.data.labels = labels;
+    categoryChart.data.datasets[0].data = data;
+    categoryChart.data.datasets[0].backgroundColor = colors.slice(0, labels.length);
+    categoryChart.update();
+}
+
+function openTransactionModal() {
+    document.getElementById('transactionModal').classList.add('show');
+}
+
+function closeTransactionModal() {
+    document.getElementById('transactionModal').classList.remove('show');
+}
+
+async function saveTransaction() {
+    const form = document.getElementById('transactionForm');
+    const formData = new FormData(form);
+
+    const data = {
+        amount: parseFloat(formData.get('amount')),
+        category_id: parseInt(formData.get('category_id')),
+        description: formData.get('description'),
+        date: formData.get('date'),
+        transaction_type: formData.get('transaction_type')
+    };
+
+    try {
+        await WealthAgent.apiCall('/wealth/api/budget/transactions', 'POST', data);
+        WealthAgent.showToast('Transaktion sparad!', 'success');
+        closeTransactionModal();
+        form.reset();
+        loadTransactions();
+    } catch (error) {
+        WealthAgent.showToast('Kunde inte spara', 'error');
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,1166 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Pitch Builder - Wealth Agent{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pitch-hero {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .pitch-hero h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Progress Steps */
+    .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 2rem;
+        position: relative;
+    }
+
+    .progress-steps::before {
+        content: '';
+        position: absolute;
+        top: 16px;
+        left: 5%;
+        right: 5%;
+        height: 3px;
+        background: rgba(255,255,255,0.3);
+    }
+
+    .step {
+        text-align: center;
+        position: relative;
+        z-index: 1;
+        flex: 1;
+    }
+
+    .step-dot {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .step-dot:hover {
+        transform: scale(1.1);
+    }
+
+    .step-dot.active {
+        background: white;
+        color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(255,255,255,0.3);
+    }
+
+    .step-dot.completed {
+        background: #10b981;
+    }
+
+    .step-label {
+        font-size: 0.7rem;
+        opacity: 0.9;
+    }
+
+    /* Slide Builder */
+    .builder-container {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+        .builder-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Sidebar */
+    .slides-sidebar {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1rem;
+        height: fit-content;
+        position: sticky;
+        top: 1rem;
+    }
+
+    .slide-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-bottom: 0.25rem;
+        transition: all 0.2s ease;
+    }
+
+    .slide-nav-item:hover {
+        background: var(--background);
+    }
+
+    .slide-nav-item.active {
+        background: rgba(59, 130, 246, 0.1);
+        border-left: 3px solid var(--primary);
+    }
+
+    .slide-nav-number {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    .slide-nav-item.completed .slide-nav-number {
+        background: var(--success);
+        color: white;
+    }
+
+    .slide-nav-item.active .slide-nav-number {
+        background: var(--primary);
+        color: white;
+    }
+
+    .slide-nav-title {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    /* Main Editor */
+    .slide-editor {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .slide-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .slide-title {
+        font-weight: 600;
+        font-size: 1.125rem;
+    }
+
+    .slide-body {
+        padding: 1.5rem;
+    }
+
+    .slide-description {
+        background: rgba(59, 130, 246, 0.05);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+
+    .slide-description h6 {
+        margin-bottom: 0.5rem;
+        color: var(--primary);
+    }
+
+    .form-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-section-title {
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Tips Box */
+    .tips-box {
+        background: rgba(245, 158, 11, 0.05);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .tips-box h6 {
+        color: #f59e0b;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .tips-box ul {
+        margin: 0;
+        padding-left: 1.25rem;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .tips-box li {
+        margin-bottom: 0.25rem;
+    }
+
+    /* Preview */
+    .preview-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .preview-slide {
+        aspect-ratio: 16/9;
+        background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+        border-radius: 8px;
+        padding: 2rem;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .preview-slide h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .preview-slide p {
+        opacity: 0.8;
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+
+    /* Valuation Calculator */
+    .valuation-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .valuation-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .valuation-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .valuation-results {
+        background: var(--background);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    .valuation-method {
+        padding: 1rem;
+        background: var(--surface);
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+    }
+
+    .valuation-method-name {
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .valuation-method-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .valuation-range {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: rgba(59, 130, 246, 0.1);
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .valuation-range-label {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .valuation-range-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    /* Export Options */
+    .export-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .export-options {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .export-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--text);
+    }
+
+    .export-btn:hover {
+        border-color: var(--primary);
+        background: rgba(59, 130, 246, 0.05);
+    }
+
+    .export-btn i {
+        font-size: 1.25rem;
+    }
+
+    /* Navigation Buttons */
+    .slide-navigation {
+        display: flex;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--border);
+        background: var(--background);
+    }
+
+    /* Slide Content Containers */
+    .slide-content {
+        display: none;
+    }
+
+    .slide-content.active {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Hero Section -->
+    <div class="pitch-hero">
+        <h1>Investor Pitch Builder</h1>
+        <p class="mb-0 opacity-75">Skapa en övertygande pitch deck som får investerare att vilja veta mer</p>
+
+        <div class="progress-steps">
+            <div class="step" data-step="1">
+                <div class="step-dot active" onclick="goToSlide(1)">1</div>
+                <div class="step-label">Problem</div>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-dot" onclick="goToSlide(2)">2</div>
+                <div class="step-label">Lösning</div>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-dot" onclick="goToSlide(3)">3</div>
+                <div class="step-label">Marknad</div>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-dot" onclick="goToSlide(4)">4</div>
+                <div class="step-label">Affärsmodell</div>
+            </div>
+            <div class="step" data-step="5">
+                <div class="step-dot" onclick="goToSlide(5)">5</div>
+                <div class="step-label">Traction</div>
+            </div>
+            <div class="step" data-step="6">
+                <div class="step-dot" onclick="goToSlide(6)">6</div>
+                <div class="step-label">Team</div>
+            </div>
+            <div class="step" data-step="7">
+                <div class="step-dot" onclick="goToSlide(7)">7</div>
+                <div class="step-label">Ask</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="builder-container">
+        <!-- Sidebar -->
+        <div class="slides-sidebar">
+            <h6 class="mb-3">Slides</h6>
+            <div class="slide-nav-item active" onclick="goToSlide(1)" data-slide="1">
+                <div class="slide-nav-number">1</div>
+                <div class="slide-nav-title">Problem</div>
+            </div>
+            <div class="slide-nav-item" onclick="goToSlide(2)" data-slide="2">
+                <div class="slide-nav-number">2</div>
+                <div class="slide-nav-title">Lösning</div>
+            </div>
+            <div class="slide-nav-item" onclick="goToSlide(3)" data-slide="3">
+                <div class="slide-nav-number">3</div>
+                <div class="slide-nav-title">Marknad (TAM/SAM/SOM)</div>
+            </div>
+            <div class="slide-nav-item" onclick="goToSlide(4)" data-slide="4">
+                <div class="slide-nav-number">4</div>
+                <div class="slide-nav-title">Affärsmodell</div>
+            </div>
+            <div class="slide-nav-item" onclick="goToSlide(5)" data-slide="5">
+                <div class="slide-nav-number">5</div>
+                <div class="slide-nav-title">Traction & Milestones</div>
+            </div>
+            <div class="slide-nav-item" onclick="goToSlide(6)" data-slide="6">
+                <div class="slide-nav-number">6</div>
+                <div class="slide-nav-title">Team</div>
+            </div>
+            <div class="slide-nav-item" onclick="goToSlide(7)" data-slide="7">
+                <div class="slide-nav-number">7</div>
+                <div class="slide-nav-title">Ask & Use of Funds</div>
+            </div>
+        </div>
+
+        <!-- Main Editor -->
+        <div class="slide-editor">
+            <!-- Slide 1: Problem -->
+            <div class="slide-content active" id="slide-1">
+                <div class="slide-header">
+                    <div class="slide-title">1. Problem</div>
+                    <span class="badge bg-primary">Viktigast</span>
+                </div>
+                <div class="slide-body">
+                    <div class="slide-description">
+                        <h6>💡 Vad ska denna slide förmedla?</h6>
+                        <p class="mb-0">Definiera problemet så tydligt att investeraren nickar igenkännande. Ett starkt problem = stark pitch.</p>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">Beskriv problemet</div>
+                        <div class="mb-3">
+                            <label class="form-label">Huvudproblem (en mening)</label>
+                            <input type="text" class="form-control" id="problem-headline" placeholder="Ex: Småföretagare spenderar 10+ timmar/vecka på bokföring">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Vem har problemet? (Målgrupp)</label>
+                            <input type="text" class="form-control" id="problem-who" placeholder="Ex: Småföretagare med 1-10 anställda">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Hur löser de problemet idag?</label>
+                            <textarea class="form-control" id="problem-current" rows="2" placeholder="Ex: Manuellt i Excel, dyra konsulter, eller ignorerar det helt"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Vad kostar problemet? (tid/pengar/frustration)</label>
+                            <input type="text" class="form-control" id="problem-cost" placeholder="Ex: 50 000 kr/år i förlorad tid och misstag">
+                        </div>
+                    </div>
+
+                    <div class="tips-box">
+                        <h6>💡 Tips för Problem-slide</h6>
+                        <ul>
+                            <li>Använd statistik om möjligt ("70% av småföretagare...")</li>
+                            <li>Berätta en kort historia om en riktig person med problemet</li>
+                            <li>Undvik att prata om din lösning här - fokus på smärtan</li>
+                            <li>Gör det personligt - investerare ska "känna" problemet</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="slide-navigation">
+                    <div></div>
+                    <button class="btn btn-primary" onclick="nextSlide()">Nästa: Lösning <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </div>
+
+            <!-- Slide 2: Solution -->
+            <div class="slide-content" id="slide-2">
+                <div class="slide-header">
+                    <div class="slide-title">2. Lösning</div>
+                </div>
+                <div class="slide-body">
+                    <div class="slide-description">
+                        <h6>💡 Vad ska denna slide förmedla?</h6>
+                        <p class="mb-0">Visa din lösning på ett enkelt och visuellt sätt. Demo > Beskrivning.</p>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="mb-3">
+                            <label class="form-label">Din lösning i en mening</label>
+                            <input type="text" class="form-control" id="solution-headline" placeholder="Ex: AI-driven bokföringsassistent som automatiserar 90% av arbetet">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Hur fungerar det? (3 steg)</label>
+                            <input type="text" class="form-control mb-2" id="solution-step1" placeholder="Steg 1: Koppla din bank">
+                            <input type="text" class="form-control mb-2" id="solution-step2" placeholder="Steg 2: AI kategoriserar automatiskt">
+                            <input type="text" class="form-control" id="solution-step3" placeholder="Steg 3: Få färdig bokföring">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Unik fördel / "Secret sauce"</label>
+                            <textarea class="form-control" id="solution-unique" rows="2" placeholder="Ex: Vår AI är tränad på 10 miljoner svenska transaktioner..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="tips-box">
+                        <h6>💡 Tips för Lösning-slide</h6>
+                        <ul>
+                            <li>Visa en screenshot eller kort demo om möjligt</li>
+                            <li>Håll det enkelt - en 8-åring ska förstå grundkonceptet</li>
+                            <li>Fokusera på värdet, inte tekniken</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="slide-navigation">
+                    <button class="btn btn-outline-secondary" onclick="prevSlide()"><i class="fas fa-arrow-left me-2"></i> Tillbaka</button>
+                    <button class="btn btn-primary" onclick="nextSlide()">Nästa: Marknad <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </div>
+
+            <!-- Slide 3: Market -->
+            <div class="slide-content" id="slide-3">
+                <div class="slide-header">
+                    <div class="slide-title">3. Marknad (TAM/SAM/SOM)</div>
+                </div>
+                <div class="slide-body">
+                    <div class="slide-description">
+                        <h6>💡 Vad ska denna slide förmedla?</h6>
+                        <p class="mb-0">Visa att marknaden är stor nog för att ge investeraren avkastning. Använd bottom-up analys.</p>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">TAM (Total Addressable Market)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="market-tam" placeholder="500">
+                                    <span class="input-group-text">MSEK</span>
+                                </div>
+                                <small class="text-muted">Hela marknaden globalt</small>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">SAM (Serviceable Market)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="market-sam" placeholder="50">
+                                    <span class="input-group-text">MSEK</span>
+                                </div>
+                                <small class="text-muted">Din geografiska/segment marknad</small>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">SOM (Obtainable Market)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="market-som" placeholder="5">
+                                    <span class="input-group-text">MSEK</span>
+                                </div>
+                                <small class="text-muted">Realistisk andel år 1-3</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Hur beräknade du detta? (Bottom-up)</label>
+                            <textarea class="form-control" id="market-calculation" rows="2" placeholder="Ex: 300 000 småföretag × 2000 kr/mån × 12 mån = 7,2 miljarder"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Marknadstrender</label>
+                            <input type="text" class="form-control" id="market-trends" placeholder="Ex: Marknaden växer 15%/år drivet av digitalisering">
+                        </div>
+                    </div>
+
+                    <div class="tips-box">
+                        <h6>💡 Tips för Marknad-slide</h6>
+                        <ul>
+                            <li>Använd bottom-up beräkning (antal kunder × pris), inte top-down</li>
+                            <li>Citera trovärdiga källor (Gartner, SCB, branschrapporter)</li>
+                            <li>Fokusera på SOM - det är det investeraren bryr sig om</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="slide-navigation">
+                    <button class="btn btn-outline-secondary" onclick="prevSlide()"><i class="fas fa-arrow-left me-2"></i> Tillbaka</button>
+                    <button class="btn btn-primary" onclick="nextSlide()">Nästa: Affärsmodell <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </div>
+
+            <!-- Slide 4: Business Model -->
+            <div class="slide-content" id="slide-4">
+                <div class="slide-header">
+                    <div class="slide-title">4. Affärsmodell</div>
+                </div>
+                <div class="slide-body">
+                    <div class="slide-description">
+                        <h6>💡 Vad ska denna slide förmedla?</h6>
+                        <p class="mb-0">Hur tjänar ni pengar? Visa att ni har en skalbar och hållbar affärsmodell.</p>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="mb-3">
+                            <label class="form-label">Intäktsmodell</label>
+                            <select class="form-select" id="biz-model">
+                                <option value="">Välj...</option>
+                                <option value="saas">SaaS (prenumeration)</option>
+                                <option value="transaction">Transaktionsavgift</option>
+                                <option value="marketplace">Marketplace (provision)</option>
+                                <option value="freemium">Freemium</option>
+                                <option value="enterprise">Enterprise-licens</option>
+                                <option value="other">Annat</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Pris/ARPU (per kund/månad)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="biz-price" placeholder="499">
+                                    <span class="input-group-text">kr</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Bruttomarginal</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="biz-margin" placeholder="80">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Unit Economics</label>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label small">CAC</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="biz-cac" placeholder="500">
+                                        <span class="input-group-text">kr</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">LTV</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="biz-ltv" placeholder="5000">
+                                        <span class="input-group-text">kr</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">LTV:CAC</label>
+                                    <input type="text" class="form-control" id="biz-ratio" readonly value="-">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tips-box">
+                        <h6>💡 Tips för Affärsmodell-slide</h6>
+                        <ul>
+                            <li>LTV:CAC bör vara minst 3:1</li>
+                            <li>Visa vägen till lönsamhet</li>
+                            <li>Om ni är pre-revenue, visa tänkt pricing</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="slide-navigation">
+                    <button class="btn btn-outline-secondary" onclick="prevSlide()"><i class="fas fa-arrow-left me-2"></i> Tillbaka</button>
+                    <button class="btn btn-primary" onclick="nextSlide()">Nästa: Traction <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </div>
+
+            <!-- Slide 5: Traction -->
+            <div class="slide-content" id="slide-5">
+                <div class="slide-header">
+                    <div class="slide-title">5. Traction & Milestones</div>
+                </div>
+                <div class="slide-body">
+                    <div class="slide-description">
+                        <h6>💡 Vad ska denna slide förmedla?</h6>
+                        <p class="mb-0">Bevisa att det finns efterfrågan. Visa tillväxt och momentum.</p>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="mb-3">
+                            <label class="form-label">Nyckeltal just nu</label>
+                            <div class="row">
+                                <div class="col-md-4 mb-2">
+                                    <input type="text" class="form-control" id="traction-users" placeholder="Antal användare/kunder">
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <input type="text" class="form-control" id="traction-revenue" placeholder="MRR/ARR">
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <input type="text" class="form-control" id="traction-growth" placeholder="Tillväxt %/mån">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Uppnådda milestones</label>
+                            <textarea class="form-control" id="traction-milestones" rows="3" placeholder="• Lanserade MVP i januari
+• 500 betalande kunder
+• Partnerskap med X
+• Nominerade till Y-pris"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kommande milestones (nästa 12 mån)</label>
+                            <textarea class="form-control" id="traction-roadmap" rows="3" placeholder="• Q2: 1000 kunder
+• Q3: Break-even
+• Q4: Expansion till Norge"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="tips-box">
+                        <h6>💡 Tips för Traction-slide</h6>
+                        <ul>
+                            <li>Visa en "up-and-to-the-right" graf om möjligt</li>
+                            <li>Även pre-revenue kan visa traction: waitlist, pilotkunder, LOIs</li>
+                            <li>Var specifik med siffror</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="slide-navigation">
+                    <button class="btn btn-outline-secondary" onclick="prevSlide()"><i class="fas fa-arrow-left me-2"></i> Tillbaka</button>
+                    <button class="btn btn-primary" onclick="nextSlide()">Nästa: Team <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </div>
+
+            <!-- Slide 6: Team -->
+            <div class="slide-content" id="slide-6">
+                <div class="slide-header">
+                    <div class="slide-title">6. Team</div>
+                </div>
+                <div class="slide-body">
+                    <div class="slide-description">
+                        <h6>💡 Vad ska denna slide förmedla?</h6>
+                        <p class="mb-0">Investerare satsar på människor. Visa varför just NI är rätt team för att lösa detta problem.</p>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="mb-4">
+                            <div class="form-section-title">Grundare 1</div>
+                            <div class="row">
+                                <div class="col-md-4 mb-2">
+                                    <input type="text" class="form-control" id="team1-name" placeholder="Namn">
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <input type="text" class="form-control" id="team1-role" placeholder="Roll (CEO, CTO...)">
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <input type="text" class="form-control" id="team1-linkedin" placeholder="LinkedIn URL">
+                                </div>
+                            </div>
+                            <input type="text" class="form-control" id="team1-background" placeholder="Bakgrund/relevanta meriter (ex: 'Ex-Klarna, 10 år fintech')">
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-section-title">Grundare 2</div>
+                            <div class="row">
+                                <div class="col-md-4 mb-2">
+                                    <input type="text" class="form-control" id="team2-name" placeholder="Namn">
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <input type="text" class="form-control" id="team2-role" placeholder="Roll">
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <input type="text" class="form-control" id="team2-linkedin" placeholder="LinkedIn URL">
+                                </div>
+                            </div>
+                            <input type="text" class="form-control" id="team2-background" placeholder="Bakgrund/relevanta meriter">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Varför är ni rätt team?</label>
+                            <textarea class="form-control" id="team-why" rows="2" placeholder="Ex: Kombinerad erfarenhet från Klarna, H&M och McKinsey. Upplevt problemet själva som småföretagare."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="tips-box">
+                        <h6>💡 Tips för Team-slide</h6>
+                        <ul>
+                            <li>Fokusera på relevant erfarenhet för just detta problem</li>
+                            <li>Nämn kända företag/skolor (brand recognition)</li>
+                            <li>Visa att ni kompletterar varandra</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="slide-navigation">
+                    <button class="btn btn-outline-secondary" onclick="prevSlide()"><i class="fas fa-arrow-left me-2"></i> Tillbaka</button>
+                    <button class="btn btn-primary" onclick="nextSlide()">Nästa: Ask <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </div>
+
+            <!-- Slide 7: Ask -->
+            <div class="slide-content" id="slide-7">
+                <div class="slide-header">
+                    <div class="slide-title">7. Ask & Use of Funds</div>
+                </div>
+                <div class="slide-body">
+                    <div class="slide-description">
+                        <h6>💡 Vad ska denna slide förmedla?</h6>
+                        <p class="mb-0">Var tydlig med vad ni ber om och vad ni ska göra med pengarna.</p>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Hur mycket söker ni?</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="ask-amount" placeholder="5">
+                                    <span class="input-group-text">MSEK</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Runway (månader)</label>
+                                <input type="number" class="form-control" id="ask-runway" placeholder="18">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Use of Funds - Hur ska pengarna användas?</label>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <div class="input-group">
+                                        <span class="input-group-text">Produkt</span>
+                                        <input type="number" class="form-control" id="use-product" placeholder="40">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <div class="input-group">
+                                        <span class="input-group-text">Sälj/Marknad</span>
+                                        <input type="number" class="form-control" id="use-sales" placeholder="35">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <div class="input-group">
+                                        <span class="input-group-text">Team</span>
+                                        <input type="number" class="form-control" id="use-team" placeholder="20">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <div class="input-group">
+                                        <span class="input-group-text">Övrigt</span>
+                                        <input type="number" class="form-control" id="use-other" placeholder="5">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Vad ska ni uppnå med denna runda?</label>
+                            <textarea class="form-control" id="ask-goals" rows="2" placeholder="Ex: Nå 1000 betalande kunder, break-even, och positionera för Series A"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="tips-box">
+                        <h6>💡 Tips för Ask-slide</h6>
+                        <ul>
+                            <li>Be om tillräckligt för att nå nästa milestone (oftast 12-18 månader)</li>
+                            <li>Visa tydlig koppling mellan pengar → milestones</li>
+                            <li>Avsluta med kontaktinfo och en stark CTA</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="slide-navigation">
+                    <button class="btn btn-outline-secondary" onclick="prevSlide()"><i class="fas fa-arrow-left me-2"></i> Tillbaka</button>
+                    <button class="btn btn-success" onclick="savePitch()"><i class="fas fa-save me-2"></i> Spara Pitch</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Valuation Calculator -->
+    <div class="valuation-section">
+        <h5 class="mb-4">🧮 Värderingskalkylator</h5>
+        <div class="valuation-grid">
+            <div>
+                <div class="mb-3">
+                    <label class="form-label">ARR (Annual Recurring Revenue)</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="val-arr" placeholder="1000000" onchange="calculateValuation()">
+                        <span class="input-group-text">kr</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tillväxttakt (YoY)</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="val-growth" placeholder="100" onchange="calculateValuation()">
+                        <span class="input-group-text">%</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Sektor</label>
+                    <select class="form-select" id="val-sector" onchange="calculateValuation()">
+                        <option value="5">Traditionell (5x)</option>
+                        <option value="10" selected>SaaS (10x)</option>
+                        <option value="15">Fintech (15x)</option>
+                        <option value="20">AI/ML (20x)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="valuation-results">
+                <h6 class="mb-3">Uppskattad värdering</h6>
+                <div class="valuation-method">
+                    <div class="valuation-method-name">Revenue Multiple</div>
+                    <div class="valuation-method-value" id="val-revenue">10 MSEK</div>
+                </div>
+                <div class="valuation-method">
+                    <div class="valuation-method-name">SaaS Rule of 40</div>
+                    <div class="valuation-method-value" id="val-rule40">-</div>
+                </div>
+                <div class="valuation-range">
+                    <div class="valuation-range-label">Estimerat värderingsintervall</div>
+                    <div class="valuation-range-value" id="val-range">8-12 MSEK</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export -->
+    <div class="export-section">
+        <h5 class="mb-3">📤 Exportera din pitch</h5>
+        <div class="export-options">
+            <button class="export-btn" onclick="exportText()">
+                <i class="fas fa-file-alt"></i>
+                <span>Text/Outline</span>
+            </button>
+            <button class="export-btn" onclick="alert('Kommer snart: PDF-export')">
+                <i class="fas fa-file-pdf"></i>
+                <span>PDF</span>
+            </button>
+            <button class="export-btn" onclick="alert('Kommer snart: Google Slides-mall')">
+                <i class="fab fa-google-drive"></i>
+                <span>Google Slides</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentSlide = 1;
+    const totalSlides = 7;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        loadPitch();
+        calculateValuation();
+        updateBizRatio();
+
+        // Add listeners for LTV:CAC calculation
+        document.getElementById('biz-cac').addEventListener('input', updateBizRatio);
+        document.getElementById('biz-ltv').addEventListener('input', updateBizRatio);
+    });
+
+    function goToSlide(slideNum) {
+        // Save current slide data
+        saveSlideData(currentSlide);
+
+        // Update UI
+        document.querySelectorAll('.slide-content').forEach(el => el.classList.remove('active'));
+        document.getElementById(`slide-${slideNum}`).classList.add('active');
+
+        document.querySelectorAll('.slide-nav-item').forEach(el => el.classList.remove('active'));
+        document.querySelector(`[data-slide="${slideNum}"]`).classList.add('active');
+
+        document.querySelectorAll('.step-dot').forEach((el, index) => {
+            el.classList.remove('active');
+            if (index + 1 === slideNum) {
+                el.classList.add('active');
+            }
+        });
+
+        currentSlide = slideNum;
+    }
+
+    function nextSlide() {
+        if (currentSlide < totalSlides) {
+            markSlideCompleted(currentSlide);
+            goToSlide(currentSlide + 1);
+        }
+    }
+
+    function prevSlide() {
+        if (currentSlide > 1) {
+            goToSlide(currentSlide - 1);
+        }
+    }
+
+    function markSlideCompleted(slideNum) {
+        const navItem = document.querySelector(`[data-slide="${slideNum}"]`);
+        navItem.classList.add('completed');
+
+        const stepDot = document.querySelectorAll('.step-dot')[slideNum - 1];
+        stepDot.classList.add('completed');
+    }
+
+    function saveSlideData(slideNum) {
+        // In a full implementation, this would save to localStorage
+    }
+
+    function savePitch() {
+        const pitchData = {
+            problem: {
+                headline: document.getElementById('problem-headline').value,
+                who: document.getElementById('problem-who').value,
+                current: document.getElementById('problem-current').value,
+                cost: document.getElementById('problem-cost').value
+            },
+            solution: {
+                headline: document.getElementById('solution-headline').value,
+                step1: document.getElementById('solution-step1').value,
+                step2: document.getElementById('solution-step2').value,
+                step3: document.getElementById('solution-step3').value,
+                unique: document.getElementById('solution-unique').value
+            },
+            market: {
+                tam: document.getElementById('market-tam').value,
+                sam: document.getElementById('market-sam').value,
+                som: document.getElementById('market-som').value,
+                calculation: document.getElementById('market-calculation').value,
+                trends: document.getElementById('market-trends').value
+            },
+            business: {
+                model: document.getElementById('biz-model').value,
+                price: document.getElementById('biz-price').value,
+                margin: document.getElementById('biz-margin').value,
+                cac: document.getElementById('biz-cac').value,
+                ltv: document.getElementById('biz-ltv').value
+            },
+            traction: {
+                users: document.getElementById('traction-users').value,
+                revenue: document.getElementById('traction-revenue').value,
+                growth: document.getElementById('traction-growth').value,
+                milestones: document.getElementById('traction-milestones').value,
+                roadmap: document.getElementById('traction-roadmap').value
+            },
+            team: {
+                member1: {
+                    name: document.getElementById('team1-name').value,
+                    role: document.getElementById('team1-role').value,
+                    background: document.getElementById('team1-background').value
+                },
+                member2: {
+                    name: document.getElementById('team2-name').value,
+                    role: document.getElementById('team2-role').value,
+                    background: document.getElementById('team2-background').value
+                },
+                why: document.getElementById('team-why').value
+            },
+            ask: {
+                amount: document.getElementById('ask-amount').value,
+                runway: document.getElementById('ask-runway').value,
+                useProduct: document.getElementById('use-product').value,
+                useSales: document.getElementById('use-sales').value,
+                useTeam: document.getElementById('use-team').value,
+                useOther: document.getElementById('use-other').value,
+                goals: document.getElementById('ask-goals').value
+            }
+        };
+
+        localStorage.setItem('pitch_data', JSON.stringify(pitchData));
+        alert('Pitch sparad!');
+    }
+
+    function loadPitch() {
+        const savedData = localStorage.getItem('pitch_data');
+        if (!savedData) return;
+
+        const data = JSON.parse(savedData);
+
+        // Load problem
+        if (data.problem) {
+            document.getElementById('problem-headline').value = data.problem.headline || '';
+            document.getElementById('problem-who').value = data.problem.who || '';
+            document.getElementById('problem-current').value = data.problem.current || '';
+            document.getElementById('problem-cost').value = data.problem.cost || '';
+        }
+
+        // Load other sections similarly...
+    }
+
+    function updateBizRatio() {
+        const cac = parseFloat(document.getElementById('biz-cac').value) || 0;
+        const ltv = parseFloat(document.getElementById('biz-ltv').value) || 0;
+
+        if (cac > 0 && ltv > 0) {
+            const ratio = (ltv / cac).toFixed(1);
+            document.getElementById('biz-ratio').value = ratio + ':1';
+        } else {
+            document.getElementById('biz-ratio').value = '-';
+        }
+    }
+
+    function calculateValuation() {
+        const arr = parseFloat(document.getElementById('val-arr').value) || 0;
+        const growth = parseFloat(document.getElementById('val-growth').value) || 0;
+        const multiple = parseFloat(document.getElementById('val-sector').value) || 10;
+
+        // Revenue multiple
+        const revenueVal = arr * multiple;
+        document.getElementById('val-revenue').textContent = formatLargeCurrency(revenueVal);
+
+        // Rule of 40 (growth + profit margin, simplified)
+        const rule40Score = growth + 20; // Assuming 20% margin for simplification
+        const rule40Val = rule40Score > 40 ? revenueVal * 1.2 : revenueVal * 0.8;
+        document.getElementById('val-rule40').textContent = formatLargeCurrency(rule40Val);
+
+        // Range
+        const lowVal = revenueVal * 0.8;
+        const highVal = revenueVal * 1.2;
+        document.getElementById('val-range').textContent = formatLargeCurrency(lowVal) + ' - ' + formatLargeCurrency(highVal);
+    }
+
+    function formatLargeCurrency(amount) {
+        if (amount >= 1000000) {
+            return (amount / 1000000).toFixed(1) + ' MSEK';
+        } else if (amount >= 1000) {
+            return (amount / 1000).toFixed(0) + ' KSEK';
+        }
+        return amount.toFixed(0) + ' kr';
+    }
+
+    function exportText() {
+        let text = '# PITCH DECK\n\n';
+
+        text += '## 1. PROBLEM\n';
+        text += document.getElementById('problem-headline').value + '\n\n';
+
+        text += '## 2. LÖSNING\n';
+        text += document.getElementById('solution-headline').value + '\n\n';
+
+        // ... continue for all slides
+
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pitch-outline.txt';
+        a.click();
+    }
+</script>
+{% endblock %}

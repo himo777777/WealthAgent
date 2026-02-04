@@ -1,0 +1,584 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Installningar - AI Wealth Agent{% endblock %}
+{% block page_title %}Installningar{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <!-- Theme Section -->
+    <div class="settings-section">
+        <div class="section-header">
+            <h3><i class="fas fa-palette"></i> Utseende</h3>
+        </div>
+        <div class="setting-item">
+            <div class="setting-info">
+                <span class="setting-label">Tema</span>
+                <span class="setting-description">Valj mellan morkt och ljust lage</span>
+            </div>
+            <div class="theme-switcher">
+                <button class="theme-btn" data-theme="dark" id="themeDark">
+                    <i class="fas fa-moon"></i> Morkt
+                </button>
+                <button class="theme-btn" data-theme="light" id="themeLight">
+                    <i class="fas fa-sun"></i> Ljust
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Section -->
+    <div class="settings-section">
+        <div class="section-header">
+            <h3><i class="fas fa-bell"></i> Notifieringar</h3>
+        </div>
+        <div class="setting-item">
+            <div class="setting-info">
+                <span class="setting-label">Veckorapport via e-post</span>
+                <span class="setting-description">Fa en sammanfattning varje sondag</span>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" id="emailWeekly" checked>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="setting-item">
+            <div class="setting-info">
+                <span class="setting-label">Manadsrapport via e-post</span>
+                <span class="setting-description">Detaljerad rapport varje manad</span>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" id="emailMonthly" checked>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="setting-item">
+            <div class="setting-info">
+                <span class="setting-label">Malpaminnelser</span>
+                <span class="setting-description">Paminnelser nar du narmar dig delmaal</span>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" id="emailGoals" checked>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="setting-item">
+            <div class="setting-info">
+                <span class="setting-label">AI-insikter</span>
+                <span class="setting-description">Tips och mojligheter fran AI:n</span>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" id="emailInsights" checked>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="setting-item">
+            <div class="setting-info">
+                <span class="setting-label">Push-notiser i appen</span>
+                <span class="setting-description">Visa notiser i webbappen</span>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" id="pushNotifications" checked>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="setting-item" id="browserPushSection">
+            <div class="setting-info">
+                <span class="setting-label">Browser Push-notiser</span>
+                <span class="setting-description">Få notiser även när appen är stängd</span>
+            </div>
+            <div class="push-status" id="pushStatus">
+                <button class="btn btn-primary btn-sm" id="enablePushBtn" onclick="enableBrowserPush()">
+                    <i class="fas fa-bell"></i> Aktivera
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Section -->
+    <div class="settings-section">
+        <div class="section-header">
+            <h3><i class="fas fa-eye-slash"></i> Sekretess</h3>
+        </div>
+        <div class="setting-item">
+            <div class="setting-info">
+                <span class="setting-label">Visa belopp pa dashboard</span>
+                <span class="setting-description">Dolj kansliga belopp nar andra kan se skarmen</span>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" id="showAmounts" checked>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Data Section -->
+    <div class="settings-section">
+        <div class="section-header">
+            <h3><i class="fas fa-database"></i> Data</h3>
+        </div>
+        <div class="setting-item">
+            <div class="setting-info">
+                <span class="setting-label">Exportera all data</span>
+                <span class="setting-description">Ladda ner all din data som JSON</span>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="exportData()">
+                <i class="fas fa-download"></i> Exportera JSON
+            </button>
+        </div>
+        <div class="setting-item">
+            <div class="setting-info">
+                <span class="setting-label">Exportera transaktioner</span>
+                <span class="setting-description">Ladda ner transaktioner som CSV</span>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="exportCSV()">
+                <i class="fas fa-file-csv"></i> Exportera CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- PWA Section -->
+    <div class="settings-section">
+        <div class="section-header">
+            <h3><i class="fas fa-mobile-alt"></i> Mobilapp</h3>
+        </div>
+        <div class="setting-item">
+            <div class="setting-info">
+                <span class="setting-label">Installera som app</span>
+                <span class="setting-description">Lagg till Wealth Agent pa hemskrmen</span>
+            </div>
+            <button class="btn btn-primary btn-sm" id="installPWA" onclick="installPWA()" style="display: none;">
+                <i class="fas fa-download"></i> Installera
+            </button>
+            <span class="setting-status" id="pwaStatus">
+                <i class="fas fa-check-circle"></i> Webbapp tillganglig
+            </span>
+        </div>
+    </div>
+
+    <!-- Save Button -->
+    <div class="settings-footer">
+        <button class="btn btn-primary btn-lg" onclick="saveSettings()">
+            <i class="fas fa-save"></i> Spara installningar
+        </button>
+    </div>
+</div>
+
+<style>
+.settings-page { max-width: 700px; }
+
+.settings-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.section-header h3 i {
+    color: var(--primary);
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-label {
+    font-weight: 500;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.setting-description {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Toggle Switch */
+.toggle {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+}
+
+.toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border);
+    transition: 0.3s;
+    border-radius: 28px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.toggle input:checked + .toggle-slider {
+    background-color: var(--primary);
+}
+
+.toggle input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+}
+
+/* Theme Switcher */
+.theme-switcher {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.theme-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.theme-btn:hover {
+    border-color: var(--primary);
+}
+
+.theme-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.setting-status {
+    font-size: 0.85rem;
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.settings-footer {
+    text-align: center;
+    padding: 1rem;
+}
+
+.btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+}
+
+/* Push Status */
+.push-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.push-active {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #22c55e;
+    font-size: 0.9rem;
+}
+
+.push-denied {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #ef4444;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let deferredPrompt = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadPreferences();
+    setupThemeSwitcher();
+    setupPWA();
+});
+
+async function loadPreferences() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/preferences');
+        if (response.success) {
+            const prefs = response.preferences;
+
+            document.getElementById('emailWeekly').checked = prefs.email_weekly_report;
+            document.getElementById('emailMonthly').checked = prefs.email_monthly_report;
+            document.getElementById('emailGoals').checked = prefs.email_goal_reminders;
+            document.getElementById('emailInsights').checked = prefs.email_insights;
+            document.getElementById('pushNotifications').checked = prefs.push_notifications;
+            document.getElementById('showAmounts').checked = prefs.show_amounts;
+
+            updateThemeButtons(prefs.theme);
+        }
+    } catch (error) {
+        console.log('Using default preferences');
+    }
+}
+
+function setupThemeSwitcher() {
+    const currentTheme = localStorage.getItem('wealth-theme') || 'dark';
+    updateThemeButtons(currentTheme);
+
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const theme = this.dataset.theme;
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('wealth-theme', theme);
+            updateThemeButtons(theme);
+        });
+    });
+}
+
+function updateThemeButtons(theme) {
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === theme);
+    });
+}
+
+function setupPWA() {
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('installPWA').style.display = 'inline-flex';
+        document.getElementById('pwaStatus').style.display = 'none';
+    });
+
+    window.addEventListener('appinstalled', () => {
+        document.getElementById('installPWA').style.display = 'none';
+        document.getElementById('pwaStatus').innerHTML = '<i class="fas fa-check-circle"></i> App installerad';
+        document.getElementById('pwaStatus').style.display = 'flex';
+    });
+}
+
+async function installPWA() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const result = await deferredPrompt.userChoice;
+        if (result.outcome === 'accepted') {
+            WealthAgent.showToast('App installeras!', 'success');
+        }
+        deferredPrompt = null;
+    }
+}
+
+async function saveSettings() {
+    const prefs = {
+        theme: localStorage.getItem('wealth-theme') || 'dark',
+        email_weekly_report: document.getElementById('emailWeekly').checked,
+        email_monthly_report: document.getElementById('emailMonthly').checked,
+        email_goal_reminders: document.getElementById('emailGoals').checked,
+        email_insights: document.getElementById('emailInsights').checked,
+        push_notifications: document.getElementById('pushNotifications').checked,
+        show_amounts: document.getElementById('showAmounts').checked
+    };
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/preferences', 'PUT', prefs);
+        if (response.success) {
+            WealthAgent.showToast('Installningar sparade!', 'success');
+        }
+    } catch (error) {
+        WealthAgent.showToast('Installningar sparade lokalt', 'success');
+    }
+}
+
+async function exportData() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/export');
+        if (response.success) {
+            const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'wealth-agent-export.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            WealthAgent.showToast('Data exporterad!', 'success');
+        }
+    } catch (error) {
+        WealthAgent.showToast('Kunde inte exportera', 'error');
+    }
+}
+
+function exportCSV() {
+    window.location.href = '/wealth/api/export/csv';
+    WealthAgent.showToast('CSV laddas ner...', 'success');
+}
+
+// Browser Push Notifications
+async function checkPushStatus() {
+    const pushSection = document.getElementById('browserPushSection');
+    const pushStatus = document.getElementById('pushStatus');
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        pushSection.style.display = 'none';
+        return;
+    }
+
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+
+        if (subscription) {
+            pushStatus.innerHTML = `
+                <span class="push-active">
+                    <i class="fas fa-check-circle"></i> Aktiverad
+                </span>
+                <button class="btn btn-secondary btn-sm" onclick="disableBrowserPush()">
+                    Inaktivera
+                </button>
+            `;
+        } else {
+            const permission = Notification.permission;
+            if (permission === 'denied') {
+                pushStatus.innerHTML = `
+                    <span class="push-denied">
+                        <i class="fas fa-times-circle"></i> Blockerad i webbläsaren
+                    </span>
+                `;
+            } else {
+                pushStatus.innerHTML = `
+                    <button class="btn btn-primary btn-sm" id="enablePushBtn" onclick="enableBrowserPush()">
+                        <i class="fas fa-bell"></i> Aktivera
+                    </button>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Push status check failed:', error);
+    }
+}
+
+async function enableBrowserPush() {
+    try {
+        const permission = await Notification.requestPermission();
+
+        if (permission !== 'granted') {
+            WealthAgent.showToast('Du måste tillåta notiser i webbläsaren', 'error');
+            return;
+        }
+
+        const registration = await navigator.serviceWorker.ready;
+
+        // VAPID public key would normally come from server
+        // This is a placeholder - in production, generate real VAPID keys
+        const vapidPublicKey = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
+
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+        });
+
+        // Send subscription to server
+        await fetch('/wealth/api/push/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(subscription)
+        });
+
+        WealthAgent.showToast('Push-notiser aktiverade!', 'success');
+        checkPushStatus();
+
+    } catch (error) {
+        console.error('Push subscription failed:', error);
+        WealthAgent.showToast('Kunde inte aktivera push-notiser', 'error');
+    }
+}
+
+async function disableBrowserPush() {
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+
+        if (subscription) {
+            await subscription.unsubscribe();
+
+            // Notify server
+            await fetch('/wealth/api/push/unsubscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint: subscription.endpoint })
+            });
+        }
+
+        WealthAgent.showToast('Push-notiser inaktiverade', 'info');
+        checkPushStatus();
+
+    } catch (error) {
+        console.error('Push unsubscription failed:', error);
+    }
+}
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+// Check push status on load
+document.addEventListener('DOMContentLoaded', checkPushStatus);
+</script>
+{% endblock %}

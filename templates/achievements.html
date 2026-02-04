@@ -1,0 +1,636 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Achievements - AI Wealth Agent{% endblock %}
+{% block page_title %}Achievements & Gamification{% endblock %}
+
+{% block content %}
+<div class="achievements-page">
+    <!-- Level & XP Header -->
+    <div class="level-header">
+        <div class="level-card">
+            <div class="level-circle">
+                <svg viewBox="0 0 100 100">
+                    <circle class="level-bg" cx="50" cy="50" r="45"></circle>
+                    <circle class="level-progress" cx="50" cy="50" r="45" id="levelProgress"></circle>
+                </svg>
+                <div class="level-number" id="currentLevel">1</div>
+            </div>
+            <div class="level-info">
+                <h2>Level <span id="levelDisplay">1</span></h2>
+                <div class="xp-bar">
+                    <div class="xp-fill" id="xpFill" style="width: 0%"></div>
+                </div>
+                <p class="xp-text"><span id="currentXp">0</span> / <span id="xpNeeded">500</span> XP</p>
+            </div>
+        </div>
+
+        <div class="stats-cards">
+            <div class="stat-card">
+                <div class="stat-icon fire">
+                    <i class="fas fa-fire"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" id="currentStreak">0</span>
+                    <span class="stat-label">Dagars streak</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon gold">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" id="unlockedCount">0</span>
+                    <span class="stat-label">Achievements</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="fas fa-flag-checkered"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" id="goalsCompleted">0</span>
+                    <span class="stat-label">Mal avklarade</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" id="lessonsCompleted">0</span>
+                    <span class="stat-label">Lektioner</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Categories -->
+    <div class="category-tabs">
+        <button class="category-tab active" data-category="all">
+            <i class="fas fa-th"></i> Alla
+        </button>
+        <button class="category-tab" data-category="savings">
+            <i class="fas fa-piggy-bank"></i> Sparande
+        </button>
+        <button class="category-tab" data-category="investing">
+            <i class="fas fa-chart-line"></i> Investering
+        </button>
+        <button class="category-tab" data-category="streak">
+            <i class="fas fa-fire"></i> Streaks
+        </button>
+        <button class="category-tab" data-category="milestone">
+            <i class="fas fa-flag"></i> Milstolpar
+        </button>
+        <button class="category-tab" data-category="learning">
+            <i class="fas fa-graduation-cap"></i> Larande
+        </button>
+    </div>
+
+    <!-- Achievements Grid -->
+    <div id="achievementsGrid" class="achievements-grid"></div>
+
+    <!-- Milestones Section -->
+    <div class="milestones-section">
+        <h3><i class="fas fa-flag"></i> Formogenhets-milstolpar</h3>
+        <div id="milestonesTrack" class="milestones-track"></div>
+    </div>
+</div>
+
+<style>
+.achievements-page { max-width: 1200px; }
+
+.level-header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.level-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 20px;
+    padding: 1.5rem 2rem;
+}
+
+.level-circle {
+    width: 100px;
+    height: 100px;
+    position: relative;
+}
+
+.level-circle svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+}
+
+.level-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 8;
+}
+
+.level-progress {
+    fill: none;
+    stroke: url(#levelGradient);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 283;
+    stroke-dashoffset: 283;
+    transition: stroke-dashoffset 1s ease;
+}
+
+.level-number {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.level-info h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.xp-bar {
+    width: 200px;
+    height: 12px;
+    background: var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #a855f7);
+    border-radius: 6px;
+    transition: width 0.5s ease;
+}
+
+.xp-text {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.stat-icon.fire { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.stat-icon.gold { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+.stat-icon.green { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.stat-icon.purple { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.category-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.category-tab {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.category-tab:hover { background: var(--surface-light); }
+
+.category-tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.achievement-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    position: relative;
+    transition: all 0.3s;
+}
+
+.achievement-card.locked {
+    opacity: 0.6;
+}
+
+.achievement-card.unlocked {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), transparent);
+}
+
+.achievement-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.achievement-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.achievement-badge {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.achievement-badge.gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; }
+.achievement-badge.silver { background: linear-gradient(135deg, #94a3b8, #64748b); color: white; }
+.achievement-badge.bronze { background: linear-gradient(135deg, #d97706, #b45309); color: white; }
+.achievement-badge.purple { background: linear-gradient(135deg, #a855f7, #7c3aed); color: white; }
+.achievement-badge.green { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+.achievement-badge.locked { background: var(--border); color: var(--text-muted); }
+
+.achievement-info h4 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.achievement-info p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.achievement-progress {
+    margin-top: 0.75rem;
+}
+
+.progress-bar {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 4px;
+}
+
+.progress-text {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+}
+
+.achievement-xp {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--primary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.unlocked-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--success);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+}
+
+.milestones-section {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+}
+
+.milestones-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.milestones-track {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    padding: 0 2rem;
+}
+
+.milestone-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+}
+
+.milestone-dot {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    border: 3px solid var(--surface);
+}
+
+.milestone-item.reached .milestone-dot {
+    background: var(--success);
+    color: white;
+}
+
+.milestone-item.current .milestone-dot {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3);
+}
+
+.milestone-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.milestone-value {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.milestones-line {
+    position: absolute;
+    top: 20px;
+    left: 3rem;
+    right: 3rem;
+    height: 4px;
+    background: var(--border);
+    z-index: 1;
+}
+
+.milestones-progress {
+    position: absolute;
+    top: 20px;
+    left: 3rem;
+    height: 4px;
+    background: linear-gradient(90deg, var(--success), var(--primary));
+    z-index: 1;
+}
+
+@media (max-width: 1024px) {
+    .level-header { grid-template-columns: 1fr; }
+    .stats-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .stats-cards { grid-template-columns: 1fr; }
+    .achievements-grid { grid-template-columns: 1fr; }
+    .milestones-track { flex-wrap: wrap; gap: 1rem; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let achievements = [];
+let milestones = [];
+let currentCategory = 'all';
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadGamificationData();
+    loadAchievements();
+    loadMilestones();
+
+    document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            currentCategory = this.dataset.category;
+            renderAchievements();
+        });
+    });
+});
+
+async function loadGamificationData() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/gamification/status');
+        if (response.success) {
+            const { level, streak, stats } = response;
+
+            // Update level display
+            document.getElementById('currentLevel').textContent = level.current;
+            document.getElementById('levelDisplay').textContent = level.current;
+            document.getElementById('currentXp').textContent = level.current_xp;
+            document.getElementById('xpNeeded').textContent = level.xp_for_next_level;
+
+            // Update XP bar
+            const xpPercent = level.progress_percent;
+            document.getElementById('xpFill').style.width = xpPercent + '%';
+
+            // Update level circle
+            const circumference = 2 * Math.PI * 45;
+            const offset = circumference - (xpPercent / 100 * circumference);
+            document.getElementById('levelProgress').style.strokeDashoffset = offset;
+
+            // Update stats
+            document.getElementById('currentStreak').textContent = streak.current;
+            document.getElementById('unlockedCount').textContent = response.achievements.unlocked;
+            document.getElementById('goalsCompleted').textContent = stats.goals_completed;
+            document.getElementById('lessonsCompleted').textContent = stats.lessons_completed;
+        }
+    } catch (error) {
+        console.error('Failed to load gamification data:', error);
+    }
+}
+
+async function loadAchievements() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/gamification/achievements');
+        if (response.success) {
+            achievements = response.achievements;
+            renderAchievements();
+        }
+    } catch (error) {
+        // Use sample data
+        achievements = getSampleAchievements();
+        renderAchievements();
+    }
+}
+
+function getSampleAchievements() {
+    return [
+        { id: 1, code: 'first_goal', title: 'Malmedveten', description: 'Skapa ditt forsta sparmal', icon: 'flag', badge_color: 'green', category: 'milestone', xp_reward: 100, is_unlocked: true, progress: 1, target: 1 },
+        { id: 2, code: 'streak_7', title: 'Veckohjalta', description: 'Logga in 7 dagar i rad', icon: 'fire', badge_color: 'gold', category: 'streak', xp_reward: 200, is_unlocked: true, progress: 7, target: 7 },
+        { id: 3, code: 'streak_30', title: 'Manadsmastare', description: 'Logga in 30 dagar i rad', icon: 'fire', badge_color: 'gold', category: 'streak', xp_reward: 500, is_unlocked: false, progress: 12, target: 30 },
+        { id: 4, code: 'first_100k', title: 'Hundratusen', description: 'Na 100 000 SEK i nettoformogenhet', icon: 'gem', badge_color: 'purple', category: 'milestone', xp_reward: 1000, is_unlocked: false, progress: 45000, target: 100000 },
+        { id: 5, code: 'budget_master', title: 'Budgetmastare', description: 'Halla budgeten i 3 manader', icon: 'wallet', badge_color: 'green', category: 'savings', xp_reward: 300, is_unlocked: false, progress: 1, target: 3 },
+        { id: 6, code: 'investor', title: 'Investeraren', description: 'Gor din forsta investering', icon: 'chart-line', badge_color: 'purple', category: 'investing', xp_reward: 200, is_unlocked: true, progress: 1, target: 1 },
+        { id: 7, code: 'learner', title: 'Kunskapstorst', description: 'Slutfor 5 utbildningskurser', icon: 'graduation-cap', badge_color: 'silver', category: 'learning', xp_reward: 250, is_unlocked: false, progress: 2, target: 5 },
+        { id: 8, code: 'saver_10', title: 'Sparare', description: 'Spara 10% av inkomsten', icon: 'piggy-bank', badge_color: 'green', category: 'savings', xp_reward: 150, is_unlocked: true, progress: 10, target: 10 },
+    ];
+}
+
+function renderAchievements() {
+    const grid = document.getElementById('achievementsGrid');
+
+    let filtered = achievements;
+    if (currentCategory !== 'all') {
+        filtered = achievements.filter(a => a.category === currentCategory);
+    }
+
+    grid.innerHTML = filtered.map(ach => {
+        const progressPercent = ach.target > 0 ? Math.min(100, (ach.progress / ach.target) * 100) : 0;
+
+        return `
+            <div class="achievement-card ${ach.is_unlocked ? 'unlocked' : 'locked'}">
+                ${ach.is_unlocked ? '<div class="unlocked-badge"><i class="fas fa-check"></i></div>' : ''}
+                <span class="achievement-xp">+${ach.xp_reward} XP</span>
+                <div class="achievement-header">
+                    <div class="achievement-badge ${ach.is_unlocked ? ach.badge_color : 'locked'}">
+                        <i class="fas fa-${ach.icon}"></i>
+                    </div>
+                    <div class="achievement-info">
+                        <h4>${ach.title}</h4>
+                        <p>${ach.description}</p>
+                    </div>
+                </div>
+                ${!ach.is_unlocked ? `
+                    <div class="achievement-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progressPercent}%"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span>${formatProgress(ach.progress)}</span>
+                            <span>${formatProgress(ach.target)}</span>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+function formatProgress(value) {
+    if (value >= 1000) {
+        return (value / 1000).toFixed(0) + 'k';
+    }
+    return value;
+}
+
+async function loadMilestones() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/milestones');
+        if (response.success) {
+            milestones = response.milestones;
+            renderMilestones();
+        }
+    } catch (error) {
+        milestones = [
+            { milestone_value: 100000, milestone_label: '100k', is_reached: false },
+            { milestone_value: 250000, milestone_label: '250k', is_reached: false },
+            { milestone_value: 500000, milestone_label: '500k', is_reached: false },
+            { milestone_value: 1000000, milestone_label: '1M', is_reached: false },
+            { milestone_value: 2000000, milestone_label: '2M', is_reached: false },
+        ];
+        renderMilestones();
+    }
+}
+
+function renderMilestones() {
+    const track = document.getElementById('milestonesTrack');
+
+    // Find current progress
+    const reachedCount = milestones.filter(m => m.is_reached).length;
+    const progressPercent = (reachedCount / milestones.length) * 100;
+
+    track.innerHTML = `
+        <div class="milestones-line"></div>
+        <div class="milestones-progress" style="width: ${progressPercent}%"></div>
+        ${milestones.map((m, i) => {
+            const isReached = m.is_reached;
+            const isCurrent = !isReached && (i === 0 || milestones[i-1].is_reached);
+            return `
+                <div class="milestone-item ${isReached ? 'reached' : ''} ${isCurrent ? 'current' : ''}">
+                    <div class="milestone-dot">
+                        ${isReached ? '<i class="fas fa-check"></i>' : '<i class="fas fa-flag"></i>'}
+                    </div>
+                    <span class="milestone-label">${m.milestone_label}</span>
+                    <span class="milestone-value">${WealthAgent.formatCurrency(m.milestone_value)}</span>
+                </div>
+            `;
+        }).join('')}
+    `;
+}
+</script>
+{% endblock %}

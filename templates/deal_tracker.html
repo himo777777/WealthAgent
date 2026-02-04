@@ -1,0 +1,1189 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Deal Tracker - Wealth Agent{% endblock %}
+
+{% block page_title %}Deal Tracker{% endblock %}
+
+{% block content %}
+<div class="deal-tracker">
+    <!-- Filters & Actions -->
+    <div class="tracker-header">
+        <div class="filter-group">
+            <button class="filter-btn active" data-filter="all">Alla</button>
+            <button class="filter-btn" data-filter="active">Aktiva</button>
+            <button class="filter-btn" data-filter="listed">Listade</button>
+            <button class="filter-btn" data-filter="sold">Salda</button>
+        </div>
+        <div class="header-actions">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchDeals" placeholder="Sok affar...">
+            </div>
+            <button class="btn-primary" onclick="openAddDealModal()">
+                <i class="fas fa-plus"></i> Ny Affar
+            </button>
+        </div>
+    </div>
+
+    <!-- Deals Table -->
+    <div class="deals-table-container">
+        <table class="deals-table">
+            <thead>
+                <tr>
+                    <th>Produkt</th>
+                    <th>Kategori</th>
+                    <th>Inkop</th>
+                    <th>Forsaljning</th>
+                    <th>Vinst/ROI</th>
+                    <th>Status</th>
+                    <th>Atgarder</th>
+                </tr>
+            </thead>
+            <tbody id="dealsTableBody">
+                <!-- Deals will be inserted here -->
+            </tbody>
+        </table>
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="fas fa-box-open"></i>
+            <h3>Inga affarer an</h3>
+            <p>Borja spara dina kop och forsaljningar for att se vinst!</p>
+            <button class="btn-primary" onclick="openAddDealModal()">
+                <i class="fas fa-plus"></i> Lagg till forsta affaren
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="summary-bar">
+        <div class="summary-item">
+            <span class="summary-label">Aktiva affarer</span>
+            <span class="summary-value" id="summaryActive">0</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">Totalt investerat</span>
+            <span class="summary-value" id="summaryInvested">0 kr</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">Totalt salt</span>
+            <span class="summary-value" id="summarySold">0 kr</span>
+        </div>
+        <div class="summary-item highlight">
+            <span class="summary-label">Total vinst</span>
+            <span class="summary-value" id="summaryProfit">0 kr</span>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Deal Modal -->
+<div class="modal" id="dealModal">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h3 id="modalTitle"><i class="fas fa-plus-circle"></i> Ny affar</h3>
+            <button class="modal-close" onclick="closeModal('dealModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="dealForm">
+                <input type="hidden" id="dealId">
+
+                <div class="form-section">
+                    <h4>Produktinformation</h4>
+                    <div class="form-group">
+                        <label>Produktnamn *</label>
+                        <input type="text" id="dealName" placeholder="t.ex. iPhone 12 Pro 128GB" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Kategori *</label>
+                            <select id="dealCategory" required>
+                                <option value="electronics">Elektronik</option>
+                                <option value="fashion">Klader & Accessoarer</option>
+                                <option value="furniture">Mobler</option>
+                                <option value="collectibles">Samlarforemol</option>
+                                <option value="sports">Sport & Fritid</option>
+                                <option value="home">Hem & Tradgord</option>
+                                <option value="vehicles">Fordon & Delar</option>
+                                <option value="books">Bocker & Media</option>
+                                <option value="toys">Leksaker</option>
+                                <option value="other">Ovrigt</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Skick</label>
+                            <select id="dealCondition">
+                                <option value="new">Nytt/Oanvant</option>
+                                <option value="like_new">Som nytt</option>
+                                <option value="good">Bra skick</option>
+                                <option value="fair">Okej skick</option>
+                                <option value="parts">For delar</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Inkopsdetaljer</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Inkopspris (kr) *</label>
+                            <input type="number" id="dealBuyPrice" placeholder="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Inkopsdatum *</label>
+                            <input type="date" id="dealBuyDate" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Inkopskalla</label>
+                            <select id="dealBuyPlatform">
+                                <option value="blocket">Blocket</option>
+                                <option value="tradera">Tradera</option>
+                                <option value="marketplace">Facebook Marketplace</option>
+                                <option value="loppis">Loppis/Secondhand</option>
+                                <option value="dodsbo">Dodsbo/Auktion</option>
+                                <option value="konkurs">Konkursauktion</option>
+                                <option value="retail">Butik/REA</option>
+                                <option value="private">Privatperson</option>
+                                <option value="other">Annat</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Extra kostnader (frakt etc.)</label>
+                            <input type="number" id="dealExtraCosts" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Forsaljningsdetaljer</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Forvantat pris</label>
+                            <input type="number" id="dealExpectedPrice" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="dealStatus" onchange="toggleSaleFields()">
+                                <option value="active">Aktiv (ej listad)</option>
+                                <option value="listed">Listad for forsaljning</option>
+                                <option value="sold">Sald</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="saleFields" style="display: none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Forsaljningspris (kr)</label>
+                                <input type="number" id="dealSellPrice" placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Forsaljningsdatum</label>
+                                <input type="date" id="dealSellDate">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Forsaljningsplattform</label>
+                                <select id="dealSellPlatform">
+                                    <option value="blocket">Blocket</option>
+                                    <option value="tradera">Tradera</option>
+                                    <option value="marketplace">Facebook Marketplace</option>
+                                    <option value="ebay">eBay</option>
+                                    <option value="private">Privatperson</option>
+                                    <option value="other">Annat</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Plattformsavgift (%)</label>
+                                <input type="number" id="dealPlatformFee" placeholder="0" step="0.1">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Fraktkostnad (om du betalade)</label>
+                            <input type="number" id="dealShippingCost" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Anteckningar</h4>
+                    <div class="form-group">
+                        <textarea id="dealNotes" placeholder="Eventuella anteckningar om affaren..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Profit Preview -->
+                <div class="profit-preview" id="profitPreview">
+                    <div class="preview-row">
+                        <span>Inkop:</span>
+                        <span id="previewBuy">0 kr</span>
+                    </div>
+                    <div class="preview-row">
+                        <span>Forsaljning:</span>
+                        <span id="previewSell">0 kr</span>
+                    </div>
+                    <div class="preview-row">
+                        <span>Avgifter:</span>
+                        <span id="previewFees">0 kr</span>
+                    </div>
+                    <div class="preview-row total">
+                        <span>Vinst:</span>
+                        <span id="previewProfit">0 kr</span>
+                    </div>
+                    <div class="preview-row">
+                        <span>ROI:</span>
+                        <span id="previewRoi">0%</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-danger" id="deleteBtn" onclick="deleteDeal()" style="margin-right: auto; display: none;">
+                <i class="fas fa-trash"></i> Radera
+            </button>
+            <button class="btn-secondary" onclick="closeModal('dealModal')">Avbryt</button>
+            <button class="btn-primary" onclick="saveDeal()">
+                <i class="fas fa-save"></i> Spara
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Mark as Sold Quick Modal -->
+<div class="modal" id="soldModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-check-circle"></i> Markera som sald</h3>
+            <button class="modal-close" onclick="closeModal('soldModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="soldDealId">
+            <p class="sold-product-name" id="soldProductName"></p>
+
+            <div class="form-group">
+                <label>Forsaljningspris (kr) *</label>
+                <input type="number" id="soldPrice" placeholder="0" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Plattform</label>
+                    <select id="soldPlatform">
+                        <option value="blocket">Blocket</option>
+                        <option value="tradera">Tradera</option>
+                        <option value="marketplace">Facebook Marketplace</option>
+                        <option value="ebay">eBay</option>
+                        <option value="private">Privatperson</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Datum</label>
+                    <input type="date" id="soldDate">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Plattformsavgift (%)</label>
+                <input type="number" id="soldFee" placeholder="0" step="0.1">
+            </div>
+
+            <div class="quick-profit" id="quickProfit">
+                <span>Forvantat vinst: <strong>0 kr</strong></span>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeModal('soldModal')">Avbryt</button>
+            <button class="btn-primary" onclick="confirmSold()">
+                <i class="fas fa-check"></i> Bekrafta forsaljning
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.deal-tracker {
+    padding: 1rem;
+}
+
+.tracker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.filter-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.filter-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.filter-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+}
+
+.search-box i {
+    color: var(--text-muted);
+}
+
+.search-box input {
+    border: none;
+    background: transparent;
+    color: var(--text);
+    outline: none;
+    width: 200px;
+}
+
+.btn-primary {
+    padding: 0.5rem 1rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.btn-secondary {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.btn-danger {
+    padding: 0.5rem 1rem;
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Deals Table */
+.deals-table-container {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.deals-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.deals-table th,
+.deals-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.deals-table th {
+    background: var(--background);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.deals-table tbody tr:hover {
+    background: var(--background);
+}
+
+.deals-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.product-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.product-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.product-info .product-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.product-info .product-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.category-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    background: var(--background);
+    color: var(--text);
+}
+
+.price-cell {
+    font-weight: 500;
+}
+
+.price-cell .price-sub {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.profit-cell {
+    font-weight: 600;
+}
+
+.profit-cell.positive {
+    color: var(--success);
+}
+
+.profit-cell.negative {
+    color: var(--danger);
+}
+
+.status-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-badge.active {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.status-badge.listed {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.status-badge.sold {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.action-btns {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.action-btn.sell:hover {
+    background: var(--success);
+    border-color: var(--success);
+}
+
+/* Summary Bar */
+.summary-bar {
+    display: flex;
+    gap: 1rem;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1rem;
+}
+
+.summary-item {
+    flex: 1;
+    text-align: center;
+    padding: 0.5rem;
+}
+
+.summary-item.highlight {
+    background: var(--primary);
+    border-radius: 8px;
+    color: white;
+}
+
+.summary-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: block;
+}
+
+.summary-item.highlight .summary-label {
+    color: rgba(255,255,255,0.8);
+}
+
+.summary-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    display: block;
+    margin-top: 0.25rem;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text);
+}
+
+.empty-state p {
+    margin: 0 0 1.5rem 0;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-content.large {
+    max-width: 600px;
+}
+
+.modal-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.modal-body {
+    padding: 1.25rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.form-section {
+    margin-bottom: 1.5rem;
+}
+
+.form-section h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    color: var(--primary);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.form-group textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Profit Preview */
+.profit-preview {
+    background: var(--background);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.preview-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.35rem 0;
+    font-size: 0.9rem;
+}
+
+.preview-row.total {
+    border-top: 1px solid var(--border);
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.sold-product-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+}
+
+.quick-profit {
+    text-align: center;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 8px;
+    color: var(--success);
+    font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+    .tracker-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-group {
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+
+    .header-actions {
+        flex-direction: column;
+    }
+
+    .search-box input {
+        width: 100%;
+    }
+
+    .deals-table-container {
+        overflow-x: auto;
+    }
+
+    .deals-table {
+        min-width: 700px;
+    }
+
+    .summary-bar {
+        flex-wrap: wrap;
+    }
+
+    .summary-item {
+        flex: 1 1 45%;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+let currentFilter = 'all';
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadDeals();
+    initFilters();
+    initSearch();
+
+    // Set today's date as default
+    document.getElementById('dealBuyDate').valueAsDate = new Date();
+    document.getElementById('soldDate').valueAsDate = new Date();
+
+    // Add input listeners for profit preview
+    const priceInputs = ['dealBuyPrice', 'dealExtraCosts', 'dealSellPrice', 'dealPlatformFee', 'dealShippingCost', 'dealExpectedPrice'];
+    priceInputs.forEach(id => {
+        document.getElementById(id)?.addEventListener('input', updateProfitPreview);
+    });
+
+    // Quick sold modal profit calculator
+    ['soldPrice', 'soldFee'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', updateQuickProfit);
+    });
+});
+
+function loadDeals() {
+    const deals = JSON.parse(localStorage.getItem('flipping_deals') || '[]');
+    renderDeals(deals);
+    updateSummary(deals);
+}
+
+function renderDeals(deals) {
+    const filteredDeals = deals.filter(d => {
+        if (currentFilter === 'all') return true;
+        return d.status === currentFilter;
+    });
+
+    const tbody = document.getElementById('dealsTableBody');
+    const emptyState = document.getElementById('emptyState');
+
+    if (filteredDeals.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+    }
+
+    emptyState.style.display = 'none';
+
+    tbody.innerHTML = filteredDeals.map(deal => {
+        const profit = deal.status === 'sold' ? calculateProfit(deal) : null;
+        const roi = profit !== null ? ((deal.sellPrice / (deal.buyPrice + (deal.extraCosts || 0)) - 1) * 100).toFixed(1) : null;
+
+        return `
+            <tr>
+                <td>
+                    <div class="product-cell">
+                        <div class="product-icon">
+                            <i class="fas fa-${getCategoryIcon(deal.category)}"></i>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">${deal.name}</div>
+                            <div class="product-meta">${deal.buyPlatform} &bull; ${formatDate(deal.buyDate)}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="category-badge">${getCategoryLabel(deal.category)}</span></td>
+                <td>
+                    <div class="price-cell">
+                        ${formatCurrency(deal.buyPrice)}
+                        ${deal.extraCosts ? `<div class="price-sub">+${formatCurrency(deal.extraCosts)} kostnader</div>` : ''}
+                    </div>
+                </td>
+                <td>
+                    <div class="price-cell">
+                        ${deal.sellPrice ? formatCurrency(deal.sellPrice) : (deal.expectedPrice ? `<span class="price-sub">${formatCurrency(deal.expectedPrice)} (forvantat)</span>` : '-')}
+                    </div>
+                </td>
+                <td>
+                    ${profit !== null ? `
+                        <div class="profit-cell ${profit >= 0 ? 'positive' : 'negative'}">
+                            ${profit >= 0 ? '+' : ''}${formatCurrency(profit)}
+                            <div class="price-sub">${roi}% ROI</div>
+                        </div>
+                    ` : '-'}
+                </td>
+                <td><span class="status-badge ${deal.status}">${getStatusLabel(deal.status)}</span></td>
+                <td>
+                    <div class="action-btns">
+                        <button class="action-btn" onclick="editDeal(${deal.id})" title="Redigera">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ${deal.status !== 'sold' ? `
+                            <button class="action-btn sell" onclick="openSoldModal(${deal.id})" title="Markera som sald">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function updateSummary(deals) {
+    const activeDeals = deals.filter(d => d.status !== 'sold');
+    const soldDeals = deals.filter(d => d.status === 'sold');
+
+    const totalInvested = deals.reduce((sum, d) => sum + d.buyPrice + (d.extraCosts || 0), 0);
+    const totalSold = soldDeals.reduce((sum, d) => sum + d.sellPrice, 0);
+    const totalProfit = soldDeals.reduce((sum, d) => sum + calculateProfit(d), 0);
+
+    document.getElementById('summaryActive').textContent = activeDeals.length;
+    document.getElementById('summaryInvested').textContent = formatCurrency(totalInvested);
+    document.getElementById('summarySold').textContent = formatCurrency(totalSold);
+    document.getElementById('summaryProfit').textContent = formatCurrency(totalProfit);
+}
+
+function calculateProfit(deal) {
+    const totalCost = deal.buyPrice + (deal.extraCosts || 0) + (deal.shippingCost || 0);
+    const platformFee = deal.sellPrice * (deal.platformFee || 0) / 100;
+    return deal.sellPrice - totalCost - platformFee;
+}
+
+function initFilters() {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = this.dataset.filter;
+            loadDeals();
+        });
+    });
+}
+
+function initSearch() {
+    document.getElementById('searchDeals').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const deals = JSON.parse(localStorage.getItem('flipping_deals') || '[]');
+        const filtered = deals.filter(d => d.name.toLowerCase().includes(searchTerm));
+        renderDeals(filtered);
+    });
+}
+
+function openAddDealModal() {
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Ny affar';
+    document.getElementById('dealForm').reset();
+    document.getElementById('dealId').value = '';
+    document.getElementById('dealBuyDate').valueAsDate = new Date();
+    document.getElementById('deleteBtn').style.display = 'none';
+    document.getElementById('saleFields').style.display = 'none';
+    updateProfitPreview();
+    document.getElementById('dealModal').classList.add('active');
+}
+
+function editDeal(id) {
+    const deals = JSON.parse(localStorage.getItem('flipping_deals') || '[]');
+    const deal = deals.find(d => d.id === id);
+    if (!deal) return;
+
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Redigera affar';
+    document.getElementById('dealId').value = deal.id;
+    document.getElementById('dealName').value = deal.name;
+    document.getElementById('dealCategory').value = deal.category;
+    document.getElementById('dealCondition').value = deal.condition || 'good';
+    document.getElementById('dealBuyPrice').value = deal.buyPrice;
+    document.getElementById('dealBuyDate').value = deal.buyDate;
+    document.getElementById('dealBuyPlatform').value = deal.buyPlatform;
+    document.getElementById('dealExtraCosts').value = deal.extraCosts || '';
+    document.getElementById('dealExpectedPrice').value = deal.expectedPrice || '';
+    document.getElementById('dealStatus').value = deal.status;
+    document.getElementById('dealNotes').value = deal.notes || '';
+
+    if (deal.sellPrice) {
+        document.getElementById('dealSellPrice').value = deal.sellPrice;
+        document.getElementById('dealSellDate').value = deal.sellDate || '';
+        document.getElementById('dealSellPlatform').value = deal.sellPlatform || 'blocket';
+        document.getElementById('dealPlatformFee').value = deal.platformFee || '';
+        document.getElementById('dealShippingCost').value = deal.shippingCost || '';
+    }
+
+    toggleSaleFields();
+    document.getElementById('deleteBtn').style.display = 'flex';
+    updateProfitPreview();
+    document.getElementById('dealModal').classList.add('active');
+}
+
+function toggleSaleFields() {
+    const status = document.getElementById('dealStatus').value;
+    document.getElementById('saleFields').style.display = (status === 'sold' || status === 'listed') ? 'block' : 'none';
+}
+
+function updateProfitPreview() {
+    const buyPrice = parseFloat(document.getElementById('dealBuyPrice').value) || 0;
+    const extraCosts = parseFloat(document.getElementById('dealExtraCosts').value) || 0;
+    const sellPrice = parseFloat(document.getElementById('dealSellPrice').value) || parseFloat(document.getElementById('dealExpectedPrice').value) || 0;
+    const platformFee = parseFloat(document.getElementById('dealPlatformFee').value) || 0;
+    const shippingCost = parseFloat(document.getElementById('dealShippingCost').value) || 0;
+
+    const totalCost = buyPrice + extraCosts + shippingCost;
+    const feeAmount = sellPrice * platformFee / 100;
+    const profit = sellPrice - totalCost - feeAmount;
+    const roi = totalCost > 0 ? ((sellPrice / totalCost - 1) * 100) : 0;
+
+    document.getElementById('previewBuy').textContent = formatCurrency(totalCost);
+    document.getElementById('previewSell').textContent = formatCurrency(sellPrice);
+    document.getElementById('previewFees').textContent = formatCurrency(feeAmount);
+    document.getElementById('previewProfit').textContent = formatCurrency(profit);
+    document.getElementById('previewProfit').style.color = profit >= 0 ? 'var(--success)' : 'var(--danger)';
+    document.getElementById('previewRoi').textContent = roi.toFixed(1) + '%';
+}
+
+function saveDeal() {
+    const dealId = document.getElementById('dealId').value;
+    const deal = {
+        id: dealId ? parseInt(dealId) : Date.now(),
+        name: document.getElementById('dealName').value,
+        category: document.getElementById('dealCategory').value,
+        condition: document.getElementById('dealCondition').value,
+        buyPrice: parseFloat(document.getElementById('dealBuyPrice').value),
+        buyDate: document.getElementById('dealBuyDate').value,
+        buyPlatform: document.getElementById('dealBuyPlatform').value,
+        extraCosts: parseFloat(document.getElementById('dealExtraCosts').value) || 0,
+        expectedPrice: parseFloat(document.getElementById('dealExpectedPrice').value) || null,
+        status: document.getElementById('dealStatus').value,
+        notes: document.getElementById('dealNotes').value,
+        sellPrice: parseFloat(document.getElementById('dealSellPrice').value) || null,
+        sellDate: document.getElementById('dealSellDate').value || null,
+        sellPlatform: document.getElementById('dealSellPlatform').value,
+        platformFee: parseFloat(document.getElementById('dealPlatformFee').value) || 0,
+        shippingCost: parseFloat(document.getElementById('dealShippingCost').value) || 0,
+        updatedAt: new Date().toISOString()
+    };
+
+    let deals = JSON.parse(localStorage.getItem('flipping_deals') || '[]');
+
+    if (dealId) {
+        deals = deals.map(d => d.id === parseInt(dealId) ? deal : d);
+    } else {
+        deal.createdAt = new Date().toISOString();
+        deals.push(deal);
+    }
+
+    localStorage.setItem('flipping_deals', JSON.stringify(deals));
+    closeModal('dealModal');
+    loadDeals();
+
+    if (window.WealthAgent) {
+        WealthAgent.showToast(dealId ? 'Affar uppdaterad!' : 'Affar tillagd!', 'success');
+    }
+}
+
+function deleteDeal() {
+    if (!confirm('Ar du saker pa att du vill radera denna affar?')) return;
+
+    const dealId = parseInt(document.getElementById('dealId').value);
+    let deals = JSON.parse(localStorage.getItem('flipping_deals') || '[]');
+    deals = deals.filter(d => d.id !== dealId);
+    localStorage.setItem('flipping_deals', JSON.stringify(deals));
+
+    closeModal('dealModal');
+    loadDeals();
+
+    if (window.WealthAgent) {
+        WealthAgent.showToast('Affar raderad', 'info');
+    }
+}
+
+function openSoldModal(id) {
+    const deals = JSON.parse(localStorage.getItem('flipping_deals') || '[]');
+    const deal = deals.find(d => d.id === id);
+    if (!deal) return;
+
+    document.getElementById('soldDealId').value = id;
+    document.getElementById('soldProductName').textContent = deal.name;
+    document.getElementById('soldPrice').value = deal.expectedPrice || '';
+    document.getElementById('soldDate').valueAsDate = new Date();
+
+    window.currentSoldDeal = deal;
+    updateQuickProfit();
+    document.getElementById('soldModal').classList.add('active');
+}
+
+function updateQuickProfit() {
+    if (!window.currentSoldDeal) return;
+
+    const deal = window.currentSoldDeal;
+    const sellPrice = parseFloat(document.getElementById('soldPrice').value) || 0;
+    const fee = parseFloat(document.getElementById('soldFee').value) || 0;
+
+    const totalCost = deal.buyPrice + (deal.extraCosts || 0);
+    const feeAmount = sellPrice * fee / 100;
+    const profit = sellPrice - totalCost - feeAmount;
+
+    document.getElementById('quickProfit').innerHTML = `
+        <span>Forvantat vinst: <strong style="color: ${profit >= 0 ? 'var(--success)' : 'var(--danger)'}">${formatCurrency(profit)}</strong></span>
+    `;
+}
+
+function confirmSold() {
+    const dealId = parseInt(document.getElementById('soldDealId').value);
+    let deals = JSON.parse(localStorage.getItem('flipping_deals') || '[]');
+
+    deals = deals.map(d => {
+        if (d.id === dealId) {
+            return {
+                ...d,
+                status: 'sold',
+                sellPrice: parseFloat(document.getElementById('soldPrice').value),
+                sellDate: document.getElementById('soldDate').value,
+                sellPlatform: document.getElementById('soldPlatform').value,
+                platformFee: parseFloat(document.getElementById('soldFee').value) || 0,
+                updatedAt: new Date().toISOString()
+            };
+        }
+        return d;
+    });
+
+    localStorage.setItem('flipping_deals', JSON.stringify(deals));
+    closeModal('soldModal');
+    loadDeals();
+
+    if (window.WealthAgent) {
+        WealthAgent.showToast('Grattis till forsaljningen!', 'success');
+    }
+
+    // Celebration
+    if (typeof confetti !== 'undefined') {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    }
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+// Helper functions
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK', maximumFractionDigits: 0 }).format(amount);
+}
+
+function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString('sv-SE');
+}
+
+function getCategoryIcon(category) {
+    const icons = {
+        electronics: 'laptop',
+        fashion: 'tshirt',
+        furniture: 'couch',
+        collectibles: 'gem',
+        sports: 'football-ball',
+        home: 'home',
+        vehicles: 'car',
+        books: 'book',
+        toys: 'puzzle-piece',
+        other: 'box'
+    };
+    return icons[category] || 'box';
+}
+
+function getCategoryLabel(category) {
+    const labels = {
+        electronics: 'Elektronik',
+        fashion: 'Klader',
+        furniture: 'Mobler',
+        collectibles: 'Samlarforemol',
+        sports: 'Sport',
+        home: 'Hem',
+        vehicles: 'Fordon',
+        books: 'Bocker',
+        toys: 'Leksaker',
+        other: 'Ovrigt'
+    };
+    return labels[category] || category;
+}
+
+function getStatusLabel(status) {
+    const labels = {
+        active: 'Aktiv',
+        listed: 'Listad',
+        sold: 'Sald'
+    };
+    return labels[status] || status;
+}
+</script>
+{% endblock %}

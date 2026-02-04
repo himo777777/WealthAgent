@@ -1,0 +1,681 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Inkomststrommar - AI Wealth Agent{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1><i class="fas fa-water"></i> Inkomststrommar</h1>
+        <p>Bygg flera inkomstkallor for ekonomisk sakerhet</p>
+    </div>
+</div>
+
+<!-- Income Overview -->
+<div class="income-overview mb-4">
+    <div class="overview-main">
+        <div class="overview-chart">
+            <canvas id="incomeDonut" height="200"></canvas>
+        </div>
+        <div class="overview-stats">
+            <div class="total-income">
+                <span class="label">Total manatlig inkomst</span>
+                <span class="value" id="totalMonthlyIncome">62 500 kr</span>
+            </div>
+            <div class="income-breakdown">
+                <div class="breakdown-item">
+                    <span class="dot active"></span>
+                    <span class="name">Aktiv inkomst</span>
+                    <span class="amount">45 000 kr</span>
+                    <span class="percent">72%</span>
+                </div>
+                <div class="breakdown-item">
+                    <span class="dot passive"></span>
+                    <span class="name">Passiv inkomst</span>
+                    <span class="amount">17 500 kr</span>
+                    <span class="percent">28%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Income Streams Grid -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3><i class="fas fa-stream"></i> Dina inkomststrommar</h3>
+        <button class="btn btn-primary btn-sm" onclick="openAddStreamModal()">
+            <i class="fas fa-plus"></i> Lagg till
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="streams-grid">
+            <!-- Primary Job -->
+            <div class="stream-card primary">
+                <div class="stream-header">
+                    <div class="stream-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <div class="stream-type">AKTIV</div>
+                </div>
+                <h4>Huvudanstallning</h4>
+                <div class="stream-amount">45 000 kr/man</div>
+                <div class="stream-details">
+                    <span><i class="fas fa-building"></i> Tech AB</span>
+                    <span><i class="fas fa-clock"></i> Heltid</span>
+                </div>
+                <div class="stream-health good">
+                    <i class="fas fa-check-circle"></i> Stabil
+                </div>
+            </div>
+
+            <!-- Freelance -->
+            <div class="stream-card">
+                <div class="stream-header">
+                    <div class="stream-icon bg-primary">
+                        <i class="fas fa-laptop-code"></i>
+                    </div>
+                    <div class="stream-type">AKTIV</div>
+                </div>
+                <h4>Frilansarbete</h4>
+                <div class="stream-amount">8 000 kr/man</div>
+                <div class="stream-details">
+                    <span><i class="fas fa-chart-line"></i> Vaxande</span>
+                    <span><i class="fas fa-clock"></i> ~10 tim/vecka</span>
+                </div>
+                <div class="stream-health growing">
+                    <i class="fas fa-arrow-up"></i> +25% denna manad
+                </div>
+            </div>
+
+            <!-- Dividends -->
+            <div class="stream-card passive-stream">
+                <div class="stream-header">
+                    <div class="stream-icon bg-success">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="stream-type passive">PASSIV</div>
+                </div>
+                <h4>Aktieutdelningar</h4>
+                <div class="stream-amount">2 500 kr/man</div>
+                <div class="stream-details">
+                    <span><i class="fas fa-chart-pie"></i> Portfolj: 750k</span>
+                    <span><i class="fas fa-percentage"></i> 4% yield</span>
+                </div>
+                <div class="stream-health good">
+                    <i class="fas fa-magic"></i> Automatisk
+                </div>
+            </div>
+
+            <!-- Online Course -->
+            <div class="stream-card passive-stream">
+                <div class="stream-header">
+                    <div class="stream-icon bg-warning">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="stream-type passive">PASSIV</div>
+                </div>
+                <h4>Online-kurs</h4>
+                <div class="stream-amount">3 200 kr/man</div>
+                <div class="stream-details">
+                    <span><i class="fas fa-users"></i> 45 studenter/man</span>
+                    <span><i class="fas fa-star"></i> 4.7 betyg</span>
+                </div>
+                <div class="stream-health growing">
+                    <i class="fas fa-arrow-up"></i> Trending
+                </div>
+            </div>
+
+            <!-- Rental -->
+            <div class="stream-card passive-stream">
+                <div class="stream-header">
+                    <div class="stream-icon bg-info">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <div class="stream-type passive">PASSIV</div>
+                </div>
+                <h4>Uthyrning (Rum)</h4>
+                <div class="stream-amount">4 500 kr/man</div>
+                <div class="stream-details">
+                    <span><i class="fas fa-bed"></i> 1 rum</span>
+                    <span><i class="fas fa-calendar-check"></i> Langtidsuthyrning</span>
+                </div>
+                <div class="stream-health good">
+                    <i class="fas fa-check-circle"></i> Stabil hyresgast
+                </div>
+            </div>
+
+            <!-- Add New Stream -->
+            <div class="stream-card add-new" onclick="openAddStreamModal()">
+                <div class="add-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <span>Lagg till ny inkomststrom</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Passive Income Goal -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-bullseye"></i> Passiv inkomst-mal</h3>
+    </div>
+    <div class="card-body">
+        <div class="passive-goal">
+            <div class="goal-visual">
+                <div class="goal-circle">
+                    <svg viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="var(--border)" stroke-width="8"/>
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="var(--success)" stroke-width="8"
+                                stroke-dasharray="283" stroke-dashoffset="200" stroke-linecap="round"
+                                transform="rotate(-90 50 50)"/>
+                    </svg>
+                    <div class="goal-text">
+                        <span class="goal-percent">29%</span>
+                        <span class="goal-label">av mal</span>
+                    </div>
+                </div>
+            </div>
+            <div class="goal-details">
+                <div class="goal-item">
+                    <span class="goal-item-label">Nuvarande passiv inkomst</span>
+                    <span class="goal-item-value">17 500 kr/man</span>
+                </div>
+                <div class="goal-item">
+                    <span class="goal-item-label">Mal: Tacka levnadskostnader</span>
+                    <span class="goal-item-value">60 000 kr/man</span>
+                </div>
+                <div class="goal-item">
+                    <span class="goal-item-label">Kvar att na</span>
+                    <span class="goal-item-value text-warning">42 500 kr/man</span>
+                </div>
+                <div class="goal-progress">
+                    <div class="progress-bar-large">
+                        <div class="progress-fill" style="width: 29%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Income Diversification Score -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-shield-alt"></i> Diversifieringspoang</h3>
+    </div>
+    <div class="card-body">
+        <div class="diversity-score">
+            <div class="score-circle">
+                <span class="score-value">68</span>
+                <span class="score-max">/100</span>
+            </div>
+            <div class="score-details">
+                <h4>Bra diversifiering!</h4>
+                <p>Du har 5 inkomstkallor, varav 3 ar passiva. Forslag for att forbattra:</p>
+                <ul class="improvement-list">
+                    <li><i class="fas fa-check text-success"></i> Flera inkomstkallor (5 st)</li>
+                    <li><i class="fas fa-check text-success"></i> Mix av aktiv och passiv</li>
+                    <li><i class="fas fa-exclamation text-warning"></i> 72% beroende av huvudjobb</li>
+                    <li><i class="fas fa-times text-danger"></i> Ingen inkomst fran digitala produkter</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recommendations -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-lightbulb"></i> Rekommenderade nasta steg</h3>
+    </div>
+    <div class="card-body">
+        <div class="recommendations-grid">
+            <div class="rec-card">
+                <div class="rec-icon bg-success">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h4>Oka utdelningsportfoljen</h4>
+                <p>Med 500k mer i utdelningsaktier far du ytterligare ~1 700 kr/man passivt</p>
+                <button class="btn btn-outline-success btn-sm">Se hur</button>
+            </div>
+            <div class="rec-card">
+                <div class="rec-icon bg-warning">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h4>Skapa en till kurs</h4>
+                <p>Din forsta kurs gar bra - en till kan dubblera den passiva inkomsten</p>
+                <button class="btn btn-outline-warning btn-sm">Planera</button>
+            </div>
+            <div class="rec-card">
+                <div class="rec-icon bg-primary">
+                    <i class="fas fa-pen"></i>
+                </div>
+                <h4>Skriv en e-bok</h4>
+                <p>Anvand din expertis for att skapa en digital produkt som saljer dygnet runt</p>
+                <button class="btn btn-outline-primary btn-sm">Utforska</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.income-overview {
+    background: linear-gradient(135deg, var(--primary), #4f46e5);
+    color: white;
+    border-radius: 16px;
+    padding: 2rem;
+}
+
+.overview-main {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+}
+
+.overview-chart {
+    width: 200px;
+    flex-shrink: 0;
+}
+
+.overview-stats {
+    flex: 1;
+}
+
+.total-income {
+    margin-bottom: 1.5rem;
+}
+
+.total-income .label {
+    display: block;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.total-income .value {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.income-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.breakdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+}
+
+.breakdown-item .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.breakdown-item .dot.active {
+    background: #f59e0b;
+}
+
+.breakdown-item .dot.passive {
+    background: #22c55e;
+}
+
+.breakdown-item .name {
+    flex: 1;
+}
+
+.breakdown-item .amount {
+    font-weight: 600;
+}
+
+.breakdown-item .percent {
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+.streams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.stream-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.stream-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.stream-card.primary {
+    border-left: 4px solid var(--primary);
+}
+
+.stream-card.passive-stream {
+    border-left: 4px solid var(--success);
+}
+
+.stream-card.add-new {
+    border-style: dashed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    min-height: 180px;
+}
+
+.stream-card.add-new:hover {
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.add-icon {
+    width: 50px;
+    height: 50px;
+    border: 2px dashed var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    color: var(--text-muted);
+}
+
+.stream-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.stream-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--primary);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.stream-type {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.stream-type.passive {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success);
+}
+
+.stream-card h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+.stream-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.stream-details {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+}
+
+.stream-health {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+}
+
+.stream-health.good {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success);
+}
+
+.stream-health.growing {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.passive-goal {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+}
+
+.goal-visual {
+    flex-shrink: 0;
+}
+
+.goal-circle {
+    position: relative;
+    width: 150px;
+    height: 150px;
+}
+
+.goal-circle svg {
+    width: 100%;
+    height: 100%;
+}
+
+.goal-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.goal-percent {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--success);
+}
+
+.goal-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.goal-details {
+    flex: 1;
+}
+
+.goal-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.goal-item:last-of-type {
+    border-bottom: none;
+}
+
+.goal-item-value {
+    font-weight: 600;
+}
+
+.goal-progress {
+    margin-top: 1rem;
+}
+
+.progress-bar-large {
+    height: 12px;
+    background: var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success), #4ade80);
+}
+
+.diversity-score {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.score-circle {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, var(--success), #4ade80);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.score-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+.score-max {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.score-details h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--success);
+}
+
+.score-details p {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.improvement-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.improvement-list li {
+    padding: 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.rec-card {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.rec-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.rec-card h4 {
+    margin-bottom: 0.5rem;
+}
+
+.rec-card p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 992px) {
+    .overview-main {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .passive-goal {
+        flex-direction: column;
+    }
+
+    .diversity-score {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .recommendations-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initDonutChart();
+});
+
+function initDonutChart() {
+    const ctx = document.getElementById('incomeDonut').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Huvudjobb', 'Frilans', 'Utdelningar', 'Kurs', 'Uthyrning'],
+            datasets: [{
+                data: [45000, 8000, 2500, 3200, 4500],
+                backgroundColor: ['#6366f1', '#3b82f6', '#22c55e', '#f59e0b', '#14b8a6']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            cutout: '65%'
+        }
+    });
+}
+
+function openAddStreamModal() {
+    alert('Lagg till ny inkomststrom - modal implementeras');
+}
+</script>
+{% endblock %}

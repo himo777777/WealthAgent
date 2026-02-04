@@ -1,0 +1,606 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Rapporter - AI Wealth Agent{% endblock %}
+{% block page_title %}Finansiella Rapporter{% endblock %}
+
+{% block content %}
+<div class="reports-page">
+    <!-- Report Type Tabs -->
+    <div class="report-tabs">
+        <button class="report-tab active" data-type="monthly">
+            <i class="fas fa-calendar-alt"></i> Manadsrapporter
+        </button>
+        <button class="report-tab" data-type="weekly">
+            <i class="fas fa-calendar-week"></i> Veckorapporter
+        </button>
+    </div>
+
+    <!-- Generate Report -->
+    <div class="generate-section">
+        <button class="btn btn-primary" onclick="generateReport()">
+            <i class="fas fa-file-alt"></i> Generera ny rapport
+        </button>
+    </div>
+
+    <!-- Current Report -->
+    <div id="currentReport" class="current-report" style="display: none;">
+        <div class="report-header">
+            <div class="report-period">
+                <h3 id="reportTitle">Manadsrapport</h3>
+                <span id="reportPeriod" class="report-dates">-</span>
+            </div>
+            <div class="report-actions">
+                <button class="btn btn-secondary btn-sm" onclick="exportPDF()">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="printReport()">
+                    <i class="fas fa-print"></i> Skriv ut
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="report-summary">
+            <div class="summary-card income">
+                <div class="card-icon">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div class="card-content">
+                    <span class="card-label">Inkomster</span>
+                    <span class="card-value" id="totalIncome">0 kr</span>
+                </div>
+            </div>
+            <div class="summary-card expense">
+                <div class="card-icon">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="card-content">
+                    <span class="card-label">Utgifter</span>
+                    <span class="card-value" id="totalExpenses">0 kr</span>
+                </div>
+            </div>
+            <div class="summary-card savings">
+                <div class="card-icon">
+                    <i class="fas fa-piggy-bank"></i>
+                </div>
+                <div class="card-content">
+                    <span class="card-label">Sparat</span>
+                    <span class="card-value" id="netSavings">0 kr</span>
+                </div>
+            </div>
+            <div class="summary-card rate">
+                <div class="card-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="card-content">
+                    <span class="card-label">Sparkvot</span>
+                    <span class="card-value" id="savingsRate">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+            <div class="chart-card">
+                <h4>Utgiftsfordelning</h4>
+                <canvas id="expenseChart" height="250"></canvas>
+            </div>
+            <div class="chart-card">
+                <h4>Malframsteg</h4>
+                <div id="goalsProgress" class="goals-list"></div>
+            </div>
+        </div>
+
+        <!-- Insights -->
+        <div class="insights-section" id="insightsSection">
+            <h4><i class="fas fa-lightbulb"></i> Insikter</h4>
+            <div id="insightsList" class="insights-list"></div>
+        </div>
+    </div>
+
+    <!-- Report History -->
+    <div class="report-history">
+        <h3><i class="fas fa-history"></i> Tidigare rapporter</h3>
+        <div id="reportsList" class="reports-list"></div>
+    </div>
+</div>
+
+<style>
+.reports-page { max-width: 1000px; }
+
+.report-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.report-tab {
+    flex: 1;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.report-tab:hover { background: var(--surface-light); }
+
+.report-tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.generate-section {
+    margin-bottom: 1.5rem;
+}
+
+.current-report {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.report-period h3 {
+    margin-bottom: 0.25rem;
+}
+
+.report-dates {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.report-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-card {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.summary-card.income .card-icon { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.summary-card.expense .card-icon { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.summary-card.savings .card-icon { background: rgba(99, 102, 241, 0.2); color: #6366f1; }
+.summary-card.rate .card-icon { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+
+.card-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: block;
+}
+
+.card-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.chart-card {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.chart-card h4 {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.goals-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.goal-progress-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.goal-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+
+.goal-bar {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.goal-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 4px;
+}
+
+.insights-section h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.insights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.insight-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 10px;
+    border-left: 4px solid var(--primary);
+}
+
+.insight-item.positive { border-left-color: var(--success); }
+.insight-item.warning { border-left-color: var(--warning); }
+
+.insight-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.insight-item.positive .insight-icon { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.insight-item.warning .insight-icon { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.insight-item.info .insight-icon { background: rgba(99, 102, 241, 0.2); color: #6366f1; }
+
+.report-history {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.report-history h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.reports-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.report-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.report-item:hover {
+    background: var(--surface-light);
+}
+
+.report-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.report-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.report-title {
+    font-weight: 500;
+    display: block;
+}
+
+.report-date {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.report-stats {
+    text-align: right;
+}
+
+.report-savings {
+    font-weight: 600;
+    display: block;
+}
+
+.report-savings.positive { color: var(--success); }
+.report-savings.negative { color: var(--danger); }
+
+.report-rate {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+    .report-summary { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let expenseChart = null;
+let currentReportType = 'monthly';
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadReports();
+
+    document.querySelectorAll('.report-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            currentReportType = this.dataset.type;
+            loadReports();
+        });
+    });
+});
+
+async function loadReports() {
+    try {
+        const response = await WealthAgent.apiCall(`/wealth/api/reports?type=${currentReportType}`);
+        if (response.success) {
+            renderReportsList(response.reports);
+            if (response.reports.length > 0) {
+                displayReport(response.reports[0]);
+            }
+        }
+    } catch (error) {
+        renderReportsList([]);
+    }
+}
+
+function renderReportsList(reports) {
+    const list = document.getElementById('reportsList');
+
+    if (reports.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-file-alt"></i>
+                <p>Inga rapporter annu. Klicka "Generera ny rapport" for att skapa din forsta.</p>
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = reports.map(report => {
+        const savings = report.summary?.net_savings || 0;
+        const rate = report.summary?.savings_rate || 0;
+
+        return `
+            <div class="report-item" onclick="displayReport(${JSON.stringify(report).replace(/"/g, '&quot;')})">
+                <div class="report-info">
+                    <div class="report-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div>
+                        <span class="report-title">${report.report_type === 'monthly' ? 'Manadsrapport' : 'Veckorapport'}</span>
+                        <span class="report-date">${formatPeriod(report.period_start, report.period_end)}</span>
+                    </div>
+                </div>
+                <div class="report-stats">
+                    <span class="report-savings ${savings >= 0 ? 'positive' : 'negative'}">
+                        ${savings >= 0 ? '+' : ''}${WealthAgent.formatCurrency(savings)}
+                    </span>
+                    <span class="report-rate">${rate.toFixed(1)}% sparkvot</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function formatPeriod(start, end) {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const options = { day: 'numeric', month: 'short' };
+    return `${startDate.toLocaleDateString('sv-SE', options)} - ${endDate.toLocaleDateString('sv-SE', options)}`;
+}
+
+function displayReport(report) {
+    const section = document.getElementById('currentReport');
+    section.style.display = 'block';
+
+    document.getElementById('reportTitle').textContent = report.report_type === 'monthly' ? 'Manadsrapport' : 'Veckorapport';
+    document.getElementById('reportPeriod').textContent = formatPeriod(report.period_start, report.period_end);
+
+    const summary = report.summary || {};
+    document.getElementById('totalIncome').textContent = WealthAgent.formatCurrency(summary.total_income || 0);
+    document.getElementById('totalExpenses').textContent = WealthAgent.formatCurrency(summary.total_expenses || 0);
+    document.getElementById('netSavings').textContent = WealthAgent.formatCurrency(summary.net_savings || 0);
+    document.getElementById('savingsRate').textContent = (summary.savings_rate || 0).toFixed(1) + '%';
+
+    // Expense chart
+    renderExpenseChart(report.expense_breakdown || {});
+
+    // Goals progress
+    renderGoalsProgress(report.goals_progress || []);
+
+    // Insights
+    renderInsights(report.insights || []);
+}
+
+function renderExpenseChart(breakdown) {
+    const ctx = document.getElementById('expenseChart').getContext('2d');
+
+    if (expenseChart) expenseChart.destroy();
+
+    const labels = Object.keys(breakdown);
+    const data = Object.values(breakdown);
+    const colors = ['#6366f1', '#a855f7', '#22c55e', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
+
+    if (labels.length === 0) {
+        document.getElementById('expenseChart').parentElement.innerHTML = '<p style="text-align:center;color:var(--text-muted);">Inga utgifter denna period</p>';
+        return;
+    }
+
+    expenseChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { color: 'rgba(255,255,255,0.7)' }
+                }
+            }
+        }
+    });
+}
+
+function renderGoalsProgress(goals) {
+    const container = document.getElementById('goalsProgress');
+
+    if (goals.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:var(--text-muted);">Inga aktiva mal</p>';
+        return;
+    }
+
+    container.innerHTML = goals.map(goal => `
+        <div class="goal-progress-item">
+            <div class="goal-header">
+                <span>${goal.title}</span>
+                <span>${goal.progress}%</span>
+            </div>
+            <div class="goal-bar">
+                <div class="goal-fill" style="width: ${goal.progress}%"></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderInsights(insights) {
+    const container = document.getElementById('insightsList');
+
+    if (insights.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted);">Inga insikter denna period</p>';
+        return;
+    }
+
+    container.innerHTML = insights.map(insight => `
+        <div class="insight-item ${insight.type}">
+            <div class="insight-icon">
+                <i class="fas fa-${insight.type === 'positive' ? 'thumbs-up' : insight.type === 'warning' ? 'exclamation' : 'info'}"></i>
+            </div>
+            <span>${insight.text}</span>
+        </div>
+    `).join('');
+}
+
+async function generateReport() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/reports/generate', 'POST', { type: currentReportType });
+        if (response.success) {
+            displayReport(response.report);
+            loadReports();
+            WealthAgent.showToast('Rapport genererad!', 'success');
+        }
+    } catch (error) {
+        WealthAgent.showToast('Kunde inte generera rapport', 'error');
+    }
+}
+
+function printReport() {
+    window.print();
+}
+
+async function exportPDF() {
+    try {
+        WealthAgent.showToast('Genererar PDF...', 'info');
+        const response = await fetch('/wealth/api/export?format=pdf', {
+            method: 'GET',
+            headers: { 'Accept': 'application/pdf' }
+        });
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `wealth-report-${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            WealthAgent.showToast('PDF nedladdad!', 'success');
+        } else {
+            throw new Error('PDF generation failed');
+        }
+    } catch (error) {
+        WealthAgent.showToast('Kunde inte generera PDF', 'error');
+    }
+}
+</script>
+{% endblock %}

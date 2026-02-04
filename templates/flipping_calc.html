@@ -1,0 +1,773 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Flipping Calculator - Wealth Agent{% endblock %}
+
+{% block page_title %}Flipping Vinstkalkylator{% endblock %}
+
+{% block content %}
+<div class="flipping-calc">
+    <div class="calc-grid">
+        <!-- Main Calculator -->
+        <div class="card main-calc">
+            <div class="card-header">
+                <h3><i class="fas fa-calculator"></i> Berakna din vinst</h3>
+            </div>
+            <div class="card-body">
+                <form id="calcForm">
+                    <div class="form-section">
+                        <h4>Inkop</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Inkopspris (kr)</label>
+                                <input type="number" id="buyPrice" placeholder="0" value="500">
+                            </div>
+                            <div class="form-group">
+                                <label>Extra kostnader (reparation etc.)</label>
+                                <input type="number" id="extraCosts" placeholder="0" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Forsaljning</h4>
+                        <div class="form-group">
+                            <label>Forsaljningspris (kr)</label>
+                            <input type="number" id="sellPrice" placeholder="0" value="1000">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Forsaljningsplattform</label>
+                                <select id="platform">
+                                    <option value="blocket" data-fee="0">Blocket (0%)</option>
+                                    <option value="tradera" data-fee="7">Tradera (~7%)</option>
+                                    <option value="ebay" data-fee="13">eBay (~13%)</option>
+                                    <option value="marketplace" data-fee="0">Facebook Marketplace (0%)</option>
+                                    <option value="sellpy" data-fee="40">Sellpy (~40%)</option>
+                                    <option value="custom">Anpassad avgift...</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="customFeeGroup" style="display: none;">
+                                <label>Avgift (%)</label>
+                                <input type="number" id="customFee" placeholder="0" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Frakt (om du betalar)</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Fraktkostnad (kr)</label>
+                                <input type="number" id="shippingCost" placeholder="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Forpackningsmaterial (kr)</label>
+                                <input type="number" id="packagingCost" placeholder="0" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Results -->
+                <div class="results-panel">
+                    <div class="result-row">
+                        <span class="result-label">Inkop + kostnader</span>
+                        <span class="result-value" id="totalCost">500 kr</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Forsaljningspris</span>
+                        <span class="result-value" id="sellPriceResult">1 000 kr</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Plattformsavgift</span>
+                        <span class="result-value negative" id="platformFee">0 kr</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Fraktkostnader</span>
+                        <span class="result-value negative" id="shippingTotal">0 kr</span>
+                    </div>
+                    <div class="result-row total">
+                        <span class="result-label">Nettovinst</span>
+                        <span class="result-value" id="netProfit">500 kr</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">ROI (Return on Investment)</span>
+                        <span class="result-value" id="roi">100%</span>
+                    </div>
+                </div>
+
+                <div class="profit-visual">
+                    <div class="profit-bar">
+                        <div class="bar-segment cost" id="costBar"></div>
+                        <div class="bar-segment profit" id="profitBar"></div>
+                    </div>
+                    <div class="profit-legend">
+                        <span><span class="dot cost"></span> Kostnader</span>
+                        <span><span class="dot profit"></span> Vinst</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Break-even Calculator -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-balance-scale"></i> Break-even</h3>
+            </div>
+            <div class="card-body">
+                <div class="breakeven-info">
+                    <p>For att ga plus pa denna affar maste du salja for minst:</p>
+                    <div class="breakeven-price" id="breakevenPrice">500 kr</div>
+                    <p class="breakeven-note">
+                        (Inkluderar inkop, avgifter och fraktkostnader)
+                    </p>
+                </div>
+
+                <div class="price-suggestions">
+                    <h5>Prisforslag</h5>
+                    <div class="suggestion-row">
+                        <span>Minimal vinst (10%)</span>
+                        <span id="price10">550 kr</span>
+                    </div>
+                    <div class="suggestion-row">
+                        <span>Bra vinst (25%)</span>
+                        <span id="price25">625 kr</span>
+                    </div>
+                    <div class="suggestion-row">
+                        <span>Utmarkt vinst (50%)</span>
+                        <span id="price50">750 kr</span>
+                    </div>
+                    <div class="suggestion-row highlight">
+                        <span>Dubbling (100%)</span>
+                        <span id="price100">1 000 kr</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platform Comparison -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-store"></i> Jamfor plattformar</h3>
+            </div>
+            <div class="card-body">
+                <p class="comparison-intro">Sa mycket far du kvar pa olika plattformar:</p>
+                <div class="platform-comparison" id="platformComparison">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipping Calculator -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-truck"></i> Fraktguide</h3>
+            </div>
+            <div class="card-body">
+                <div class="shipping-options">
+                    <div class="shipping-option">
+                        <div class="shipping-icon"><i class="fas fa-envelope"></i></div>
+                        <div class="shipping-info">
+                            <span class="shipping-name">Brev (PostNord)</span>
+                            <span class="shipping-size">Max 3cm tjockt</span>
+                        </div>
+                        <span class="shipping-price">13-25 kr</span>
+                    </div>
+                    <div class="shipping-option">
+                        <div class="shipping-icon"><i class="fas fa-box"></i></div>
+                        <div class="shipping-info">
+                            <span class="shipping-name">Litet paket (Instabox)</span>
+                            <span class="shipping-size">Max 2kg</span>
+                        </div>
+                        <span class="shipping-price">29-49 kr</span>
+                    </div>
+                    <div class="shipping-option">
+                        <div class="shipping-icon"><i class="fas fa-boxes"></i></div>
+                        <div class="shipping-info">
+                            <span class="shipping-name">Paket (PostNord)</span>
+                            <span class="shipping-size">Max 20kg</span>
+                        </div>
+                        <span class="shipping-price">59-99 kr</span>
+                    </div>
+                    <div class="shipping-option">
+                        <div class="shipping-icon"><i class="fas fa-couch"></i></div>
+                        <div class="shipping-info">
+                            <span class="shipping-name">Stort/Tungt</span>
+                            <span class="shipping-size">Mobler etc.</span>
+                        </div>
+                        <span class="shipping-price">199-499 kr</span>
+                    </div>
+                </div>
+                <p class="shipping-tip">
+                    <i class="fas fa-lightbulb"></i>
+                    Tips: Lat koparen betala frakten for att skydda din marginal!
+                </p>
+            </div>
+        </div>
+
+        <!-- Quick Tips -->
+        <div class="card full-width">
+            <div class="card-header">
+                <h3><i class="fas fa-lightbulb"></i> Maximera din vinst</h3>
+            </div>
+            <div class="card-body">
+                <div class="tips-grid">
+                    <div class="tip">
+                        <div class="tip-icon"><i class="fas fa-percentage"></i></div>
+                        <div class="tip-content">
+                            <h5>Sikta pa 50%+ ROI</h5>
+                            <p>Under 50% ROI ar ofta inte vart besvaretefter tid och risk.</p>
+                        </div>
+                    </div>
+                    <div class="tip">
+                        <div class="tip-icon"><i class="fas fa-clock"></i></div>
+                        <div class="tip-content">
+                            <h5>Rakna med din tid</h5>
+                            <p>Om du lagger 2h pa en affar som ger 100 kr vinst = 50 kr/h.</p>
+                        </div>
+                    </div>
+                    <div class="tip">
+                        <div class="tip-icon"><i class="fas fa-hand-holding-usd"></i></div>
+                        <div class="tip-content">
+                            <h5>Undvik avgifter</h5>
+                            <p>Blocket och Marketplace ar gratis - mer pengar i fickan.</p>
+                        </div>
+                    </div>
+                    <div class="tip">
+                        <div class="tip-icon"><i class="fas fa-truck"></i></div>
+                        <div class="tip-content">
+                            <h5>Lat koparen betala frakt</h5>
+                            <p>Standard pa de flesta plattformar - skyddar din marginal.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.flipping-calc {
+    padding: 1rem;
+}
+
+.calc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1rem;
+}
+
+.card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.card.full-width {
+    grid-column: 1 / -1;
+}
+
+.card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card-header h3 i {
+    color: var(--primary);
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+.main-calc {
+    grid-row: span 2;
+}
+
+.form-section {
+    margin-bottom: 1.5rem;
+}
+
+.form-section h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin: 0 0 1rem 0;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Results Panel */
+.results-panel {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.result-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.result-row:last-child {
+    border-bottom: none;
+}
+
+.result-row.total {
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 2px solid var(--primary);
+    font-size: 1.1rem;
+}
+
+.result-label {
+    color: var(--text-muted);
+}
+
+.result-value {
+    font-weight: 600;
+}
+
+.result-value.negative {
+    color: var(--danger);
+}
+
+.result-row.total .result-value {
+    color: var(--success);
+    font-size: 1.25rem;
+}
+
+/* Profit Visual */
+.profit-visual {
+    margin-top: 1rem;
+}
+
+.profit-bar {
+    height: 24px;
+    background: var(--border);
+    border-radius: 12px;
+    display: flex;
+    overflow: hidden;
+}
+
+.bar-segment {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.bar-segment.cost {
+    background: var(--text-muted);
+}
+
+.bar-segment.profit {
+    background: var(--success);
+}
+
+.profit-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+}
+
+.profit-legend .dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    margin-right: 0.35rem;
+}
+
+.dot.cost {
+    background: var(--text-muted);
+}
+
+.dot.profit {
+    background: var(--success);
+}
+
+/* Break-even */
+.breakeven-info {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.breakeven-info p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.breakeven-price {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0.5rem 0;
+}
+
+.breakeven-note {
+    font-size: 0.8rem !important;
+}
+
+.price-suggestions h5 {
+    margin: 0 0 1rem 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.suggestion-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.suggestion-row:last-child {
+    border-bottom: none;
+}
+
+.suggestion-row.highlight {
+    background: rgba(99, 102, 241, 0.1);
+    margin: 0.5rem -0.5rem 0;
+    padding: 0.75rem 0.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.suggestion-row span:last-child {
+    font-weight: 600;
+    color: var(--success);
+}
+
+/* Platform Comparison */
+.comparison-intro {
+    margin: 0 0 1rem 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.platform-comparison {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.platform-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.platform-row.best {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid var(--success);
+}
+
+.platform-row .platform-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.platform-row .platform-fee {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.platform-row .platform-profit {
+    font-weight: 600;
+    color: var(--success);
+}
+
+.platform-row .best-badge {
+    background: var(--success);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+/* Shipping */
+.shipping-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.shipping-option {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.shipping-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.shipping-info {
+    flex: 1;
+}
+
+.shipping-name {
+    font-weight: 600;
+    display: block;
+}
+
+.shipping-size {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.shipping-price {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.shipping-tip {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.shipping-tip i {
+    color: #f59e0b;
+}
+
+/* Tips Grid */
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.tip {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.tip-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.tip-content h5 {
+    margin: 0 0 0.35rem 0;
+    font-size: 0.95rem;
+}
+
+.tip-content p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+    .calc-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .main-calc {
+        grid-row: auto;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+const platforms = [
+    { id: 'blocket', name: 'Blocket', fee: 0 },
+    { id: 'marketplace', name: 'Facebook Marketplace', fee: 0 },
+    { id: 'tradera', name: 'Tradera', fee: 7 },
+    { id: 'ebay', name: 'eBay', fee: 13 },
+    { id: 'sellpy', name: 'Sellpy', fee: 40 }
+];
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listeners to all inputs
+    const inputs = document.querySelectorAll('#calcForm input, #calcForm select');
+    inputs.forEach(input => {
+        input.addEventListener('input', calculate);
+        input.addEventListener('change', calculate);
+    });
+
+    // Platform change handler
+    document.getElementById('platform').addEventListener('change', function() {
+        const customFeeGroup = document.getElementById('customFeeGroup');
+        customFeeGroup.style.display = this.value === 'custom' ? 'block' : 'none';
+        calculate();
+    });
+
+    // Initial calculation
+    calculate();
+});
+
+function calculate() {
+    const buyPrice = parseFloat(document.getElementById('buyPrice').value) || 0;
+    const extraCosts = parseFloat(document.getElementById('extraCosts').value) || 0;
+    const sellPrice = parseFloat(document.getElementById('sellPrice').value) || 0;
+    const shippingCost = parseFloat(document.getElementById('shippingCost').value) || 0;
+    const packagingCost = parseFloat(document.getElementById('packagingCost').value) || 0;
+
+    // Get platform fee
+    let feePercent = 0;
+    const platformSelect = document.getElementById('platform');
+    if (platformSelect.value === 'custom') {
+        feePercent = parseFloat(document.getElementById('customFee').value) || 0;
+    } else {
+        const selectedOption = platformSelect.options[platformSelect.selectedIndex];
+        feePercent = parseFloat(selectedOption.dataset.fee) || 0;
+    }
+
+    const totalCost = buyPrice + extraCosts;
+    const platformFee = sellPrice * (feePercent / 100);
+    const shippingTotal = shippingCost + packagingCost;
+    const netProfit = sellPrice - totalCost - platformFee - shippingTotal;
+    const roi = totalCost > 0 ? ((netProfit / totalCost) * 100) : 0;
+
+    // Update results
+    document.getElementById('totalCost').textContent = formatCurrency(totalCost);
+    document.getElementById('sellPriceResult').textContent = formatCurrency(sellPrice);
+    document.getElementById('platformFee').textContent = '-' + formatCurrency(platformFee);
+    document.getElementById('shippingTotal').textContent = '-' + formatCurrency(shippingTotal);
+    document.getElementById('netProfit').textContent = formatCurrency(netProfit);
+    document.getElementById('netProfit').style.color = netProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+    document.getElementById('roi').textContent = roi.toFixed(1) + '%';
+    document.getElementById('roi').style.color = roi >= 50 ? 'var(--success)' : (roi >= 0 ? 'var(--warning)' : 'var(--danger)');
+
+    // Update profit visual
+    const total = Math.max(totalCost + platformFee + shippingTotal + netProfit, 1);
+    const costPercent = ((totalCost + platformFee + shippingTotal) / total) * 100;
+    const profitPercent = netProfit > 0 ? (netProfit / total) * 100 : 0;
+
+    document.getElementById('costBar').style.width = costPercent + '%';
+    document.getElementById('profitBar').style.width = profitPercent + '%';
+
+    // Break-even calculations
+    const breakevenPrice = calculateBreakeven(totalCost, shippingTotal, feePercent);
+    document.getElementById('breakevenPrice').textContent = formatCurrency(breakevenPrice);
+
+    // Price suggestions (based on buy price + costs)
+    const baseForProfit = totalCost;
+    document.getElementById('price10').textContent = formatCurrency(calculatePriceForROI(baseForProfit, shippingTotal, feePercent, 10));
+    document.getElementById('price25').textContent = formatCurrency(calculatePriceForROI(baseForProfit, shippingTotal, feePercent, 25));
+    document.getElementById('price50').textContent = formatCurrency(calculatePriceForROI(baseForProfit, shippingTotal, feePercent, 50));
+    document.getElementById('price100').textContent = formatCurrency(calculatePriceForROI(baseForProfit, shippingTotal, feePercent, 100));
+
+    // Platform comparison
+    updatePlatformComparison(sellPrice, totalCost, shippingTotal);
+}
+
+function calculateBreakeven(totalCost, shippingCost, feePercent) {
+    // breakeven = (cost + shipping) / (1 - fee%)
+    return Math.ceil((totalCost + shippingCost) / (1 - feePercent / 100));
+}
+
+function calculatePriceForROI(baseCost, shippingCost, feePercent, targetROI) {
+    // We want: sellPrice - (baseCost + shipping + sellPrice*fee%) = baseCost * targetROI%
+    // sellPrice * (1 - fee%) = baseCost * (1 + targetROI%) + shipping
+    // sellPrice = (baseCost * (1 + targetROI%) + shipping) / (1 - fee%)
+    const targetProfit = baseCost * (targetROI / 100);
+    const neededNet = baseCost + shippingCost + targetProfit;
+    return Math.ceil(neededNet / (1 - feePercent / 100));
+}
+
+function updatePlatformComparison(sellPrice, totalCost, shippingCost) {
+    const comparison = document.getElementById('platformComparison');
+    const results = platforms.map(p => {
+        const fee = sellPrice * (p.fee / 100);
+        const profit = sellPrice - totalCost - fee - shippingCost;
+        return { ...p, fee: fee, profit: profit };
+    }).sort((a, b) => b.profit - a.profit);
+
+    const maxProfit = Math.max(...results.map(r => r.profit));
+
+    comparison.innerHTML = results.map((p, i) => `
+        <div class="platform-row ${p.profit === maxProfit ? 'best' : ''}">
+            <span class="platform-name">${p.name}</span>
+            <span class="platform-fee">${p.fee > 0 ? '-' + formatCurrency(p.fee) : 'Gratis'}</span>
+            <span class="platform-profit">${formatCurrency(p.profit)}</span>
+            ${p.profit === maxProfit ? '<span class="best-badge">BAST</span>' : ''}
+        </div>
+    `).join('');
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('sv-SE', {
+        style: 'currency',
+        currency: 'SEK',
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,1352 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Client Pipeline - Wealth Agent{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pipeline-hero {
+        background: linear-gradient(135deg, var(--primary) 0%, #06b6d4 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .pipeline-hero h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .hero-stat {
+        text-align: center;
+    }
+
+    .hero-stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+
+    .hero-stat-label {
+        opacity: 0.9;
+        font-size: 0.875rem;
+    }
+
+    .pipeline-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .view-toggle {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .view-btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 8px;
+        cursor: pointer;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .view-btn.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    /* Kanban Board */
+    .kanban-board {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+    }
+
+    @media (max-width: 1200px) {
+        .kanban-board {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .kanban-board {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .kanban-column {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        min-height: 400px;
+    }
+
+    .column-header {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .column-title {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .column-count {
+        background: var(--border);
+        padding: 0.125rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .column-value {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .column-body {
+        padding: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        min-height: 300px;
+    }
+
+    /* Status Colors */
+    .status-lead .column-header { border-top: 3px solid #94a3b8; }
+    .status-pitch .column-header { border-top: 3px solid #3b82f6; }
+    .status-negotiation .column-header { border-top: 3px solid #f59e0b; }
+    .status-won .column-header { border-top: 3px solid #10b981; }
+
+    /* Client Card */
+    .client-card {
+        background: var(--background);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: grab;
+        transition: all 0.2s ease;
+    }
+
+    .client-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .client-card.dragging {
+        opacity: 0.5;
+        transform: rotate(3deg);
+    }
+
+    .client-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .client-company {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0.75rem;
+    }
+
+    .client-value {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--success);
+        margin-bottom: 0.5rem;
+    }
+
+    .client-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .client-tag {
+        padding: 0.125rem 0.5rem;
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+        border-radius: 4px;
+        font-size: 0.75rem;
+    }
+
+    .client-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .client-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .client-action {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.25rem;
+    }
+
+    .client-action:hover {
+        color: var(--primary);
+    }
+
+    /* List View */
+    .list-view {
+        display: none;
+    }
+
+    .list-view.active {
+        display: block;
+    }
+
+    .kanban-board.hidden {
+        display: none;
+    }
+
+    .client-table {
+        width: 100%;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .client-table th {
+        background: var(--background);
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.875rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .client-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+
+    .client-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .client-table tr:hover {
+        background: var(--background);
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .status-badge.lead {
+        background: rgba(148, 163, 184, 0.2);
+        color: #64748b;
+    }
+
+    .status-badge.pitch {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .status-badge.negotiation {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+
+    .status-badge.won {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .status-badge.lost {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    /* Summary Cards */
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .summary-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+    }
+
+    .summary-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .summary-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .summary-icon.blue { background: rgba(59, 130, 246, 0.1); }
+    .summary-icon.green { background: rgba(16, 185, 129, 0.1); }
+    .summary-icon.yellow { background: rgba(245, 158, 11, 0.1); }
+    .summary-icon.purple { background: rgba(139, 92, 246, 0.1); }
+
+    .summary-trend {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+    }
+
+    .summary-trend.up {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .summary-trend.down {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    .summary-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .summary-label {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    /* Empty State */
+    .empty-column {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--text-muted);
+    }
+
+    .empty-column-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.5;
+    }
+
+    /* Drop Zone */
+    .drop-zone {
+        border: 2px dashed var(--border);
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        color: var(--text-muted);
+        transition: all 0.2s ease;
+    }
+
+    .drop-zone.drag-over {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    /* Activity Log */
+    .activity-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .activity-item {
+        display: flex;
+        gap: 1rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--background);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-text {
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-time {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    /* Quick Stats in Modal */
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .quick-stat {
+        text-align: center;
+        padding: 0.75rem;
+        background: var(--background);
+        border-radius: 8px;
+    }
+
+    .quick-stat-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .quick-stat-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    /* Priority indicator */
+    .priority-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 0.5rem;
+    }
+
+    .priority-high { background: #ef4444; }
+    .priority-medium { background: #f59e0b; }
+    .priority-low { background: #10b981; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Hero Section -->
+    <div class="pipeline-hero">
+        <h1>Client Pipeline</h1>
+        <p class="mb-0 opacity-75">Hantera dina freelance-kunder från lead till signerat avtal</p>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-value" id="totalClients">0</div>
+                <div class="hero-stat-label">Totala kunder</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value" id="pipelineValue">0 kr</div>
+                <div class="hero-stat-label">Pipeline-värde</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value" id="wonValue">0 kr</div>
+                <div class="hero-stat-label">Vunna affärer</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value" id="conversionRate">0%</div>
+                <div class="hero-stat-label">Konvertering</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+        <div class="summary-card">
+            <div class="summary-card-header">
+                <div class="summary-icon blue">📥</div>
+                <span class="summary-trend up" id="leadsTrend">+2 denna vecka</span>
+            </div>
+            <div class="summary-value" id="leadsCount">0</div>
+            <div class="summary-label">Nya leads</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-card-header">
+                <div class="summary-icon yellow">💬</div>
+            </div>
+            <div class="summary-value" id="pitchCount">0</div>
+            <div class="summary-label">Aktiva pitchar</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-card-header">
+                <div class="summary-icon purple">🤝</div>
+            </div>
+            <div class="summary-value" id="negotiationCount">0</div>
+            <div class="summary-label">I förhandling</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-card-header">
+                <div class="summary-icon green">🎉</div>
+            </div>
+            <div class="summary-value" id="wonCount">0</div>
+            <div class="summary-label">Vunna kunder</div>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="pipeline-toolbar">
+        <div class="view-toggle">
+            <button class="view-btn active" onclick="setView('kanban')">
+                <i class="fas fa-columns"></i> Kanban
+            </button>
+            <button class="view-btn" onclick="setView('list')">
+                <i class="fas fa-list"></i> Lista
+            </button>
+        </div>
+        <button class="btn btn-primary" onclick="openAddClientModal()">
+            <i class="fas fa-plus me-2"></i> Ny Kund/Lead
+        </button>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="kanban-board" id="kanbanBoard">
+        <!-- Lead Column -->
+        <div class="kanban-column status-lead" data-status="lead">
+            <div class="column-header">
+                <div class="column-title">
+                    📥 Lead
+                    <span class="column-count" id="leadColumnCount">0</span>
+                </div>
+                <div class="column-value" id="leadColumnValue">0 kr</div>
+            </div>
+            <div class="column-body" id="leadColumn" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <!-- Cards will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Pitch Column -->
+        <div class="kanban-column status-pitch" data-status="pitch">
+            <div class="column-header">
+                <div class="column-title">
+                    💬 Pitch
+                    <span class="column-count" id="pitchColumnCount">0</span>
+                </div>
+                <div class="column-value" id="pitchColumnValue">0 kr</div>
+            </div>
+            <div class="column-body" id="pitchColumn" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <!-- Cards will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Negotiation Column -->
+        <div class="kanban-column status-negotiation" data-status="negotiation">
+            <div class="column-header">
+                <div class="column-title">
+                    🤝 Förhandling
+                    <span class="column-count" id="negotiationColumnCount">0</span>
+                </div>
+                <div class="column-value" id="negotiationColumnValue">0 kr</div>
+            </div>
+            <div class="column-body" id="negotiationColumn" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <!-- Cards will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Won Column -->
+        <div class="kanban-column status-won" data-status="won">
+            <div class="column-header">
+                <div class="column-title">
+                    🎉 Vunnen
+                    <span class="column-count" id="wonColumnCount">0</span>
+                </div>
+                <div class="column-value" id="wonColumnValue">0 kr</div>
+            </div>
+            <div class="column-body" id="wonColumn" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <!-- Cards will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- List View -->
+    <div class="list-view" id="listView">
+        <table class="client-table">
+            <thead>
+                <tr>
+                    <th>Kund</th>
+                    <th>Företag</th>
+                    <th>Värde</th>
+                    <th>Status</th>
+                    <th>Tjänst</th>
+                    <th>Senast kontakt</th>
+                    <th>Åtgärder</th>
+                </tr>
+            </thead>
+            <tbody id="clientTableBody">
+                <!-- Table rows will be rendered here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Activity Log -->
+    <div class="activity-section">
+        <h5 class="mb-3">Senaste Aktivitet</h5>
+        <div id="activityLog">
+            <!-- Activity items will be rendered here -->
+            <div class="text-center text-muted py-3">
+                <i class="fas fa-history mb-2" style="font-size: 2rem; opacity: 0.5;"></i>
+                <p class="mb-0">Inga aktiviteter än. Lägg till din första kund!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Client Modal -->
+<div class="modal fade" id="addClientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Lägg till Ny Kund/Lead</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Kontaktperson *</label>
+                            <input type="text" class="form-control" id="clientName" placeholder="Anna Andersson">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Företag</label>
+                            <input type="text" class="form-control" id="clientCompany" placeholder="Företag AB">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">E-post</label>
+                            <input type="email" class="form-control" id="clientEmail" placeholder="anna@foretag.se">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Telefon</label>
+                            <input type="tel" class="form-control" id="clientPhone" placeholder="070-123 45 67">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Estimerat värde (kr) *</label>
+                            <input type="number" class="form-control" id="clientValue" placeholder="25000">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="clientStatus">
+                                <option value="lead">Lead</option>
+                                <option value="pitch">Pitch</option>
+                                <option value="negotiation">Förhandling</option>
+                                <option value="won">Vunnen</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Tjänst/Projekt</label>
+                            <input type="text" class="form-control" id="clientService" placeholder="Webbdesign, Konsulting...">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Prioritet</label>
+                            <select class="form-select" id="clientPriority">
+                                <option value="high">Hög</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="low">Låg</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Källa</label>
+                    <select class="form-select" id="clientSource">
+                        <option value="referral">Referens</option>
+                        <option value="linkedin">LinkedIn</option>
+                        <option value="website">Hemsida</option>
+                        <option value="cold">Kall kontakt</option>
+                        <option value="event">Event/Nätverk</option>
+                        <option value="other">Annat</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Anteckningar</label>
+                    <textarea class="form-control" id="clientNotes" rows="3" placeholder="Extra information om kunden..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                <button type="button" class="btn btn-primary" onclick="saveClient()">
+                    <i class="fas fa-plus me-1"></i> Lägg till
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Client Modal -->
+<div class="modal fade" id="editClientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Redigera Kund</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editClientId">
+
+                <!-- Quick Stats -->
+                <div class="quick-stats">
+                    <div class="quick-stat">
+                        <div class="quick-stat-value" id="editDaysInPipeline">0</div>
+                        <div class="quick-stat-label">Dagar i pipeline</div>
+                    </div>
+                    <div class="quick-stat">
+                        <div class="quick-stat-value" id="editContactCount">0</div>
+                        <div class="quick-stat-label">Kontakter</div>
+                    </div>
+                    <div class="quick-stat">
+                        <div class="quick-stat-value" id="editLastContact">-</div>
+                        <div class="quick-stat-label">Senaste kontakt</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Kontaktperson</label>
+                            <input type="text" class="form-control" id="editClientName">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Företag</label>
+                            <input type="text" class="form-control" id="editClientCompany">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">E-post</label>
+                            <input type="email" class="form-control" id="editClientEmail">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Telefon</label>
+                            <input type="tel" class="form-control" id="editClientPhone">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Estimerat värde (kr)</label>
+                            <input type="number" class="form-control" id="editClientValue">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="editClientStatus">
+                                <option value="lead">Lead</option>
+                                <option value="pitch">Pitch</option>
+                                <option value="negotiation">Förhandling</option>
+                                <option value="won">Vunnen</option>
+                                <option value="lost">Förlorad</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Tjänst/Projekt</label>
+                            <input type="text" class="form-control" id="editClientService">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Prioritet</label>
+                            <select class="form-select" id="editClientPriority">
+                                <option value="high">Hög</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Låg</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Anteckningar</label>
+                    <textarea class="form-control" id="editClientNotes" rows="3"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Logga ny kontakt</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="newContactNote" placeholder="T.ex. 'Skickade offert via mail'">
+                        <button class="btn btn-outline-primary" onclick="logContact()">
+                            <i class="fas fa-plus"></i> Logga
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger me-auto" onclick="deleteClient()">
+                    <i class="fas fa-trash me-1"></i> Ta bort
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                <button type="button" class="btn btn-primary" onclick="updateClient()">
+                    <i class="fas fa-save me-1"></i> Spara
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Data storage
+    let clients = JSON.parse(localStorage.getItem('pipeline_clients') || '[]');
+    let activities = JSON.parse(localStorage.getItem('pipeline_activities') || '[]');
+    let currentView = 'kanban';
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        renderClients();
+        updateStats();
+        renderActivities();
+    });
+
+    // Status labels
+    const statusLabels = {
+        lead: 'Lead',
+        pitch: 'Pitch',
+        negotiation: 'Förhandling',
+        won: 'Vunnen',
+        lost: 'Förlorad'
+    };
+
+    const sourceLabels = {
+        referral: 'Referens',
+        linkedin: 'LinkedIn',
+        website: 'Hemsida',
+        cold: 'Kall kontakt',
+        event: 'Event/Nätverk',
+        other: 'Annat'
+    };
+
+    function setView(view) {
+        currentView = view;
+        document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.closest('.view-btn').classList.add('active');
+
+        if (view === 'kanban') {
+            document.getElementById('kanbanBoard').classList.remove('hidden');
+            document.getElementById('listView').classList.remove('active');
+        } else {
+            document.getElementById('kanbanBoard').classList.add('hidden');
+            document.getElementById('listView').classList.add('active');
+        }
+
+        renderClients();
+    }
+
+    function openAddClientModal() {
+        document.getElementById('clientName').value = '';
+        document.getElementById('clientCompany').value = '';
+        document.getElementById('clientEmail').value = '';
+        document.getElementById('clientPhone').value = '';
+        document.getElementById('clientValue').value = '';
+        document.getElementById('clientStatus').value = 'lead';
+        document.getElementById('clientService').value = '';
+        document.getElementById('clientPriority').value = 'medium';
+        document.getElementById('clientSource').value = 'referral';
+        document.getElementById('clientNotes').value = '';
+
+        new bootstrap.Modal(document.getElementById('addClientModal')).show();
+    }
+
+    function saveClient() {
+        const name = document.getElementById('clientName').value;
+        const value = parseFloat(document.getElementById('clientValue').value) || 0;
+
+        if (!name) {
+            alert('Ange kontaktperson');
+            return;
+        }
+
+        const client = {
+            id: Date.now().toString(),
+            name,
+            company: document.getElementById('clientCompany').value,
+            email: document.getElementById('clientEmail').value,
+            phone: document.getElementById('clientPhone').value,
+            value,
+            status: document.getElementById('clientStatus').value,
+            service: document.getElementById('clientService').value,
+            priority: document.getElementById('clientPriority').value,
+            source: document.getElementById('clientSource').value,
+            notes: document.getElementById('clientNotes').value,
+            contacts: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        clients.push(client);
+        localStorage.setItem('pipeline_clients', JSON.stringify(clients));
+
+        // Log activity
+        logActivity('add', client);
+
+        bootstrap.Modal.getInstance(document.getElementById('addClientModal')).hide();
+        renderClients();
+        updateStats();
+    }
+
+    function renderClients() {
+        if (currentView === 'kanban') {
+            renderKanban();
+        } else {
+            renderList();
+        }
+    }
+
+    function renderKanban() {
+        const columns = {
+            lead: document.getElementById('leadColumn'),
+            pitch: document.getElementById('pitchColumn'),
+            negotiation: document.getElementById('negotiationColumn'),
+            won: document.getElementById('wonColumn')
+        };
+
+        // Clear all columns
+        Object.values(columns).forEach(col => col.innerHTML = '');
+
+        // Render clients in columns
+        clients.forEach(client => {
+            if (client.status === 'lost') return; // Don't show lost in kanban
+
+            const column = columns[client.status];
+            if (!column) return;
+
+            const card = createClientCard(client);
+            column.innerHTML += card;
+        });
+
+        // Add empty state to empty columns
+        Object.entries(columns).forEach(([status, column]) => {
+            if (column.innerHTML === '') {
+                column.innerHTML = `
+                    <div class="empty-column">
+                        <div class="empty-column-icon">📭</div>
+                        <div>Inga ${statusLabels[status].toLowerCase()} än</div>
+                    </div>
+                `;
+            }
+        });
+
+        // Update column counts and values
+        updateColumnStats();
+    }
+
+    function createClientCard(client) {
+        const priorityClass = `priority-${client.priority}`;
+        const tags = client.service ? client.service.split(',').map(t => t.trim()) : [];
+        const daysSinceContact = client.contacts.length > 0
+            ? Math.floor((new Date() - new Date(client.contacts[client.contacts.length - 1].date)) / (1000 * 60 * 60 * 24))
+            : Math.floor((new Date() - new Date(client.createdAt)) / (1000 * 60 * 60 * 24));
+
+        return `
+            <div class="client-card" draggable="true" ondragstart="drag(event)" data-id="${client.id}">
+                <div class="client-name">
+                    <span class="priority-indicator ${priorityClass}"></span>
+                    ${client.name}
+                </div>
+                <div class="client-company">${client.company || 'Privatperson'}</div>
+                <div class="client-value">${formatCurrency(client.value)}</div>
+                ${tags.length > 0 ? `
+                    <div class="client-tags">
+                        ${tags.slice(0, 2).map(tag => `<span class="client-tag">${tag}</span>`).join('')}
+                    </div>
+                ` : ''}
+                <div class="client-meta">
+                    <span><i class="fas fa-clock me-1"></i>${daysSinceContact}d sedan kontakt</span>
+                    <div class="client-actions">
+                        <button class="client-action" onclick="editClient('${client.id}')" title="Redigera">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderList() {
+        const tbody = document.getElementById('clientTableBody');
+
+        if (clients.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        Inga kunder än. Lägg till din första lead!
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = clients.map(client => {
+            const lastContact = client.contacts.length > 0
+                ? new Date(client.contacts[client.contacts.length - 1].date).toLocaleDateString('sv-SE')
+                : new Date(client.createdAt).toLocaleDateString('sv-SE');
+
+            return `
+                <tr>
+                    <td>
+                        <span class="priority-indicator priority-${client.priority}"></span>
+                        <strong>${client.name}</strong>
+                    </td>
+                    <td>${client.company || '-'}</td>
+                    <td><strong>${formatCurrency(client.value)}</strong></td>
+                    <td><span class="status-badge ${client.status}">${statusLabels[client.status]}</span></td>
+                    <td>${client.service || '-'}</td>
+                    <td>${lastContact}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editClient('${client.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function updateColumnStats() {
+        const statuses = ['lead', 'pitch', 'negotiation', 'won'];
+
+        statuses.forEach(status => {
+            const statusClients = clients.filter(c => c.status === status);
+            const count = statusClients.length;
+            const value = statusClients.reduce((sum, c) => sum + c.value, 0);
+
+            document.getElementById(`${status}ColumnCount`).textContent = count;
+            document.getElementById(`${status}ColumnValue`).textContent = formatCurrency(value);
+        });
+    }
+
+    function updateStats() {
+        const totalClients = clients.length;
+        const activeClients = clients.filter(c => c.status !== 'lost');
+        const wonClients = clients.filter(c => c.status === 'won');
+        const lostClients = clients.filter(c => c.status === 'lost');
+
+        const pipelineValue = clients
+            .filter(c => !['won', 'lost'].includes(c.status))
+            .reduce((sum, c) => sum + c.value, 0);
+
+        const wonValue = wonClients.reduce((sum, c) => sum + c.value, 0);
+
+        const conversionRate = (wonClients.length + lostClients.length) > 0
+            ? (wonClients.length / (wonClients.length + lostClients.length)) * 100
+            : 0;
+
+        document.getElementById('totalClients').textContent = totalClients;
+        document.getElementById('pipelineValue').textContent = formatCurrency(pipelineValue);
+        document.getElementById('wonValue').textContent = formatCurrency(wonValue);
+        document.getElementById('conversionRate').textContent = conversionRate.toFixed(0) + '%';
+
+        // Summary cards
+        document.getElementById('leadsCount').textContent = clients.filter(c => c.status === 'lead').length;
+        document.getElementById('pitchCount').textContent = clients.filter(c => c.status === 'pitch').length;
+        document.getElementById('negotiationCount').textContent = clients.filter(c => c.status === 'negotiation').length;
+        document.getElementById('wonCount').textContent = wonClients.length;
+    }
+
+    // Drag and Drop
+    function allowDrop(e) {
+        e.preventDefault();
+        e.target.closest('.column-body').classList.add('drag-over');
+    }
+
+    function drag(e) {
+        e.dataTransfer.setData('text/plain', e.target.dataset.id);
+        e.target.classList.add('dragging');
+    }
+
+    function drop(e) {
+        e.preventDefault();
+        const columnBody = e.target.closest('.column-body');
+        columnBody.classList.remove('drag-over');
+
+        const clientId = e.dataTransfer.getData('text/plain');
+        const newStatus = e.target.closest('.kanban-column').dataset.status;
+
+        const client = clients.find(c => c.id === clientId);
+        if (client && client.status !== newStatus) {
+            const oldStatus = client.status;
+            client.status = newStatus;
+            client.updatedAt = new Date().toISOString();
+            localStorage.setItem('pipeline_clients', JSON.stringify(clients));
+
+            logActivity('move', client, { from: oldStatus, to: newStatus });
+
+            renderClients();
+            updateStats();
+        }
+
+        document.querySelectorAll('.client-card').forEach(card => card.classList.remove('dragging'));
+    }
+
+    function editClient(id) {
+        const client = clients.find(c => c.id === id);
+        if (!client) return;
+
+        document.getElementById('editClientId').value = id;
+        document.getElementById('editClientName').value = client.name;
+        document.getElementById('editClientCompany').value = client.company;
+        document.getElementById('editClientEmail').value = client.email;
+        document.getElementById('editClientPhone').value = client.phone;
+        document.getElementById('editClientValue').value = client.value;
+        document.getElementById('editClientStatus').value = client.status;
+        document.getElementById('editClientService').value = client.service;
+        document.getElementById('editClientPriority').value = client.priority;
+        document.getElementById('editClientNotes').value = client.notes;
+
+        // Calculate stats
+        const daysInPipeline = Math.floor((new Date() - new Date(client.createdAt)) / (1000 * 60 * 60 * 24));
+        const contactCount = client.contacts.length;
+        const lastContact = client.contacts.length > 0
+            ? new Date(client.contacts[client.contacts.length - 1].date).toLocaleDateString('sv-SE')
+            : '-';
+
+        document.getElementById('editDaysInPipeline').textContent = daysInPipeline;
+        document.getElementById('editContactCount').textContent = contactCount;
+        document.getElementById('editLastContact').textContent = lastContact;
+
+        new bootstrap.Modal(document.getElementById('editClientModal')).show();
+    }
+
+    function updateClient() {
+        const id = document.getElementById('editClientId').value;
+        const client = clients.find(c => c.id === id);
+        if (!client) return;
+
+        client.name = document.getElementById('editClientName').value;
+        client.company = document.getElementById('editClientCompany').value;
+        client.email = document.getElementById('editClientEmail').value;
+        client.phone = document.getElementById('editClientPhone').value;
+        client.value = parseFloat(document.getElementById('editClientValue').value) || 0;
+        client.status = document.getElementById('editClientStatus').value;
+        client.service = document.getElementById('editClientService').value;
+        client.priority = document.getElementById('editClientPriority').value;
+        client.notes = document.getElementById('editClientNotes').value;
+        client.updatedAt = new Date().toISOString();
+
+        localStorage.setItem('pipeline_clients', JSON.stringify(clients));
+
+        bootstrap.Modal.getInstance(document.getElementById('editClientModal')).hide();
+        renderClients();
+        updateStats();
+    }
+
+    function deleteClient() {
+        if (!confirm('Vill du ta bort denna kund?')) return;
+
+        const id = document.getElementById('editClientId').value;
+        clients = clients.filter(c => c.id !== id);
+        localStorage.setItem('pipeline_clients', JSON.stringify(clients));
+
+        bootstrap.Modal.getInstance(document.getElementById('editClientModal')).hide();
+        renderClients();
+        updateStats();
+    }
+
+    function logContact() {
+        const id = document.getElementById('editClientId').value;
+        const note = document.getElementById('newContactNote').value;
+
+        if (!note) {
+            alert('Skriv en notering om kontakten');
+            return;
+        }
+
+        const client = clients.find(c => c.id === id);
+        if (!client) return;
+
+        client.contacts.push({
+            date: new Date().toISOString(),
+            note
+        });
+        client.updatedAt = new Date().toISOString();
+
+        localStorage.setItem('pipeline_clients', JSON.stringify(clients));
+
+        logActivity('contact', client, { note });
+
+        document.getElementById('newContactNote').value = '';
+        document.getElementById('editContactCount').textContent = client.contacts.length;
+        document.getElementById('editLastContact').textContent = new Date().toLocaleDateString('sv-SE');
+
+        renderActivities();
+    }
+
+    function logActivity(type, client, extra = {}) {
+        const activity = {
+            id: Date.now().toString(),
+            type,
+            clientId: client.id,
+            clientName: client.name,
+            timestamp: new Date().toISOString(),
+            ...extra
+        };
+
+        activities.unshift(activity);
+        if (activities.length > 50) activities = activities.slice(0, 50);
+        localStorage.setItem('pipeline_activities', JSON.stringify(activities));
+
+        renderActivities();
+    }
+
+    function renderActivities() {
+        const container = document.getElementById('activityLog');
+
+        if (activities.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-history mb-2" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p class="mb-0">Inga aktiviteter än. Lägg till din första kund!</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = activities.slice(0, 10).map(activity => {
+            let icon, text;
+
+            switch (activity.type) {
+                case 'add':
+                    icon = '➕';
+                    text = `<strong>${activity.clientName}</strong> lades till som ny lead`;
+                    break;
+                case 'move':
+                    icon = '📦';
+                    text = `<strong>${activity.clientName}</strong> flyttades från ${statusLabels[activity.from]} till ${statusLabels[activity.to]}`;
+                    break;
+                case 'contact':
+                    icon = '📞';
+                    text = `Kontakt med <strong>${activity.clientName}</strong>: ${activity.note}`;
+                    break;
+                default:
+                    icon = '📝';
+                    text = `Aktivitet för ${activity.clientName}`;
+            }
+
+            const timeAgo = getTimeAgo(new Date(activity.timestamp));
+
+            return `
+                <div class="activity-item">
+                    <div class="activity-icon">${icon}</div>
+                    <div class="activity-content">
+                        <div class="activity-text">${text}</div>
+                        <div class="activity-time">${timeAgo}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function getTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+
+        if (seconds < 60) return 'Just nu';
+        if (seconds < 3600) return `${Math.floor(seconds / 60)} min sedan`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)} tim sedan`;
+        if (seconds < 604800) return `${Math.floor(seconds / 86400)} dagar sedan`;
+        return date.toLocaleDateString('sv-SE');
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('sv-SE', {
+            style: 'decimal',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount) + ' kr';
+    }
+
+    // Remove drag-over class when leaving
+    document.querySelectorAll('.column-body').forEach(col => {
+        col.addEventListener('dragleave', function(e) {
+            if (!this.contains(e.relatedTarget)) {
+                this.classList.remove('drag-over');
+            }
+        });
+    });
+</script>
+{% endblock %}

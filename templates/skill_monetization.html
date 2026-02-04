@@ -1,0 +1,625 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Monetarisera dina kunskaper - AI Wealth Agent{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1><i class="fas fa-brain"></i> Monetarisera dina kunskaper</h1>
+        <p>Forvandla det du kan till pengar</p>
+    </div>
+</div>
+
+<!-- Skill Assessment -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-clipboard-check"></i> Dina kunskaper</h3>
+    </div>
+    <div class="card-body">
+        <p class="text-muted mb-3">Lagg till dina kunskaper och fa forslag pa hur du kan tjna pengar pa dem</p>
+
+        <div class="skills-input mb-4">
+            <div class="input-group">
+                <input type="text" id="skillInput" class="form-control form-control-lg" placeholder="Vad kan du? T.ex. Python, Excel, Fotoografi...">
+                <button class="btn btn-primary" onclick="addSkill()">
+                    <i class="fas fa-plus"></i> Lagg till
+                </button>
+            </div>
+        </div>
+
+        <div class="skills-cloud" id="skillsCloud">
+            <div class="skill-bubble" data-skill="python" data-level="advanced">
+                <span class="skill-name">Python</span>
+                <span class="skill-level">Avancerad</span>
+                <button class="skill-remove" onclick="removeSkill(this)"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="skill-bubble" data-skill="excel" data-level="expert">
+                <span class="skill-name">Excel</span>
+                <span class="skill-level">Expert</span>
+                <button class="skill-remove" onclick="removeSkill(this)"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="skill-bubble" data-skill="kommunikation" data-level="advanced">
+                <span class="skill-name">Kommunikation</span>
+                <span class="skill-level">Avancerad</span>
+                <button class="skill-remove" onclick="removeSkill(this)"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="skill-bubble" data-skill="projektledning" data-level="intermediate">
+                <span class="skill-name">Projektledning</span>
+                <span class="skill-level">Medel</span>
+                <button class="skill-remove" onclick="removeSkill(this)"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+
+        <button class="btn btn-success btn-lg mt-3" onclick="analyzeSkills()">
+            <i class="fas fa-magic"></i> Analysera mina kunskaper
+        </button>
+    </div>
+</div>
+
+<!-- Monetization Opportunities -->
+<div class="card mb-4" id="opportunitiesSection">
+    <div class="card-header">
+        <h3><i class="fas fa-dollar-sign"></i> Monetariseringsmojligheter</h3>
+    </div>
+    <div class="card-body">
+        <div class="opportunities-grid">
+            <!-- Python Opportunities -->
+            <div class="opp-category">
+                <div class="opp-header">
+                    <span class="opp-skill">Python</span>
+                    <span class="opp-potential">Potential: 40-150k/man</span>
+                </div>
+                <div class="opp-list">
+                    <div class="opp-item hot">
+                        <div class="opp-icon bg-primary">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="opp-content">
+                            <h5>AI/ML-konsulting</h5>
+                            <p>Hjalp foretag implementera AI-losningar</p>
+                            <div class="opp-meta">
+                                <span class="earning">800-1500 kr/tim</span>
+                                <span class="demand hot"><i class="fas fa-fire"></i> Hog efterfragan</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-sm">Starta</button>
+                    </div>
+
+                    <div class="opp-item">
+                        <div class="opp-icon bg-success">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="opp-content">
+                            <h5>Python-kurs online</h5>
+                            <p>Lar ut programmering pa Udemy/Skillshare</p>
+                            <div class="opp-meta">
+                                <span class="earning">5k-50k/man (passiv)</span>
+                                <span class="demand"><i class="fas fa-users"></i> Stor marknad</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm">Utforska</button>
+                    </div>
+
+                    <div class="opp-item">
+                        <div class="opp-icon bg-warning">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <div class="opp-content">
+                            <h5>Automatiseringstjanster</h5>
+                            <p>Bygg skript och verktyg for foretag</p>
+                            <div class="opp-meta">
+                                <span class="earning">5k-30k/projekt</span>
+                                <span class="demand"><i class="fas fa-chart-line"></i> Vaxande</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm">Utforska</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Excel Opportunities -->
+            <div class="opp-category">
+                <div class="opp-header">
+                    <span class="opp-skill">Excel</span>
+                    <span class="opp-potential">Potential: 15-60k/man</span>
+                </div>
+                <div class="opp-list">
+                    <div class="opp-item">
+                        <div class="opp-icon bg-success">
+                            <i class="fas fa-file-excel"></i>
+                        </div>
+                        <div class="opp-content">
+                            <h5>Excel-mallar</h5>
+                            <p>Salj premiummallar pa Etsy/Gumroad</p>
+                            <div class="opp-meta">
+                                <span class="earning">2k-20k/man (passiv)</span>
+                                <span class="demand"><i class="fas fa-clock"></i> Skapar en gang</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm">Utforska</button>
+                    </div>
+
+                    <div class="opp-item">
+                        <div class="opp-icon bg-info">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                        <div class="opp-content">
+                            <h5>Excel-utbildning</h5>
+                            <p>Halla kurser for foretag</p>
+                            <div class="opp-meta">
+                                <span class="earning">5k-15k/kurs</span>
+                                <span class="demand"><i class="fas fa-building"></i> B2B</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm">Utforska</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Communication Opportunities -->
+            <div class="opp-category">
+                <div class="opp-header">
+                    <span class="opp-skill">Kommunikation</span>
+                    <span class="opp-potential">Potential: 20-80k/man</span>
+                </div>
+                <div class="opp-list">
+                    <div class="opp-item">
+                        <div class="opp-icon bg-purple">
+                            <i class="fas fa-microphone"></i>
+                        </div>
+                        <div class="opp-content">
+                            <h5>Podcast/YouTube</h5>
+                            <p>Bygg en publik och tjan pa annonser/sponsorer</p>
+                            <div class="opp-meta">
+                                <span class="earning">5k-100k/man</span>
+                                <span class="demand"><i class="fas fa-clock"></i> Langsiktigt</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm">Utforska</button>
+                    </div>
+
+                    <div class="opp-item">
+                        <div class="opp-icon bg-orange">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="opp-content">
+                            <h5>Coaching/Mentorskap</h5>
+                            <p>Hjalp andra utvecklas professionellt</p>
+                            <div class="opp-meta">
+                                <span class="earning">500-2000 kr/tim</span>
+                                <span class="demand hot"><i class="fas fa-fire"></i> Populart</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm">Utforska</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Income Calculator -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-calculator"></i> Inkomstkalkylator</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">Valj monetariseringsmetod</label>
+                    <select class="form-select" id="methodSelect" onchange="updateCalculator()">
+                        <option value="consulting">Konsulting (timpris)</option>
+                        <option value="course">Online-kurs (engangskop)</option>
+                        <option value="templates">Digitala produkter/mallar</option>
+                        <option value="coaching">Coaching (paket)</option>
+                    </select>
+                </div>
+
+                <div id="consultingInputs">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Timpris (kr)</label>
+                        <input type="number" id="hourlyRate" class="form-control" value="800" onchange="calculate()">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Timmar per vecka</label>
+                        <input type="number" id="hoursPerWeek" class="form-control" value="10" onchange="calculate()">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Utnyttjandegrad (%)</label>
+                        <input type="range" id="utilization" class="form-range" min="50" max="100" value="70" onchange="calculate()">
+                        <span id="utilizationValue">70%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="calc-result">
+                    <div class="result-main">
+                        <span class="result-label">Beraknad manadsinkomst</span>
+                        <span class="result-value" id="monthlyIncome">22 400 kr</span>
+                    </div>
+                    <div class="result-details">
+                        <div class="detail-row">
+                            <span>Per vecka</span>
+                            <span id="weeklyIncome">5 600 kr</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Per ar</span>
+                            <span id="yearlyIncome">268 800 kr</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Effektiv timlon</span>
+                            <span id="effectiveRate">560 kr/tim</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Plan -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-rocket"></i> Kom igang-plan</h3>
+    </div>
+    <div class="card-body">
+        <div class="action-timeline">
+            <div class="action-step">
+                <div class="step-marker">1</div>
+                <div class="step-content">
+                    <h4>Vecka 1-2: Forberedelse</h4>
+                    <ul>
+                        <li>Skapa en LinkedIn-profil som visar din expertis</li>
+                        <li>Bygg en enkel portfolj/hemsida</li>
+                        <li>Bestam ditt erbjudande och pris</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="action-step">
+                <div class="step-marker">2</div>
+                <div class="step-content">
+                    <h4>Vecka 3-4: Forsta kunden</h4>
+                    <ul>
+                        <li>Kontakta ditt natverk - beratta vad du erbjuder</li>
+                        <li>Erbjud gratis/rabatterat arbete for testimonials</li>
+                        <li>Listan pa plattformar (Upwork, Fiverr, etc)</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="action-step">
+                <div class="step-marker">3</div>
+                <div class="step-content">
+                    <h4>Manad 2-3: Skala upp</h4>
+                    <ul>
+                        <li>Be om referenser och omdomen</li>
+                        <li>Hoj priserna gradvis</li>
+                        <li>Borja bygga passiva inkomstkallor (kurser, mallar)</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="action-step">
+                <div class="step-marker">4</div>
+                <div class="step-content">
+                    <h4>Manad 4+: Automatisera</h4>
+                    <ul>
+                        <li>Skapa system och processer</li>
+                        <li>Diversifiera inkomstkallorna</li>
+                        <li>Overag om du vill ga heltid</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.skills-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.skill-bubble {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, var(--primary), #818cf8);
+    color: white;
+    border-radius: 25px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.skill-name {
+    font-weight: 500;
+}
+
+.skill-level {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+}
+
+.skill-remove {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    padding: 0 0.25rem;
+}
+
+.skill-remove:hover {
+    color: white;
+}
+
+.opportunities-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.opp-category {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.opp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: var(--background);
+    border-bottom: 1px solid var(--border);
+}
+
+.opp-skill {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.opp-potential {
+    color: var(--success);
+    font-weight: 500;
+}
+
+.opp-list {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.opp-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.opp-item:hover {
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.opp-item.hot {
+    border-left: 3px solid #f59e0b;
+}
+
+.opp-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.bg-purple { background: #8b5cf6; }
+.bg-orange { background: #f97316; }
+
+.opp-content {
+    flex: 1;
+}
+
+.opp-content h5 {
+    margin: 0 0 0.25rem 0;
+}
+
+.opp-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.opp-meta {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.opp-meta .earning {
+    color: var(--success);
+    font-weight: 500;
+}
+
+.opp-meta .demand {
+    color: var(--text-muted);
+}
+
+.opp-meta .demand.hot {
+    color: #f59e0b;
+}
+
+.calc-result {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), transparent);
+    border: 2px solid var(--success);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.result-main {
+    text-align: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.result-label {
+    display: block;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.result-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--success);
+}
+
+.result-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.action-timeline {
+    position: relative;
+    padding-left: 40px;
+}
+
+.action-timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+}
+
+.action-step {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.action-step:last-child {
+    margin-bottom: 0;
+}
+
+.step-marker {
+    position: absolute;
+    left: -40px;
+    width: 30px;
+    height: 30px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.step-content h4 {
+    margin: 0 0 0.75rem 0;
+}
+
+.step-content ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    color: var(--text-muted);
+}
+
+.step-content li {
+    margin-bottom: 0.5rem;
+}
+</style>
+
+<script>
+function addSkill() {
+    const input = document.getElementById('skillInput');
+    const skill = input.value.trim();
+
+    if (skill) {
+        const cloud = document.getElementById('skillsCloud');
+        const bubble = document.createElement('div');
+        bubble.className = 'skill-bubble';
+        bubble.dataset.skill = skill.toLowerCase();
+        bubble.dataset.level = 'intermediate';
+        bubble.innerHTML = `
+            <span class="skill-name">${skill}</span>
+            <span class="skill-level">Medel</span>
+            <button class="skill-remove" onclick="removeSkill(this)"><i class="fas fa-times"></i></button>
+        `;
+        cloud.appendChild(bubble);
+        input.value = '';
+    }
+}
+
+function removeSkill(btn) {
+    btn.closest('.skill-bubble').remove();
+}
+
+function analyzeSkills() {
+    const skills = Array.from(document.querySelectorAll('.skill-bubble')).map(b => b.dataset.skill);
+    alert('Analyserar kunskaper: ' + skills.join(', ') + '\n\nI en riktig implementation skulle AI generera personliga forslag baserat pa dina kunskaper och marknadstrender.');
+}
+
+function updateCalculator() {
+    // Show/hide different inputs based on method
+    calculate();
+}
+
+function calculate() {
+    const rate = parseFloat(document.getElementById('hourlyRate').value) || 0;
+    const hours = parseFloat(document.getElementById('hoursPerWeek').value) || 0;
+    const utilization = parseFloat(document.getElementById('utilization').value) / 100;
+
+    document.getElementById('utilizationValue').textContent = (utilization * 100) + '%';
+
+    const weeklyIncome = rate * hours * utilization;
+    const monthlyIncome = weeklyIncome * 4;
+    const yearlyIncome = monthlyIncome * 12;
+    const effectiveRate = hours > 0 ? weeklyIncome / hours : 0;
+
+    document.getElementById('weeklyIncome').textContent = formatCurrency(weeklyIncome);
+    document.getElementById('monthlyIncome').textContent = formatCurrency(monthlyIncome);
+    document.getElementById('yearlyIncome').textContent = formatCurrency(yearlyIncome);
+    document.getElementById('effectiveRate').textContent = formatCurrency(effectiveRate) + '/tim';
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('sv-SE', {
+        style: 'currency',
+        currency: 'SEK',
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+
+document.getElementById('skillInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') addSkill();
+});
+
+calculate();
+</script>
+{% endblock %}

@@ -1,0 +1,822 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Sidoinkomster - AI Wealth Agent{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1><i class="fas fa-briefcase"></i> Sidoinkomster & Projekt</h1>
+        <p>Spara och folj upp alla dina extra inkomstkallor</p>
+    </div>
+    <div class="page-actions">
+        <button class="btn btn-primary" onclick="openAddHustleModal()">
+            <i class="fas fa-plus"></i> Nytt projekt
+        </button>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="hustle-summary mb-4">
+    <div class="summary-card total">
+        <div class="summary-icon">
+            <i class="fas fa-coins"></i>
+        </div>
+        <div class="summary-content">
+            <span class="summary-label">Total sidoinkomst (i ar)</span>
+            <span class="summary-value" id="totalIncome">47 500 kr</span>
+            <span class="summary-trend positive">+23% vs forsta aret</span>
+        </div>
+    </div>
+    <div class="summary-card monthly">
+        <div class="summary-icon">
+            <i class="fas fa-calendar"></i>
+        </div>
+        <div class="summary-content">
+            <span class="summary-label">Genomsnitt/manad</span>
+            <span class="summary-value" id="monthlyAvg">7 916 kr</span>
+        </div>
+    </div>
+    <div class="summary-card projects">
+        <div class="summary-icon">
+            <i class="fas fa-project-diagram"></i>
+        </div>
+        <div class="summary-content">
+            <span class="summary-label">Aktiva projekt</span>
+            <span class="summary-value" id="activeProjects">3</span>
+        </div>
+    </div>
+    <div class="summary-card time">
+        <div class="summary-icon">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="summary-content">
+            <span class="summary-label">Tid investerad</span>
+            <span class="summary-value" id="totalHours">~45 tim/man</span>
+        </div>
+    </div>
+</div>
+
+<!-- Income Chart -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-bar"></i> Inkomst over tid</h3>
+    </div>
+    <div class="card-body">
+        <canvas id="incomeChart" height="250"></canvas>
+    </div>
+</div>
+
+<!-- Active Side Hustles -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3><i class="fas fa-fire"></i> Aktiva projekt</h3>
+        <div class="view-toggle">
+            <button class="btn btn-sm btn-outline-primary active" onclick="setView('cards')">
+                <i class="fas fa-th-large"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-primary" onclick="setView('list')">
+                <i class="fas fa-list"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="hustles-grid" id="hustlesGrid">
+            <!-- Freelance Web Development -->
+            <div class="hustle-card" data-status="active">
+                <div class="hustle-header">
+                    <div class="hustle-icon bg-primary">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <div class="hustle-title">
+                        <h4>Frilans Webbutveckling</h4>
+                        <span class="hustle-status active">Aktivt</span>
+                    </div>
+                    <div class="hustle-menu">
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="hustle-stats">
+                    <div class="stat">
+                        <span class="stat-label">Denna manad</span>
+                        <span class="stat-value">12 500 kr</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Totalt (i ar)</span>
+                        <span class="stat-value">32 000 kr</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Tid/vecka</span>
+                        <span class="stat-value">~10 tim</span>
+                    </div>
+                </div>
+                <div class="hustle-progress">
+                    <div class="progress-header">
+                        <span>Manadsmål: 15 000 kr</span>
+                        <span>83%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 83%"></div>
+                    </div>
+                </div>
+                <div class="hustle-actions">
+                    <button class="btn btn-sm btn-outline-primary" onclick="logIncome('freelance')">
+                        <i class="fas fa-plus"></i> Logga inkomst
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="viewDetails('freelance')">
+                        <i class="fas fa-chart-line"></i> Detaljer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Online Course -->
+            <div class="hustle-card" data-status="active">
+                <div class="hustle-header">
+                    <div class="hustle-icon bg-success">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="hustle-title">
+                        <h4>Online-kurs (Udemy)</h4>
+                        <span class="hustle-status active">Aktivt</span>
+                    </div>
+                    <div class="hustle-menu">
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="hustle-stats">
+                    <div class="stat">
+                        <span class="stat-label">Denna manad</span>
+                        <span class="stat-value">3 200 kr</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Totalt (i ar)</span>
+                        <span class="stat-value">9 800 kr</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Tid/vecka</span>
+                        <span class="stat-value">~2 tim</span>
+                    </div>
+                </div>
+                <div class="hustle-badge passive">
+                    <i class="fas fa-magic"></i> Passiv inkomst
+                </div>
+                <div class="hustle-actions">
+                    <button class="btn btn-sm btn-outline-primary" onclick="logIncome('course')">
+                        <i class="fas fa-plus"></i> Logga inkomst
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="viewDetails('course')">
+                        <i class="fas fa-chart-line"></i> Detaljer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Consulting -->
+            <div class="hustle-card" data-status="active">
+                <div class="hustle-header">
+                    <div class="hustle-icon bg-warning">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="hustle-title">
+                        <h4>IT-konsulting</h4>
+                        <span class="hustle-status active">Aktivt</span>
+                    </div>
+                    <div class="hustle-menu">
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="hustle-stats">
+                    <div class="stat">
+                        <span class="stat-label">Denna manad</span>
+                        <span class="stat-value">8 000 kr</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Totalt (i ar)</span>
+                        <span class="stat-value">5 700 kr</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Timpris</span>
+                        <span class="stat-value">800 kr</span>
+                    </div>
+                </div>
+                <div class="hustle-clients">
+                    <span class="client-badge">2 aktiva kunder</span>
+                </div>
+                <div class="hustle-actions">
+                    <button class="btn btn-sm btn-outline-primary" onclick="logIncome('consulting')">
+                        <i class="fas fa-plus"></i> Logga inkomst
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="viewDetails('consulting')">
+                        <i class="fas fa-chart-line"></i> Detaljer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ideas & Opportunities -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-lightbulb"></i> Ideer & Mojligheter</h3>
+    </div>
+    <div class="card-body">
+        <div class="ideas-list">
+            <div class="idea-item">
+                <div class="idea-icon bg-info">
+                    <i class="fas fa-pen"></i>
+                </div>
+                <div class="idea-content">
+                    <h5>Teknisk skribent</h5>
+                    <p>Du har kunskaper inom programmering - manga foretag betalar bra for teknisk dokumentation</p>
+                    <div class="idea-meta">
+                        <span><i class="fas fa-coins"></i> 500-1500 kr/artikel</span>
+                        <span><i class="fas fa-clock"></i> 2-4 tim/artikel</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary" onclick="startIdea('tech-writer')">
+                    <i class="fas fa-rocket"></i> Utforska
+                </button>
+            </div>
+
+            <div class="idea-item">
+                <div class="idea-icon bg-purple">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="idea-content">
+                    <h5>AI-automatisering for smaforetag</h5>
+                    <p>Hjalp foretag automatisera uppgifter med AI-verktyg som ChatGPT</p>
+                    <div class="idea-meta">
+                        <span><i class="fas fa-coins"></i> 5000-20000 kr/projekt</span>
+                        <span><i class="fas fa-trending-up"></i> Hog efterfragan</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary" onclick="startIdea('ai-automation')">
+                    <i class="fas fa-rocket"></i> Utforska
+                </button>
+            </div>
+
+            <div class="idea-item">
+                <div class="idea-icon bg-success">
+                    <i class="fas fa-video"></i>
+                </div>
+                <div class="idea-content">
+                    <h5>YouTube-kanal om programmering</h5>
+                    <p>Dela dina kunskaper och bygg passiv inkomst fran annonser</p>
+                    <div class="idea-meta">
+                        <span><i class="fas fa-clock"></i> 6-12 man till forsta inkomst</span>
+                        <span><i class="fas fa-chart-line"></i> Skalbar</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary" onclick="startIdea('youtube')">
+                    <i class="fas fa-rocket"></i> Utforska
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hourly Rate Calculator -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-calculator"></i> Timpriskalkylatorn</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">Onskat manadsinkomst fran sidoprojekt</label>
+                    <input type="number" id="targetIncome" class="form-control" value="15000">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Tillgangliga timmar per manad</label>
+                    <input type="number" id="availableHours" class="form-control" value="40">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Faktureringgrad (%)</label>
+                    <input type="range" id="billableRate" class="form-range" min="50" max="100" value="70">
+                    <div class="d-flex justify-content-between">
+                        <span>50%</span>
+                        <span id="billableValue">70%</span>
+                        <span>100%</span>
+                    </div>
+                    <small class="text-muted">Tid som faktiskt kan faktureras</small>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="rate-result">
+                    <div class="rate-main">
+                        <span class="rate-label">Rekommenderat timpris</span>
+                        <span class="rate-value" id="recommendedRate">536 kr/tim</span>
+                    </div>
+                    <div class="rate-breakdown">
+                        <div class="breakdown-item">
+                            <span>Mal: <span id="targetDisplay">15 000 kr</span></span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span>Fakturerbara timmar: <span id="billableHours">28 tim</span></span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span>+ 25% moms = <span id="rateWithVat">670 kr/tim</span></span>
+                        </div>
+                    </div>
+                    <div class="rate-comparison mt-3">
+                        <small class="text-muted">Jamfor med marknadspriser:</small>
+                        <div class="market-rates">
+                            <span class="rate-badge">Junior: 400-600 kr</span>
+                            <span class="rate-badge">Mid: 600-900 kr</span>
+                            <span class="rate-badge">Senior: 900-1500 kr</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Side Hustle Modal -->
+<div class="modal fade" id="addHustleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Lagg till sidoprojekt</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addHustleForm">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Projektnamn</label>
+                        <input type="text" class="form-control" placeholder="T.ex. Frilans webbutveckling">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Kategori</label>
+                        <select class="form-select">
+                            <option value="freelance">Frilansarbete</option>
+                            <option value="consulting">Konsulting</option>
+                            <option value="ecommerce">E-handel</option>
+                            <option value="content">Content creation</option>
+                            <option value="passive">Passiv inkomst</option>
+                            <option value="other">Ovrigt</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Manatligt mal (kr)</label>
+                        <input type="number" class="form-control" placeholder="0">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Uppskattad tid/vecka (timmar)</label>
+                        <input type="number" class="form-control" placeholder="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                <button type="button" class="btn btn-primary" onclick="saveHustle()">
+                    <i class="fas fa-save"></i> Spara
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hustle-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.summary-card.total {
+    background: linear-gradient(135deg, var(--primary), #4f46e5);
+    color: white;
+    border: none;
+}
+
+.summary-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.summary-card:not(.total) .summary-icon {
+    background: var(--primary);
+    color: white;
+}
+
+.summary-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.summary-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.summary-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.summary-trend {
+    font-size: 0.8rem;
+}
+
+.summary-trend.positive {
+    color: #4ade80;
+}
+
+.hustles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+}
+
+.hustle-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.hustle-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.hustle-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.hustle-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.hustle-title {
+    flex: 1;
+}
+
+.hustle-title h4 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.hustle-status {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+}
+
+.hustle-status.active {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success);
+}
+
+.hustle-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.hustle-stats .stat {
+    text-align: center;
+    padding: 0.5rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.stat-value {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.hustle-progress {
+    margin-bottom: 1rem;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+}
+
+.progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--success);
+}
+
+.hustle-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.hustle-badge.passive {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success);
+}
+
+.client-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: var(--border);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.hustle-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.ideas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.idea-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.idea-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.bg-purple { background: #8b5cf6; }
+
+.idea-content {
+    flex: 1;
+}
+
+.idea-content h5 {
+    margin: 0 0 0.25rem 0;
+}
+
+.idea-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.idea-meta {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.idea-meta i {
+    margin-right: 0.25rem;
+}
+
+.rate-result {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), transparent);
+    border: 2px solid var(--success);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.rate-main {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.rate-label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.rate-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--success);
+}
+
+.rate-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.breakdown-item {
+    font-size: 0.9rem;
+}
+
+.market-rates {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.rate-badge {
+    padding: 0.25rem 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 992px) {
+    .hustle-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .hustle-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .hustle-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .idea-item {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .idea-meta {
+        justify-content: center;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let incomeChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initChart();
+    initRateCalculator();
+});
+
+function initChart() {
+    const ctx = document.getElementById('incomeChart').getContext('2d');
+
+    incomeChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun'],
+            datasets: [
+                {
+                    label: 'Frilans',
+                    data: [8000, 6500, 9000, 7500, 10000, 12500],
+                    backgroundColor: '#6366f1'
+                },
+                {
+                    label: 'Online-kurs',
+                    data: [1200, 1500, 1800, 1400, 2100, 3200],
+                    backgroundColor: '#22c55e'
+                },
+                {
+                    label: 'Konsulting',
+                    data: [0, 0, 0, 4000, 8000, 5700],
+                    backgroundColor: '#f59e0b'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                x: { stacked: true },
+                y: {
+                    stacked: true,
+                    ticks: { callback: v => v.toLocaleString() + ' kr' }
+                }
+            }
+        }
+    });
+}
+
+function initRateCalculator() {
+    const inputs = ['targetIncome', 'availableHours', 'billableRate'];
+    inputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', calculateRate);
+    });
+    calculateRate();
+}
+
+function calculateRate() {
+    const target = parseFloat(document.getElementById('targetIncome').value) || 0;
+    const hours = parseFloat(document.getElementById('availableHours').value) || 1;
+    const billablePercent = parseFloat(document.getElementById('billableRate').value) / 100;
+
+    document.getElementById('billableValue').textContent = (billablePercent * 100) + '%';
+
+    const billableHours = hours * billablePercent;
+    const rate = target / billableHours;
+    const rateWithVat = rate * 1.25;
+
+    document.getElementById('recommendedRate').textContent = Math.round(rate) + ' kr/tim';
+    document.getElementById('targetDisplay').textContent = target.toLocaleString() + ' kr';
+    document.getElementById('billableHours').textContent = Math.round(billableHours) + ' tim';
+    document.getElementById('rateWithVat').textContent = Math.round(rateWithVat) + ' kr/tim';
+}
+
+function openAddHustleModal() {
+    new bootstrap.Modal(document.getElementById('addHustleModal')).show();
+}
+
+function saveHustle() {
+    alert('Sidoprojekt sparat!');
+    bootstrap.Modal.getInstance(document.getElementById('addHustleModal')).hide();
+}
+
+function logIncome(projectId) {
+    const amount = prompt('Ange inkomstbelopp (kr):');
+    if (amount) {
+        alert(`${amount} kr loggat for ${projectId}`);
+    }
+}
+
+function viewDetails(projectId) {
+    alert('Visa detaljer for: ' + projectId);
+}
+
+function setView(view) {
+    document.querySelectorAll('.view-toggle .btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function startIdea(ideaId) {
+    alert('Starta ide: ' + ideaId);
+}
+</script>
+{% endblock %}

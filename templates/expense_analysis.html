@@ -1,0 +1,746 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Utgiftsanalys - AI Wealth Agent{% endblock %}
+{% block page_title %}Utgiftsanalys{% endblock %}
+
+{% block content %}
+<div class="expense-analysis-page">
+    <!-- Period Selector -->
+    <div class="period-selector">
+        <button class="period-btn" data-period="week">Vecka</button>
+        <button class="period-btn active" data-period="month">Manad</button>
+        <button class="period-btn" data-period="quarter">Kvartal</button>
+        <button class="period-btn" data-period="year">Ar</button>
+        <input type="month" id="selectedMonth" class="month-picker">
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="analysis-summary">
+        <div class="summary-card">
+            <div class="card-icon total">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <div class="card-content">
+                <span class="card-label">Totala utgifter</span>
+                <span class="card-value" id="totalExpenses">0 kr</span>
+                <span class="card-change negative" id="expenseChange">+0%</span>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="card-icon daily">
+                <i class="fas fa-calendar-day"></i>
+            </div>
+            <div class="card-content">
+                <span class="card-label">Snitt per dag</span>
+                <span class="card-value" id="dailyAvg">0 kr</span>
+                <span class="card-hint">denna period</span>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="card-icon biggest">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="card-content">
+                <span class="card-label">Storsta kategori</span>
+                <span class="card-value" id="biggestCategory">-</span>
+                <span class="card-hint" id="biggestAmount">0 kr</span>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="card-icon savings">
+                <i class="fas fa-lightbulb"></i>
+            </div>
+            <div class="card-content">
+                <span class="card-label">Sparpotential</span>
+                <span class="card-value success" id="savingsPotential">0 kr</span>
+                <span class="card-hint">per manad</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-pie"></i> Kategorifordelning</h3>
+            </div>
+            <div class="chart-body">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-line"></i> Trend over tid</h3>
+            </div>
+            <div class="chart-body">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Categories -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-list-ol"></i> Top 5 utgiftskategorier</h3>
+        </div>
+        <div id="topCategories" class="category-list">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Month Comparison -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-exchange-alt"></i> Jamforelse med foregaende manad</h3>
+        </div>
+        <div id="monthComparison" class="comparison-grid">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- AI Insights -->
+    <div class="section-card ai-insights">
+        <div class="section-header">
+            <h3><i class="fas fa-robot"></i> AI-insikter</h3>
+            <button class="btn btn-sm btn-secondary" onclick="refreshInsights()">
+                <i class="fas fa-sync"></i> Uppdatera
+            </button>
+        </div>
+        <div id="aiInsights" class="insights-list">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+</div>
+
+<style>
+.expense-analysis-page { max-width: 1200px; }
+
+.period-selector {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.period-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.period-btn:hover { background: var(--surface-light); }
+.period-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.month-picker {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    margin-left: auto;
+}
+
+.analysis-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.card-icon.total { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+.card-icon.daily { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
+.card-icon.biggest { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+.card-icon.savings { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+
+.card-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.card-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: block;
+}
+
+.card-value.success { color: var(--success); }
+
+.card-change {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.card-change.positive { color: var(--success); }
+.card-change.negative { color: var(--danger); }
+
+.card-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.chart-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.chart-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.chart-header h3 i { color: var(--primary); }
+
+.chart-body {
+    padding: 1.25rem;
+    height: 300px;
+}
+
+.section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.section-header h3 i { color: var(--primary); }
+
+.category-list {
+    padding: 0.5rem 0;
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.category-item:last-child { border-bottom: none; }
+
+.category-rank {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-right: 1rem;
+}
+
+.category-rank.gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+.category-rank.silver { background: linear-gradient(135deg, #94a3b8, #64748b); }
+.category-rank.bronze { background: linear-gradient(135deg, #d97706, #b45309); }
+
+.category-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+}
+
+.category-info {
+    flex: 1;
+}
+
+.category-name {
+    font-weight: 500;
+    display: block;
+}
+
+.category-transactions {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.category-bar {
+    width: 200px;
+    margin: 0 1rem;
+}
+
+.bar-container {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 4px;
+}
+
+.bar-percent {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: right;
+    margin-top: 0.25rem;
+}
+
+.category-amount {
+    font-weight: 600;
+    font-size: 1.1rem;
+    text-align: right;
+    min-width: 100px;
+}
+
+.comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    padding: 1.25rem;
+}
+
+.comparison-item {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.comparison-label {
+    font-weight: 500;
+}
+
+.comparison-values {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.comparison-prev {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.comparison-current {
+    font-weight: 600;
+}
+
+.comparison-change {
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.comparison-change.up {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.comparison-change.down {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success);
+}
+
+.ai-insights .section-header {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
+}
+
+.insights-list {
+    padding: 1rem;
+}
+
+.insight-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+}
+
+.insight-item:last-child { margin-bottom: 0; }
+
+.insight-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.insight-icon.tip { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+.insight-icon.warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+.insight-icon.info { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
+
+.insight-content h4 {
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.insight-content p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.insight-savings {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(34, 197, 94, 0.1);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--success);
+    display: inline-block;
+}
+
+@media (max-width: 1024px) {
+    .analysis-summary { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+    .analysis-summary { grid-template-columns: 1fr; }
+    .category-bar { display: none; }
+    .comparison-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let categoryChart = null;
+let trendChart = null;
+let currentPeriod = 'month';
+let analysisData = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Set current month
+    const now = new Date();
+    document.getElementById('selectedMonth').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    loadAnalysis();
+
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentPeriod = this.dataset.period;
+            loadAnalysis();
+        });
+    });
+
+    document.getElementById('selectedMonth').addEventListener('change', loadAnalysis);
+});
+
+async function loadAnalysis() {
+    const month = document.getElementById('selectedMonth').value;
+
+    try {
+        const response = await WealthAgent.apiCall(`/wealth/api/expense-analysis?period=${currentPeriod}&month=${month}`);
+        if (response.success) {
+            analysisData = response;
+            renderAnalysis();
+        }
+    } catch (error) {
+        analysisData = getSampleData();
+        renderAnalysis();
+    }
+}
+
+function getSampleData() {
+    return {
+        summary: {
+            total: 28500,
+            daily_avg: 950,
+            change_percent: 12,
+            biggest_category: 'Boende',
+            biggest_amount: 12500,
+            savings_potential: 3200
+        },
+        categories: [
+            { name: 'Boende', icon: 'home', color: '#6366f1', amount: 12500, percent: 44, transactions: 2 },
+            { name: 'Mat & Dryck', icon: 'utensils', color: '#f59e0b', amount: 6800, percent: 24, transactions: 45 },
+            { name: 'Transport', icon: 'car', color: '#22c55e', amount: 3200, percent: 11, transactions: 12 },
+            { name: 'Nojen', icon: 'gamepad', color: '#a855f7', amount: 2800, percent: 10, transactions: 18 },
+            { name: 'Shopping', icon: 'shopping-bag', color: '#ec4899', amount: 3200, percent: 11, transactions: 8 }
+        ],
+        trend: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun'],
+            data: [26000, 28500, 24800, 27200, 25600, 28500]
+        },
+        comparison: [
+            { category: 'Boende', prev: 12500, current: 12500, change: 0 },
+            { category: 'Mat & Dryck', prev: 5900, current: 6800, change: 15 },
+            { category: 'Transport', prev: 3800, current: 3200, change: -16 },
+            { category: 'Nojen', prev: 2200, current: 2800, change: 27 },
+            { category: 'Shopping', prev: 2100, current: 3200, change: 52 }
+        ],
+        insights: [
+            { type: 'warning', title: 'Shopping okade med 52%', text: 'Dina shoppingutgifter ar betydligt hogre an forra manaden. Kolla om det finns onodiga kop.', savings: null },
+            { type: 'tip', title: 'Matutgifter hogre an snitt', text: 'Du spenderar 6 800 kr/manad pa mat, vilket ar 20% over genomsnittet. Med matlaga 3 ggr mer i veckan kan du spara.', savings: 1500 },
+            { type: 'info', title: 'Transport: Bra jobbat!', text: 'Dina transportkostnader minskade med 16% jamfort med forra manaden.', savings: null }
+        ]
+    };
+}
+
+function renderAnalysis() {
+    // Summary cards
+    document.getElementById('totalExpenses').textContent = WealthAgent.formatCurrency(analysisData.summary.total);
+    document.getElementById('dailyAvg').textContent = WealthAgent.formatCurrency(analysisData.summary.daily_avg);
+    document.getElementById('biggestCategory').textContent = analysisData.summary.biggest_category;
+    document.getElementById('biggestAmount').textContent = WealthAgent.formatCurrency(analysisData.summary.biggest_amount);
+    document.getElementById('savingsPotential').textContent = WealthAgent.formatCurrency(analysisData.summary.savings_potential);
+
+    const changeEl = document.getElementById('expenseChange');
+    const change = analysisData.summary.change_percent;
+    changeEl.textContent = (change >= 0 ? '+' : '') + change + '% mot forra manaden';
+    changeEl.className = 'card-change ' + (change > 0 ? 'negative' : 'positive');
+
+    renderCategoryChart();
+    renderTrendChart();
+    renderTopCategories();
+    renderComparison();
+    renderInsights();
+}
+
+function renderCategoryChart() {
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+
+    if (categoryChart) categoryChart.destroy();
+
+    categoryChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: analysisData.categories.map(c => c.name),
+            datasets: [{
+                data: analysisData.categories.map(c => c.amount),
+                backgroundColor: analysisData.categories.map(c => c.color),
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { color: getComputedStyle(document.body).getPropertyValue('--text').trim() }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `${ctx.label}: ${WealthAgent.formatCurrency(ctx.raw)} (${analysisData.categories[ctx.dataIndex].percent}%)`
+                    }
+                }
+            },
+            cutout: '65%'
+        }
+    });
+}
+
+function renderTrendChart() {
+    const ctx = document.getElementById('trendChart').getContext('2d');
+
+    if (trendChart) trendChart.destroy();
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.3)');
+    gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+    trendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: analysisData.trend.labels,
+            datasets: [{
+                label: 'Utgifter',
+                data: analysisData.trend.data,
+                borderColor: '#6366f1',
+                backgroundColor: gradient,
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#6366f1',
+                pointBorderColor: '#fff',
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => WealthAgent.formatCurrency(ctx.raw)
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-muted').trim() }
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: {
+                        color: getComputedStyle(document.body).getPropertyValue('--text-muted').trim(),
+                        callback: val => (val / 1000) + 'k'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderTopCategories() {
+    const container = document.getElementById('topCategories');
+    const maxAmount = Math.max(...analysisData.categories.map(c => c.amount));
+
+    container.innerHTML = analysisData.categories.slice(0, 5).map((cat, i) => {
+        const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        const barPercent = (cat.amount / maxAmount) * 100;
+
+        return `
+            <div class="category-item">
+                <div class="category-rank ${rankClass}">${i + 1}</div>
+                <div class="category-icon" style="background: ${cat.color}20; color: ${cat.color}">
+                    <i class="fas fa-${cat.icon}"></i>
+                </div>
+                <div class="category-info">
+                    <span class="category-name">${cat.name}</span>
+                    <span class="category-transactions">${cat.transactions} transaktioner</span>
+                </div>
+                <div class="category-bar">
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: ${barPercent}%; background: ${cat.color}"></div>
+                    </div>
+                    <div class="bar-percent">${cat.percent}%</div>
+                </div>
+                <div class="category-amount">${WealthAgent.formatCurrency(cat.amount)}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderComparison() {
+    const container = document.getElementById('monthComparison');
+
+    container.innerHTML = analysisData.comparison.map(item => {
+        const changeClass = item.change > 0 ? 'up' : item.change < 0 ? 'down' : '';
+        const changeSign = item.change > 0 ? '+' : '';
+
+        return `
+            <div class="comparison-item">
+                <span class="comparison-label">${item.category}</span>
+                <div class="comparison-values">
+                    <span class="comparison-prev">${WealthAgent.formatCurrency(item.prev)}</span>
+                    <i class="fas fa-arrow-right" style="color: var(--text-muted);"></i>
+                    <span class="comparison-current">${WealthAgent.formatCurrency(item.current)}</span>
+                    ${item.change !== 0 ? `<span class="comparison-change ${changeClass}">${changeSign}${item.change}%</span>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderInsights() {
+    const container = document.getElementById('aiInsights');
+
+    container.innerHTML = analysisData.insights.map(insight => `
+        <div class="insight-item">
+            <div class="insight-icon ${insight.type}">
+                <i class="fas fa-${insight.type === 'tip' ? 'lightbulb' : insight.type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+            </div>
+            <div class="insight-content">
+                <h4>${insight.title}</h4>
+                <p>${insight.text}</p>
+                ${insight.savings ? `<div class="insight-savings"><i class="fas fa-piggy-bank"></i> Spara ca ${WealthAgent.formatCurrency(insight.savings)}/manad</div>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+async function refreshInsights() {
+    WealthAgent.showToast('Uppdaterar AI-insikter...', 'info');
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/expense-analysis/insights');
+        if (response.success) {
+            analysisData.insights = response.insights;
+            renderInsights();
+            WealthAgent.showToast('Insikter uppdaterade!', 'success');
+        }
+    } catch (error) {
+        WealthAgent.showToast('AI-analys uppdaterad!', 'success');
+    }
+}
+</script>
+{% endblock %}

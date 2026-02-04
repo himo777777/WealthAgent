@@ -1,0 +1,205 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Min Profil - AI Wealth Agent{% endblock %}
+{% block page_title %}Min Profil{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <div class="profile-grid">
+        <!-- Profile Overview -->
+        <div class="card profile-overview">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="profile-info">
+                    <h2>{{ session.get('dashboard_name', 'Användare') }}</h2>
+                    <p>{{ profile.occupation or 'Yrke ej angivet' }}</p>
+                </div>
+            </div>
+            <div class="profile-badges">
+                {% if profile.risk_tolerance %}
+                <span class="badge {{ profile.risk_tolerance }}">
+                    <i class="fas fa-shield-alt"></i> {{ profile.risk_tolerance|title }}
+                </span>
+                {% endif %}
+                {% if profile.investment_experience %}
+                <span class="badge experience">
+                    <i class="fas fa-chart-line"></i> {{ profile.investment_experience|title }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Background Section -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-briefcase"></i> Yrkesbakgrund</h3>
+                <button class="btn btn-ghost btn-sm" onclick="editSection('background')">
+                    <i class="fas fa-edit"></i>
+                </button>
+            </div>
+            <div class="card-content profile-section" id="backgroundSection">
+                <div class="profile-item">
+                    <span class="label">Yrke</span>
+                    <span class="value">{{ profile.occupation or '-' }}</span>
+                </div>
+                <div class="profile-item">
+                    <span class="label">Arbetsgivare</span>
+                    <span class="value">{{ profile.employer or '-' }}</span>
+                </div>
+                <div class="profile-item">
+                    <span class="label">Bransch</span>
+                    <span class="value">{{ profile.industry or '-' }}</span>
+                </div>
+                <div class="profile-item">
+                    <span class="label">År i branschen</span>
+                    <span class="value">{{ profile.years_in_field or '-' }}</span>
+                </div>
+                <div class="profile-item">
+                    <span class="label">Utbildning</span>
+                    <span class="value">{{ profile.education_level or '-' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skills Section -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-graduation-cap"></i> Kunskaper & Intressen</h3>
+                <button class="btn btn-ghost btn-sm" onclick="editSection('skills')">
+                    <i class="fas fa-edit"></i>
+                </button>
+            </div>
+            <div class="card-content profile-section">
+                <div class="profile-item">
+                    <span class="label">Investeringserfarenhet</span>
+                    <span class="value">{{ profile.investment_experience or '-' }}</span>
+                </div>
+                <div class="profile-item">
+                    <span class="label">Företagandeerfarenhet</span>
+                    <span class="value">{{ profile.entrepreneurship_experience or '-' }}</span>
+                </div>
+                <div class="profile-item">
+                    <span class="label">Teknisk vana</span>
+                    <span class="value">{{ profile.tech_savviness or '-' }}</span>
+                </div>
+                {% if profile.investment_interests %}
+                <div class="profile-item">
+                    <span class="label">Intresseområden</span>
+                    <div class="tags">
+                        {% for interest in profile.investment_interests %}
+                        <span class="tag">{{ interest }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Risk Profile Section -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-balance-scale"></i> Riskprofil</h3>
+                <button class="btn btn-ghost btn-sm" onclick="retakeQuiz()">
+                    <i class="fas fa-redo"></i> Ta om quiz
+                </button>
+            </div>
+            <div class="card-content profile-section">
+                <div class="risk-display">
+                    <div class="risk-meter">
+                        <div class="risk-level {{ profile.risk_tolerance or 'unknown' }}">
+                            {{ profile.risk_tolerance or 'Ej definierad' }}
+                        </div>
+                    </div>
+                    <div class="risk-explanation">
+                        {% if profile.risk_tolerance == 'konservativ' %}
+                        <p>Du föredrar säkerhet framför hög avkastning. Du är villig att acceptera lägre avkastning för att minimera risken att förlora pengar.</p>
+                        {% elif profile.risk_tolerance == 'balanserad' %}
+                        <p>Du söker en balans mellan tillväxt och säkerhet. Du är beredd att ta viss risk för högre avkastning men vill undvika stora förluster.</p>
+                        {% elif profile.risk_tolerance == 'aggressiv' %}
+                        <p>Du prioriterar hög avkastning och är beredd att ta betydande risker. Du tål volatilitet och har ett långt tidsperspektiv.</p>
+                        {% else %}
+                        <p>Gör risk-quizet för att få din riskprofil beräknad.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="profile-item">
+                    <span class="label">Tidsperspektiv</span>
+                    <span class="value">{{ profile.time_horizon or '-' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Goals Overview -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-flag"></i> Mål</h3>
+                <a href="{{ url_for('wealth_agent.goals') }}" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+            </div>
+            <div class="card-content profile-section">
+                {% if profile.short_term_goals %}
+                <div class="profile-item">
+                    <span class="label">Kortsiktiga mål</span>
+                    <span class="value">{{ profile.short_term_goals|join(', ') or '-' }}</span>
+                </div>
+                {% endif %}
+                {% if profile.medium_term_goals %}
+                <div class="profile-item">
+                    <span class="label">Medellånga mål</span>
+                    <span class="value">{{ profile.medium_term_goals|join(', ') or '-' }}</span>
+                </div>
+                {% endif %}
+                {% if profile.long_term_goals %}
+                <div class="profile-item">
+                    <span class="label">Långsiktiga mål</span>
+                    <span class="value">{{ profile.long_term_goals|join(', ') or '-' }}</span>
+                </div>
+                {% endif %}
+                {% if profile.dream_goal %}
+                <div class="profile-item">
+                    <span class="label">Drömmål</span>
+                    <span class="value highlight">{{ profile.dream_goal }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-cog"></i> Inställningar</h3>
+            </div>
+            <div class="card-content">
+                <div class="settings-list">
+                    <a href="{{ url_for('wealth_agent.onboarding') }}" class="settings-item">
+                        <i class="fas fa-redo"></i>
+                        <span>Gör om onboarding</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    <a href="{{ url_for('dashboard.logout') }}" class="settings-item danger">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logga ut</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function editSection(section) {
+        // For now, redirect to onboarding
+        window.location.href = '/wealth/onboarding';
+    }
+
+    function retakeQuiz() {
+        if (confirm('Vill du göra om risk-quizet?')) {
+            window.location.href = '/wealth/onboarding';
+        }
+    }
+</script>
+{% endblock %}

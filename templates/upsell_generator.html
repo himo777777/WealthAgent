@@ -1,0 +1,1092 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Upsell Generator - Wealth Agent{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upsell-hero {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .upsell-hero h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .hero-stat {
+        text-align: center;
+    }
+
+    .hero-stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+
+    .hero-stat-label {
+        opacity: 0.9;
+        font-size: 0.875rem;
+    }
+
+    /* Strategy Cards */
+    .strategy-section {
+        margin-bottom: 2rem;
+    }
+
+    .strategy-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+
+    .strategy-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .strategy-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .strategy-card.selected {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    .strategy-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .strategy-icon.upsell { background: rgba(16, 185, 129, 0.1); }
+    .strategy-icon.cross { background: rgba(59, 130, 246, 0.1); }
+    .strategy-icon.retainer { background: rgba(139, 92, 246, 0.1); }
+    .strategy-icon.price { background: rgba(245, 158, 11, 0.1); }
+
+    .strategy-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .strategy-desc {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+
+    .strategy-potential {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--success);
+        font-weight: 500;
+    }
+
+    /* Generator Section */
+    .generator-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .generator-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .generator-title {
+        font-weight: 600;
+        font-size: 1.125rem;
+    }
+
+    /* Client Selector */
+    .client-selector {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .client-option {
+        padding: 1rem;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .client-option:hover {
+        border-color: var(--primary);
+    }
+
+    .client-option.selected {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    .client-option-name {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+
+    .client-option-value {
+        font-size: 0.875rem;
+        color: var(--success);
+    }
+
+    /* Opportunity Cards */
+    .opportunity-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .opportunity-card {
+        background: var(--background);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.25rem;
+    }
+
+    .opportunity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .opportunity-type {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+
+    .opportunity-type.high {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .opportunity-type.medium {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+    }
+
+    .opportunity-type.low {
+        background: rgba(148, 163, 184, 0.1);
+        color: #64748b;
+    }
+
+    .opportunity-value {
+        font-weight: 600;
+        color: var(--success);
+    }
+
+    .opportunity-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .opportunity-desc {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+
+    .opportunity-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* Templates Section */
+    .templates-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .template-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .template-tab {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        color: var(--text);
+    }
+
+    .template-tab.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    .template-content {
+        display: none;
+    }
+
+    .template-content.active {
+        display: block;
+    }
+
+    .template-box {
+        background: var(--background);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.5rem;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        position: relative;
+    }
+
+    .template-copy-btn {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+    }
+
+    .template-variables {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: rgba(99, 102, 241, 0.05);
+        border-radius: 8px;
+    }
+
+    .template-var {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .template-var:last-child {
+        margin-bottom: 0;
+    }
+
+    .template-var label {
+        min-width: 120px;
+        font-size: 0.875rem;
+    }
+
+    .template-var input {
+        flex: 1;
+    }
+
+    /* Tips Section */
+    .tips-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+
+    .tip-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+    }
+
+    .tip-number {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+
+    .tip-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .tip-text {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    /* Stats */
+    .upsell-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .upsell-stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+        text-align: center;
+    }
+
+    .upsell-stat-icon {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .upsell-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .upsell-stat-label {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    /* Checklist */
+    .checklist {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .checklist-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .checklist-item:last-child {
+        border-bottom: none;
+    }
+
+    .checklist-icon {
+        color: var(--success);
+        margin-top: 0.125rem;
+    }
+
+    .checklist-text {
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    /* Price Calculator */
+    .price-calc {
+        background: var(--background);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-top: 1rem;
+    }
+
+    .price-calc-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        font-size: 0.875rem;
+    }
+
+    .price-calc-row.total {
+        border-top: 2px solid var(--border);
+        margin-top: 0.5rem;
+        padding-top: 1rem;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .price-calc-row.total .value {
+        color: var(--success);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Hero Section -->
+    <div class="upsell-hero">
+        <h1>Upsell Generator</h1>
+        <p class="mb-0 opacity-75">Öka intäkterna från befintliga kunder med smarta upsell-strategier</p>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-value" id="totalCustomers">0</div>
+                <div class="hero-stat-label">Befintliga kunder</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value" id="upsellPotential">0 kr</div>
+                <div class="hero-stat-label">Upsell-potential</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value" id="avgOrderValue">0 kr</div>
+                <div class="hero-stat-label">Snitt ordervärde</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value" id="retainerPotential">0 kr</div>
+                <div class="hero-stat-label">Retainer-potential/mån</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Strategy Selection -->
+    <div class="strategy-section">
+        <h5 class="mb-3">Välj Upsell-strategi</h5>
+        <div class="strategy-grid">
+            <div class="strategy-card" onclick="selectStrategy('upsell')" data-strategy="upsell">
+                <div class="strategy-icon upsell">💰</div>
+                <div class="strategy-title">Uppgradera befintlig tjänst</div>
+                <div class="strategy-desc">Erbjud premium-version, utökad support eller extra funktioner</div>
+                <div class="strategy-potential">
+                    <i class="fas fa-arrow-up"></i>
+                    +25-50% per kund
+                </div>
+            </div>
+
+            <div class="strategy-card" onclick="selectStrategy('cross')" data-strategy="cross">
+                <div class="strategy-icon cross">🔗</div>
+                <div class="strategy-title">Cross-sell relaterade tjänster</div>
+                <div class="strategy-desc">Kompletterande tjänster som passar kundens behov</div>
+                <div class="strategy-potential">
+                    <i class="fas fa-arrow-up"></i>
+                    +30-75% per kund
+                </div>
+            </div>
+
+            <div class="strategy-card" onclick="selectStrategy('retainer')" data-strategy="retainer">
+                <div class="strategy-icon retainer">🔄</div>
+                <div class="strategy-title">Retainer/Månadsavtal</div>
+                <div class="strategy-desc">Konvertera engångsköpare till löpande kunder</div>
+                <div class="strategy-potential">
+                    <i class="fas fa-arrow-up"></i>
+                    Stabil månadsinkomst
+                </div>
+            </div>
+
+            <div class="strategy-card" onclick="selectStrategy('price')" data-strategy="price">
+                <div class="strategy-icon price">📈</div>
+                <div class="strategy-title">Prishöjning</div>
+                <div class="strategy-desc">Kommunicera värdehöjning och justera priser</div>
+                <div class="strategy-potential">
+                    <i class="fas fa-arrow-up"></i>
+                    +10-20% intäkt
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Analyzer -->
+    <div class="generator-section" id="analyzerSection">
+        <div class="generator-header">
+            <div class="generator-title">🔍 Analysera Kund för Upsell-möjligheter</div>
+        </div>
+
+        <p class="text-muted mb-3">Välj en kund från din pipeline eller lägg till info manuellt:</p>
+
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label class="form-label">Kundnamn</label>
+                <input type="text" class="form-control" id="analyzeCustomerName" placeholder="Företag AB">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Nuvarande ordervärde (kr)</label>
+                <input type="number" class="form-control" id="analyzeCurrentValue" placeholder="25000">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Tjänst du levererat</label>
+                <input type="text" class="form-control" id="analyzeCurrentService" placeholder="Webbdesign">
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Kundens bransch</label>
+                <select class="form-select" id="analyzeIndustry">
+                    <option value="">Välj bransch...</option>
+                    <option value="ecommerce">E-handel</option>
+                    <option value="saas">SaaS/Tech</option>
+                    <option value="agency">Byrå/Konsult</option>
+                    <option value="restaurant">Restaurang/Café</option>
+                    <option value="retail">Butik/Handel</option>
+                    <option value="health">Hälsa/Friskvård</option>
+                    <option value="education">Utbildning</option>
+                    <option value="other">Annat</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Kundrelation (månader)</label>
+                <input type="number" class="form-control" id="analyzeRelationMonths" placeholder="6" value="6">
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="analyzeCustomer()">
+            <i class="fas fa-magic me-2"></i> Generera Upsell-möjligheter
+        </button>
+
+        <!-- Results -->
+        <div id="opportunityResults" style="display: none;">
+            <h6 class="mt-4 mb-3">Rekommenderade Upsell-möjligheter</h6>
+            <div class="opportunity-grid" id="opportunityGrid">
+                <!-- Opportunities will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates Section -->
+    <div class="templates-section">
+        <h5 class="mb-3">📝 Mallar för Upsell-kommunikation</h5>
+
+        <div class="template-tabs">
+            <button class="template-tab active" onclick="showTemplate('upsell')">Uppgradering</button>
+            <button class="template-tab" onclick="showTemplate('crosssell')">Cross-sell</button>
+            <button class="template-tab" onclick="showTemplate('retainer')">Retainer-förslag</button>
+            <button class="template-tab" onclick="showTemplate('price')">Prishöjning</button>
+        </div>
+
+        <!-- Upsell Template -->
+        <div class="template-content active" id="template-upsell">
+            <div class="template-box">
+                <button class="btn btn-sm btn-outline-primary template-copy-btn" onclick="copyTemplate('upsell')">
+                    <i class="fas fa-copy me-1"></i> Kopiera
+                </button>
+Hej [KUNDNAMN],
+
+Tack för förtroendet med [NUVARANDE_TJÄNST]! Jag har sett att [OBSERVATION].
+
+Baserat på era behov vill jag föreslå en uppgradering som kan hjälpa er:
+
+✨ [PREMIUM_TJÄNST]
+- [FÖRDEL_1]
+- [FÖRDEL_2]
+- [FÖRDEL_3]
+
+Investering: [NYTT_PRIS] (ordinarie [ORIG_PRIS])
+
+Som befintlig kund erbjuder jag 15% rabatt om ni bestämmer er inom [DEADLINE].
+
+Vill du att jag berättar mer?
+
+Med vänlig hälsning,
+[DITT_NAMN]
+            </div>
+
+            <div class="template-variables">
+                <h6 class="mb-3">Fyll i variabler:</h6>
+                <div class="template-var">
+                    <label>Kundnamn:</label>
+                    <input type="text" class="form-control form-control-sm" id="var-kundnamn" placeholder="Anna">
+                </div>
+                <div class="template-var">
+                    <label>Nuvarande tjänst:</label>
+                    <input type="text" class="form-control form-control-sm" id="var-nuvarande" placeholder="webbdesign">
+                </div>
+                <div class="template-var">
+                    <label>Observation:</label>
+                    <input type="text" class="form-control form-control-sm" id="var-observation" placeholder="er trafik har ökat med 50%">
+                </div>
+            </div>
+        </div>
+
+        <!-- Cross-sell Template -->
+        <div class="template-content" id="template-crosssell">
+            <div class="template-box">
+                <button class="btn btn-sm btn-outline-primary template-copy-btn" onclick="copyTemplate('crosssell')">
+                    <i class="fas fa-copy me-1"></i> Kopiera
+                </button>
+Hej [KUNDNAMN],
+
+Jag hoppas att [LEVERERAD_TJÄNST] fungerar bra för er!
+
+Många av mina kunder i liknande situation har haft stor nytta av att kombinera det med [KOMPLETTERANDE_TJÄNST].
+
+Fördelarna är:
+🎯 [FÖRDEL_1]
+📈 [FÖRDEL_2]
+⏱️ [FÖRDEL_3]
+
+Som befintlig kund erbjuder jag ett paketpris på [PAKETPRIS] istället för [SEPARATPRIS] om ni köper båda.
+
+Låter det intressant? Jag kan boka in ett kort samtal för att gå igenom detaljerna.
+
+Med vänlig hälsning,
+[DITT_NAMN]
+            </div>
+        </div>
+
+        <!-- Retainer Template -->
+        <div class="template-content" id="template-retainer">
+            <div class="template-box">
+                <button class="btn btn-sm btn-outline-primary template-copy-btn" onclick="copyTemplate('retainer')">
+                    <i class="fas fa-copy me-1"></i> Kopiera
+                </button>
+Hej [KUNDNAMN],
+
+Nu när [PROJEKT] är levererat ville jag diskutera hur vi kan fortsätta samarbetet.
+
+Jag erbjuder ett månadsavtal som ger er:
+
+📋 MÅNADSAVTAL - [TIMMAR] timmar/månad
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Prioriterad support (svar inom 24h)
+✅ [ANTAL] timmar arbete per månad
+✅ Månatlig genomgång och optimering
+✅ [EXTRA_FÖRDEL]
+
+💰 Pris: [MÅNADSPRIS]/mån (spara [BESPARING] jämfört med timdebitering)
+
+⏰ Bindningstid: [BINDNING]
+
+Fördelarna för er:
+• Förutsägbara kostnader
+• Kontinuerlig förbättring
+• Snabb responstid
+
+Ska vi boka ett möte för att diskutera?
+
+Med vänlig hälsning,
+[DITT_NAMN]
+            </div>
+
+            <div class="price-calc">
+                <h6 class="mb-3">Räkna ut retainer-pris</h6>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Din timpris (kr)</label>
+                        <input type="number" class="form-control" id="retainerHourlyRate" value="850" onchange="calculateRetainer()">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Timmar/månad</label>
+                        <input type="number" class="form-control" id="retainerHours" value="10" onchange="calculateRetainer()">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Rabatt (%)</label>
+                        <input type="number" class="form-control" id="retainerDiscount" value="15" onchange="calculateRetainer()">
+                    </div>
+                </div>
+                <div class="price-calc-row">
+                    <span>Normalpris:</span>
+                    <span id="retainerNormalPrice">8 500 kr</span>
+                </div>
+                <div class="price-calc-row">
+                    <span>Rabatt:</span>
+                    <span id="retainerDiscountAmount">-1 275 kr</span>
+                </div>
+                <div class="price-calc-row total">
+                    <span>Månadspris:</span>
+                    <span class="value" id="retainerFinalPrice">7 225 kr</span>
+                </div>
+                <div class="price-calc-row">
+                    <span>Årlig intäkt:</span>
+                    <span id="retainerYearlyIncome">86 700 kr</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Increase Template -->
+        <div class="template-content" id="template-price">
+            <div class="template-box">
+                <button class="btn btn-sm btn-outline-primary template-copy-btn" onclick="copyTemplate('price')">
+                    <i class="fas fa-copy me-1"></i> Kopiera
+                </button>
+Hej [KUNDNAMN],
+
+Jag hoppas att allt är bra! Jag skriver för att informera om en justering av mina priser.
+
+Under [SAMARBETSTID] har vi arbetat tillsammans, och jag har kontinuerligt utvecklat mina tjänster:
+
+📚 Nya kompetenser: [NYA_KOMPETENSER]
+⚡ Förbättrade processer: [FÖRBÄTTRINGAR]
+🎯 Resultat vi uppnått: [RESULTAT]
+
+Från och med [DATUM] kommer min nya prislista att gälla:
+
+[TJÄNST]: [NYTT_PRIS] (tidigare [GAMMALT_PRIS])
+
+För dig som befintlig kund erbjuder jag:
+• Behålla nuvarande pris i ytterligare [MÅNADER] månader
+• ELLER 10% rabatt på nya projekt under [PERIOD]
+
+Jag uppskattar verkligen vårt samarbete och ser fram emot att fortsätta leverera värde till er.
+
+Har du frågor? Tveka inte att höra av dig!
+
+Med vänlig hälsning,
+[DITT_NAMN]
+            </div>
+
+            <div class="template-variables">
+                <h6 class="mb-3">Räkna ut ny prisnivå:</h6>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Nuvarande timpris</label>
+                        <input type="number" class="form-control" id="currentRate" value="750" onchange="calculateNewRate()">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Ökning (%)</label>
+                        <input type="number" class="form-control" id="rateIncrease" value="15" onchange="calculateNewRate()">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Nytt timpris</label>
+                        <input type="number" class="form-control" id="newRate" value="863" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tips Section -->
+    <h5 class="mb-3">💡 Tips för Framgångsrik Upsell</h5>
+    <div class="tips-grid">
+        <div class="tip-card">
+            <div class="tip-number">1</div>
+            <div class="tip-title">Rätt timing</div>
+            <div class="tip-text">Kontakta kunden när de är nöjda - direkt efter lyckat leverans eller positiv feedback.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-number">2</div>
+            <div class="tip-title">Fokusera på värde</div>
+            <div class="tip-text">Prata om resultat och ROI, inte bara funktioner. Visa hur det hjälper kundens affär.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-number">3</div>
+            <div class="tip-title">Personalisera</div>
+            <div class="tip-text">Referera till specifika saker du vet om kunden. Generiska mail fungerar dåligt.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-number">4</div>
+            <div class="tip-title">Skapa brådska</div>
+            <div class="tip-text">Tidsbegränsade erbjudanden och early-bird priser ökar konverteringen.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-number">5</div>
+            <div class="tip-title">Gör det enkelt</div>
+            <div class="tip-text">En tydlig CTA och enkel beslutsprocess. Inga krångliga kontrakt.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-number">6</div>
+            <div class="tip-title">Följ upp</div>
+            <div class="tip-text">80% av försäljning sker efter 5:e kontakten. Ge inte upp för tidigt!</div>
+        </div>
+    </div>
+
+    <!-- Checklist -->
+    <div class="generator-section mt-4">
+        <h5 class="mb-3">✅ Checklista innan du skickar upsell</h5>
+        <ul class="checklist">
+            <li class="checklist-item">
+                <i class="fas fa-check checklist-icon"></i>
+                <div class="checklist-text">Kunden har uttryckt nöjdhet med tidigare arbete</div>
+            </li>
+            <li class="checklist-item">
+                <i class="fas fa-check checklist-icon"></i>
+                <div class="checklist-text">Erbjudandet är relevant för kundens faktiska behov</div>
+            </li>
+            <li class="checklist-item">
+                <i class="fas fa-check checklist-icon"></i>
+                <div class="checklist-text">Prissättningen är tydlig och motiverad</div>
+            </li>
+            <li class="checklist-item">
+                <i class="fas fa-check checklist-icon"></i>
+                <div class="checklist-text">Det finns en tydlig deadline eller brådska</div>
+            </li>
+            <li class="checklist-item">
+                <i class="fas fa-check checklist-icon"></i>
+                <div class="checklist-text">Call-to-action är enkel (boka möte, svara ja)</div>
+            </li>
+            <li class="checklist-item">
+                <i class="fas fa-check checklist-icon"></i>
+                <div class="checklist-text">Du har planerat uppföljning om ingen respons</div>
+            </li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load pipeline clients
+    let pipelineClients = JSON.parse(localStorage.getItem('pipeline_clients') || '[]');
+    let selectedStrategy = '';
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        updateStats();
+        calculateRetainer();
+        calculateNewRate();
+    });
+
+    function updateStats() {
+        const wonClients = pipelineClients.filter(c => c.status === 'won');
+        const totalValue = wonClients.reduce((sum, c) => sum + c.value, 0);
+        const avgValue = wonClients.length > 0 ? totalValue / wonClients.length : 0;
+
+        // Estimate upsell potential at 30% of current value
+        const upsellPotential = totalValue * 0.3;
+
+        // Estimate retainer potential (20% of clients × avg value × 0.3 monthly)
+        const retainerPotential = wonClients.length * 0.2 * avgValue * 0.15;
+
+        document.getElementById('totalCustomers').textContent = wonClients.length;
+        document.getElementById('upsellPotential').textContent = formatCurrency(upsellPotential);
+        document.getElementById('avgOrderValue').textContent = formatCurrency(avgValue);
+        document.getElementById('retainerPotential').textContent = formatCurrency(retainerPotential);
+    }
+
+    function selectStrategy(strategy) {
+        selectedStrategy = strategy;
+        document.querySelectorAll('.strategy-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        document.querySelector(`[data-strategy="${strategy}"]`).classList.add('selected');
+    }
+
+    function analyzeCustomer() {
+        const name = document.getElementById('analyzeCustomerName').value || 'Kunden';
+        const currentValue = parseFloat(document.getElementById('analyzeCurrentValue').value) || 25000;
+        const currentService = document.getElementById('analyzeCurrentService').value || 'tjänsten';
+        const industry = document.getElementById('analyzeIndustry').value;
+        const relationMonths = parseInt(document.getElementById('analyzeRelationMonths').value) || 6;
+
+        // Generate opportunities based on inputs
+        const opportunities = generateOpportunities(name, currentValue, currentService, industry, relationMonths);
+
+        // Show results
+        document.getElementById('opportunityResults').style.display = 'block';
+        renderOpportunities(opportunities);
+    }
+
+    function generateOpportunities(name, value, service, industry, months) {
+        const opportunities = [];
+
+        // Upsell opportunity
+        opportunities.push({
+            type: 'high',
+            category: 'Uppgradering',
+            title: `Premium ${service}`,
+            description: `Erbjud utökad version med extra funktioner och prioriterad support`,
+            value: Math.round(value * 0.4),
+            action: 'Skicka uppgraderingserbjudande'
+        });
+
+        // Cross-sell based on service
+        const crossSells = getCrossSells(service);
+        if (crossSells.length > 0) {
+            opportunities.push({
+                type: 'medium',
+                category: 'Cross-sell',
+                title: crossSells[0].title,
+                description: crossSells[0].desc,
+                value: crossSells[0].value,
+                action: 'Föreslå kompletterande tjänst'
+            });
+        }
+
+        // Retainer opportunity if relationship > 3 months
+        if (months >= 3) {
+            opportunities.push({
+                type: 'high',
+                category: 'Retainer',
+                title: 'Månadsavtal',
+                description: `${name} verkar nöjd - perfekt tid att föreslå löpande samarbete`,
+                value: Math.round(value * 0.15),
+                valueType: 'monthly',
+                action: 'Skicka retainer-förslag'
+            });
+        }
+
+        // Price increase opportunity if relationship > 6 months
+        if (months >= 6) {
+            opportunities.push({
+                type: 'medium',
+                category: 'Prishöjning',
+                title: 'Justera priser',
+                description: 'Lång relation och bevisad kvalitet - dags att höja priserna med 10-15%',
+                value: Math.round(value * 0.15),
+                action: 'Kommunicera prishöjning'
+            });
+        }
+
+        // Industry-specific opportunity
+        if (industry) {
+            const industryOpp = getIndustryOpportunity(industry, value);
+            if (industryOpp) {
+                opportunities.push(industryOpp);
+            }
+        }
+
+        return opportunities;
+    }
+
+    function getCrossSells(service) {
+        const crossSellMap = {
+            'webbdesign': [
+                { title: 'SEO-optimering', desc: 'Hjälp kunden synas bättre i Google', value: 15000 },
+                { title: 'Innehållsstrategi', desc: 'Skapa engagerande content för hemsidan', value: 12000 }
+            ],
+            'webbutveckling': [
+                { title: 'Underhållsavtal', desc: 'Löpande uppdateringar och support', value: 5000 },
+                { title: 'Hosting & drift', desc: 'Hantera teknisk drift åt kunden', value: 2000 }
+            ],
+            'grafisk design': [
+                { title: 'Varumärkesguide', desc: 'Dokumentera grafisk profil', value: 20000 },
+                { title: 'Sociala medier-paket', desc: 'Mallar och content för sociala medier', value: 8000 }
+            ],
+            'konsulting': [
+                { title: 'Workshop', desc: 'Utbildning för kundens team', value: 25000 },
+                { title: 'Implementationsstöd', desc: 'Hjälp att genomföra rekommendationer', value: 30000 }
+            ]
+        };
+
+        const normalizedService = service.toLowerCase();
+        for (const [key, value] of Object.entries(crossSellMap)) {
+            if (normalizedService.includes(key)) {
+                return value;
+            }
+        }
+        return [{ title: 'Utbildning/Workshop', desc: 'Lär kundens team att använda det du levererat', value: 15000 }];
+    }
+
+    function getIndustryOpportunity(industry, value) {
+        const industryMap = {
+            'ecommerce': {
+                type: 'medium',
+                category: 'Branschspecifik',
+                title: 'Konverteringsoptimering',
+                description: 'E-handlare vill alltid sälja mer - erbjud CRO-analys',
+                value: Math.round(value * 0.3)
+            },
+            'saas': {
+                type: 'high',
+                category: 'Branschspecifik',
+                title: 'Onboarding-flöden',
+                description: 'SaaS-bolag behöver bättre användarupplevelse',
+                value: Math.round(value * 0.5)
+            },
+            'restaurant': {
+                type: 'low',
+                category: 'Branschspecifik',
+                title: 'Digital meny & beställning',
+                description: 'Restauranger behöver digitala lösningar post-covid',
+                value: 10000
+            }
+        };
+
+        return industryMap[industry];
+    }
+
+    function renderOpportunities(opportunities) {
+        const grid = document.getElementById('opportunityGrid');
+
+        grid.innerHTML = opportunities.map(opp => `
+            <div class="opportunity-card">
+                <div class="opportunity-header">
+                    <span class="opportunity-type ${opp.type}">${opp.category}</span>
+                    <span class="opportunity-value">
+                        +${formatCurrency(opp.value)}${opp.valueType === 'monthly' ? '/mån' : ''}
+                    </span>
+                </div>
+                <div class="opportunity-title">${opp.title}</div>
+                <div class="opportunity-desc">${opp.description}</div>
+                <div class="opportunity-actions">
+                    <button class="btn btn-sm btn-primary" onclick="alert('Öppna mallgenerator för: ${opp.title}')">
+                        <i class="fas fa-paper-plane me-1"></i> ${opp.action}
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function showTemplate(template) {
+        document.querySelectorAll('.template-tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.template-content').forEach(content => content.classList.remove('active'));
+
+        event.target.classList.add('active');
+        document.getElementById(`template-${template}`).classList.add('active');
+    }
+
+    function copyTemplate(template) {
+        const templateBox = document.querySelector(`#template-${template} .template-box`);
+        let text = templateBox.innerText;
+
+        // Remove the copy button text
+        text = text.replace('Kopiera', '').trim();
+
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = templateBox.querySelector('.template-copy-btn');
+            btn.innerHTML = '<i class="fas fa-check me-1"></i> Kopierad!';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-copy me-1"></i> Kopiera';
+            }, 2000);
+        });
+    }
+
+    function calculateRetainer() {
+        const hourlyRate = parseFloat(document.getElementById('retainerHourlyRate').value) || 850;
+        const hours = parseFloat(document.getElementById('retainerHours').value) || 10;
+        const discountPercent = parseFloat(document.getElementById('retainerDiscount').value) || 15;
+
+        const normalPrice = hourlyRate * hours;
+        const discountAmount = normalPrice * (discountPercent / 100);
+        const finalPrice = normalPrice - discountAmount;
+        const yearlyIncome = finalPrice * 12;
+
+        document.getElementById('retainerNormalPrice').textContent = formatCurrency(normalPrice);
+        document.getElementById('retainerDiscountAmount').textContent = '-' + formatCurrency(discountAmount);
+        document.getElementById('retainerFinalPrice').textContent = formatCurrency(finalPrice);
+        document.getElementById('retainerYearlyIncome').textContent = formatCurrency(yearlyIncome);
+    }
+
+    function calculateNewRate() {
+        const currentRate = parseFloat(document.getElementById('currentRate').value) || 750;
+        const increase = parseFloat(document.getElementById('rateIncrease').value) || 15;
+
+        const newRate = Math.round(currentRate * (1 + increase / 100));
+        document.getElementById('newRate').value = newRate;
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('sv-SE', {
+            style: 'decimal',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount) + ' kr';
+    }
+</script>
+{% endblock %}

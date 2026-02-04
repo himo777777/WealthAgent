@@ -1,0 +1,558 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Ranterantan - AI Wealth Agent{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1><i class="fas fa-chart-line"></i> Ranterantans Magi</h1>
+        <p>Visualisera hur dina pengar vaxer exponentiellt over tid</p>
+    </div>
+</div>
+
+<!-- Calculator Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-calculator"></i> Berakna din framtida formogenhet</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">Startkapital (kr)</label>
+                    <input type="number" id="initialAmount" class="form-control" value="10000" min="0">
+                    <small class="text-muted">Vad du investerar idag</small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label">Manatlig insattning (kr)</label>
+                    <input type="number" id="monthlyDeposit" class="form-control" value="2000" min="0">
+                    <small class="text-muted">Regelbundet sparande varje manad</small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label">Arlig avkastning (%)</label>
+                    <input type="range" id="annualReturn" class="form-range" min="1" max="15" value="7" step="0.5">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">1%</span>
+                        <span class="badge bg-primary" id="returnValue">7%</span>
+                        <span class="text-muted">15%</span>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label">Investeringstid (ar)</label>
+                    <input type="range" id="years" class="form-range" min="1" max="50" value="20">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">1 ar</span>
+                        <span class="badge bg-primary" id="yearsValue">20 ar</span>
+                        <span class="text-muted">50 ar</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary w-100" onclick="calculateCompound()">
+                    <i class="fas fa-magic"></i> Berakna
+                </button>
+            </div>
+
+            <div class="col-md-6">
+                <div class="result-card">
+                    <div class="result-item highlight">
+                        <span class="result-label">Slutvarde</span>
+                        <span class="result-value text-success" id="finalValue">0 kr</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Totalt insatt</span>
+                        <span class="result-value" id="totalDeposited">0 kr</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Rantans ranta</span>
+                        <span class="result-value text-primary" id="interestEarned">0 kr</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Tillvaxt</span>
+                        <span class="result-value" id="growthPercent">0%</span>
+                    </div>
+                </div>
+
+                <div class="info-box mt-3">
+                    <i class="fas fa-lightbulb text-warning"></i>
+                    <strong>Visste du?</strong>
+                    <p class="mb-0" id="funFact">Einstein kallade ranterantan for "varldens attonde underverk"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-area"></i> Tillvaxtkurva</h3>
+    </div>
+    <div class="card-body">
+        <canvas id="compoundChart" height="300"></canvas>
+    </div>
+</div>
+
+<!-- Comparison Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-balance-scale"></i> Med vs Utan ranterantan</h3>
+    </div>
+    <div class="card-body">
+        <div class="comparison-bars">
+            <div class="comparison-item">
+                <div class="comparison-label">Med ranterantan</div>
+                <div class="comparison-bar">
+                    <div class="bar-fill bg-success" id="compoundBar" style="width: 100%"></div>
+                </div>
+                <div class="comparison-value" id="compoundValue">0 kr</div>
+            </div>
+            <div class="comparison-item">
+                <div class="comparison-label">Utan ranta (sparande)</div>
+                <div class="comparison-bar">
+                    <div class="bar-fill bg-secondary" id="savingsBar" style="width: 50%"></div>
+                </div>
+                <div class="comparison-value" id="savingsValue">0 kr</div>
+            </div>
+        </div>
+        <div class="comparison-difference mt-3 text-center">
+            <span class="text-muted">Ranterantans effekt:</span>
+            <span class="text-success fw-bold" id="compoundEffect">+0 kr</span>
+        </div>
+    </div>
+</div>
+
+<!-- Milestones -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-flag-checkered"></i> Milstolpar pa vagen till miljon</h3>
+    </div>
+    <div class="card-body">
+        <div class="milestone-timeline" id="milestoneTimeline">
+            <!-- Dynamically populated -->
+        </div>
+    </div>
+</div>
+
+<!-- Tips Section -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-graduation-cap"></i> Tips for att maximera ranterantan</h3>
+    </div>
+    <div class="card-body">
+        <div class="tips-grid">
+            <div class="tip-card">
+                <div class="tip-icon bg-success">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h4>Borja tidigt</h4>
+                <p>Tid ar din storsta tillgang. 10 ar extra ger enorma skillnader.</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-icon bg-primary">
+                    <i class="fas fa-sync"></i>
+                </div>
+                <h4>Var konsekvent</h4>
+                <p>Regelbundna insattningar slar market timing.</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-icon bg-warning">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <h4>Halla kostnader laga</h4>
+                <p>Varje procent i avgifter kostar dig 100 000-tals kr.</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-icon bg-info">
+                    <i class="fas fa-redo"></i>
+                </div>
+                <h4>Aterinvestera utdelningar</h4>
+                <p>Lat utdelningar kopa fler andelar automatiskt.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.result-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.result-item:last-child {
+    border-bottom: none;
+}
+
+.result-item.highlight {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), transparent);
+    margin: -0.75rem -1rem 0.75rem -1rem;
+    padding: 1rem;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 2px solid var(--primary);
+}
+
+.result-label {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.result-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.result-item.highlight .result-value {
+    font-size: 1.75rem;
+}
+
+.info-box {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.1), transparent);
+    border: 1px solid rgba(234, 179, 8, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.info-box p {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.comparison-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.comparison-item {
+    display: grid;
+    grid-template-columns: 150px 1fr 120px;
+    align-items: center;
+    gap: 1rem;
+}
+
+.comparison-bar {
+    background: var(--border);
+    height: 30px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+}
+
+.comparison-value {
+    font-weight: 700;
+    text-align: right;
+}
+
+.milestone-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.milestone-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.milestone-item:hover {
+    border-color: var(--primary);
+    transform: translateX(5px);
+}
+
+.milestone-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.milestone-content {
+    flex: 1;
+}
+
+.milestone-amount {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.milestone-time {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.milestone-reached {
+    border-color: var(--success);
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05), transparent);
+}
+
+.milestone-reached .milestone-icon {
+    background: var(--success);
+    color: white;
+}
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.tip-card {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.tip-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.tip-card h4 {
+    margin-bottom: 0.5rem;
+}
+
+.tip-card p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .comparison-item {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .comparison-value {
+        text-align: left;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let compoundChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize sliders
+    document.getElementById('annualReturn').addEventListener('input', function() {
+        document.getElementById('returnValue').textContent = this.value + '%';
+    });
+
+    document.getElementById('years').addEventListener('input', function() {
+        document.getElementById('yearsValue').textContent = this.value + ' ar';
+    });
+
+    // Initial calculation
+    calculateCompound();
+});
+
+function calculateCompound() {
+    const initial = parseFloat(document.getElementById('initialAmount').value) || 0;
+    const monthly = parseFloat(document.getElementById('monthlyDeposit').value) || 0;
+    const annualRate = parseFloat(document.getElementById('annualReturn').value) / 100;
+    const years = parseInt(document.getElementById('years').value) || 1;
+
+    const monthlyRate = annualRate / 12;
+    const months = years * 12;
+
+    // Calculate compound growth
+    let data = [];
+    let compoundData = [];
+    let savingsData = [];
+    let balance = initial;
+    let totalDeposited = initial;
+
+    for (let i = 0; i <= months; i++) {
+        if (i > 0) {
+            balance = balance * (1 + monthlyRate) + monthly;
+            totalDeposited += monthly;
+        }
+
+        if (i % 12 === 0) {
+            data.push({
+                year: i / 12,
+                compound: balance,
+                savings: totalDeposited
+            });
+            compoundData.push(balance);
+            savingsData.push(totalDeposited);
+        }
+    }
+
+    const finalValue = balance;
+    const interestEarned = finalValue - totalDeposited;
+    const growthPercent = totalDeposited > 0 ? ((finalValue / totalDeposited - 1) * 100) : 0;
+
+    // Update results
+    document.getElementById('finalValue').textContent = formatCurrency(finalValue);
+    document.getElementById('totalDeposited').textContent = formatCurrency(totalDeposited);
+    document.getElementById('interestEarned').textContent = formatCurrency(interestEarned);
+    document.getElementById('growthPercent').textContent = growthPercent.toFixed(0) + '%';
+
+    // Update comparison bars
+    const maxValue = finalValue;
+    document.getElementById('compoundBar').style.width = '100%';
+    document.getElementById('savingsBar').style.width = (totalDeposited / maxValue * 100) + '%';
+    document.getElementById('compoundValue').textContent = formatCurrency(finalValue);
+    document.getElementById('savingsValue').textContent = formatCurrency(totalDeposited);
+    document.getElementById('compoundEffect').textContent = '+' + formatCurrency(interestEarned);
+
+    // Update chart
+    updateChart(data);
+
+    // Update milestones
+    updateMilestones(data);
+
+    // Fun fact
+    updateFunFact(finalValue, interestEarned, years);
+}
+
+function updateChart(data) {
+    const ctx = document.getElementById('compoundChart').getContext('2d');
+
+    if (compoundChart) {
+        compoundChart.destroy();
+    }
+
+    compoundChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => 'Ar ' + d.year),
+            datasets: [
+                {
+                    label: 'Med ranterantan',
+                    data: data.map(d => d.compound),
+                    borderColor: '#22c55e',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: 'Utan ranta',
+                    data: data.map(d => d.savings),
+                    borderColor: '#6b7280',
+                    backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    borderDash: [5, 5]
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + formatCurrency(context.raw);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return formatCurrency(value);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateMilestones(data) {
+    const milestones = [100000, 250000, 500000, 750000, 1000000, 2000000, 5000000, 10000000];
+    const container = document.getElementById('milestoneTimeline');
+    container.innerHTML = '';
+
+    milestones.forEach(milestone => {
+        const yearReached = data.find(d => d.compound >= milestone);
+
+        if (yearReached || milestone <= 1000000) {
+            const item = document.createElement('div');
+            item.className = 'milestone-item' + (yearReached ? ' milestone-reached' : '');
+
+            const icon = milestone >= 1000000 ? 'crown' : 'flag';
+            const color = yearReached ? 'success' : 'secondary';
+
+            item.innerHTML = `
+                <div class="milestone-icon bg-${color}">
+                    <i class="fas fa-${icon}"></i>
+                </div>
+                <div class="milestone-content">
+                    <div class="milestone-amount">${formatCurrency(milestone)}</div>
+                    <div class="milestone-time">
+                        ${yearReached ? 'Uppnas efter ' + yearReached.year + ' ar' : 'Behover langre tid'}
+                    </div>
+                </div>
+                ${yearReached ? '<i class="fas fa-check-circle text-success"></i>' : ''}
+            `;
+
+            container.appendChild(item);
+        }
+    });
+}
+
+function updateFunFact(finalValue, interest, years) {
+    const facts = [
+        `Pa ${years} ar har dina pengar "jobbat" och genererat ${formatCurrency(interest)} at dig!`,
+        `Du tjanar ${formatCurrency(interest / years)} per ar i genomsnitt - bara fran ranterantan.`,
+        `Varje 1000 kr du sparar idag blir ${formatCurrency(1000 * (finalValue / (document.getElementById('initialAmount').value || 1)))} om ${years} ar.`,
+        `Ranterantan multiplicerar dina pengar ${(finalValue / (parseFloat(document.getElementById('totalDeposited')?.textContent?.replace(/[^\d]/g, '')) || 1)).toFixed(1)}x over ${years} ar.`
+    ];
+
+    document.getElementById('funFact').textContent = facts[Math.floor(Math.random() * facts.length)];
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('sv-SE', {
+        style: 'currency',
+        currency: 'SEK',
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+</script>
+{% endblock %}

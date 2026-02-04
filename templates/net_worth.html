@@ -1,0 +1,560 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Nettoformogenhet - AI Wealth Agent{% endblock %}
+{% block page_title %}Nettoformogenhet{% endblock %}
+
+{% block content %}
+<div class="net-worth-page">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h2><i class="fas fa-chart-area"></i> Nettoformogenhet</h2>
+            <p>Folj din ekonomiska utveckling over tid</p>
+        </div>
+        <button class="btn btn-primary" onclick="openAddModal()">
+            <i class="fas fa-plus"></i> Lagg till Snapshot
+        </button>
+    </div>
+
+    <!-- Current Net Worth -->
+    <div class="net-worth-hero">
+        <div class="hero-card">
+            <div class="hero-label">Din nettoformogenhet</div>
+            <div class="hero-value" id="currentNetWorth">0 SEK</div>
+            <div class="hero-change positive" id="netWorthChange">
+                <i class="fas fa-arrow-up"></i> +0 SEK (+0%) denna manad
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon green">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="totalAssets">0 SEK</span>
+                <span class="stat-label">Totala tillgangar</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon red">
+                <i class="fas fa-minus-circle"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="totalLiabilities">0 SEK</span>
+                <span class="stat-label">Totala skulder</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon purple">
+                <i class="fas fa-piggy-bank"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="cashAmount">0 SEK</span>
+                <span class="stat-label">Kassa & sparkonto</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon blue">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="investmentAmount">0 SEK</span>
+                <span class="stat-label">Investeringar</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Net Worth Chart -->
+    <div class="card chart-card">
+        <div class="card-header">
+            <h3>Utveckling over tid</h3>
+            <div class="chart-filters">
+                <button class="filter-btn active" data-range="6m">6 man</button>
+                <button class="filter-btn" data-range="1y">1 ar</button>
+                <button class="filter-btn" data-range="all">Allt</button>
+            </div>
+        </div>
+        <div class="card-content">
+            <canvas id="netWorthChart" height="300"></canvas>
+        </div>
+    </div>
+
+    <!-- Breakdown -->
+    <div class="breakdown-grid">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-plus-circle"></i> Tillgangar</h3>
+            </div>
+            <div class="card-content">
+                <div class="breakdown-list" id="assetsList">
+                    <div class="breakdown-item">
+                        <div class="item-info">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Kassa</span>
+                        </div>
+                        <span class="item-value">0 SEK</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="item-info">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Investeringar</span>
+                        </div>
+                        <span class="item-value">0 SEK</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="item-info">
+                            <i class="fas fa-home"></i>
+                            <span>Fastigheter</span>
+                        </div>
+                        <span class="item-value">0 SEK</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="item-info">
+                            <i class="fas fa-ellipsis-h"></i>
+                            <span>Ovrigt</span>
+                        </div>
+                        <span class="item-value">0 SEK</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-minus-circle"></i> Skulder</h3>
+            </div>
+            <div class="card-content">
+                <div class="breakdown-list" id="liabilitiesList">
+                    <div class="breakdown-item">
+                        <div class="item-info">
+                            <i class="fas fa-home"></i>
+                            <span>Bolan</span>
+                        </div>
+                        <span class="item-value negative">0 SEK</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="item-info">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>Studielan</span>
+                        </div>
+                        <span class="item-value negative">0 SEK</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <div class="item-info">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Ovriga lan</span>
+                        </div>
+                        <span class="item-value negative">0 SEK</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Snapshot Modal -->
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Lagg till Snapshot</h3>
+            <button class="modal-close" onclick="closeAddModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="snapshotForm">
+                <h4>Tillgangar</h4>
+                <div class="form-group">
+                    <label>Kassa & sparkonto (SEK)</label>
+                    <input type="number" name="cash" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>Investeringar (SEK)</label>
+                    <input type="number" name="investments" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>Fastigheter (SEK)</label>
+                    <input type="number" name="real_estate" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>Ovriga tillgangar (SEK)</label>
+                    <input type="number" name="other_assets" placeholder="0">
+                </div>
+
+                <h4>Skulder</h4>
+                <div class="form-group">
+                    <label>Bolan (SEK)</label>
+                    <input type="number" name="mortgage" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>Studielan (SEK)</label>
+                    <input type="number" name="student_loans" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>Ovriga skulder (SEK)</label>
+                    <input type="number" name="other_debts" placeholder="0">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeAddModal()">Avbryt</button>
+            <button class="btn btn-primary" onclick="saveSnapshot()">Spara</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.net-worth-page { max-width: 1200px; }
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.header-content h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.header-content h2 i { color: var(--primary); }
+.header-content p { color: var(--text-muted); }
+
+.net-worth-hero {
+    margin-bottom: 2rem;
+}
+
+.hero-card {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: 20px;
+    padding: 2.5rem;
+    text-align: center;
+}
+
+.hero-label {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+}
+
+.hero-value {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.hero-change {
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.hero-change.positive { color: #86efac; }
+.hero-change.negative { color: #fca5a5; }
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid var(--border);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.stat-icon.green { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.stat-icon.red { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.stat-icon.purple { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+.stat-icon.blue { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+
+.stat-info { display: flex; flex-direction: column; }
+.stat-value { font-size: 1.25rem; font-weight: 700; }
+.stat-label { font-size: 0.8rem; color: var(--text-muted); }
+
+.chart-card { margin-bottom: 2rem; }
+
+.chart-filters {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.filter-btn {
+    background: var(--background);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.filter-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.breakdown-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.item-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.item-info i { color: var(--text-muted); }
+.item-value { font-weight: 600; }
+.item-value.negative { color: var(--error); }
+
+.card {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+}
+
+.card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.card-content { padding: 1.25rem; }
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.show { display: flex; }
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.modal-body { padding: 1.5rem; }
+.modal-body h4 { margin: 1rem 0 0.75rem; }
+.modal-body h4:first-child { margin-top: 0; }
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+}
+
+@media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .breakdown-grid { grid-template-columns: 1fr; }
+    .hero-value { font-size: 2.5rem; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let netWorthChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadNetWorthData();
+    initChart();
+});
+
+function initChart() {
+    const ctx = document.getElementById('netWorthChart').getContext('2d');
+    netWorthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Nettoformogenhet',
+                data: [],
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: '#94a3b8' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8' }
+                }
+            }
+        }
+    });
+}
+
+async function loadNetWorthData() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/net-worth');
+        if (response.success) {
+            updateDisplay(response.snapshots);
+        }
+    } catch (error) {
+        console.error('Failed to load net worth data:', error);
+    }
+}
+
+function updateDisplay(snapshots) {
+    // Update chart
+    const labels = snapshots.map(s => s.snapshot_date.substring(0, 7)).reverse();
+    const data = snapshots.map(s => parseFloat(s.net_worth || 0)).reverse();
+
+    netWorthChart.data.labels = labels;
+    netWorthChart.data.datasets[0].data = data;
+    netWorthChart.update();
+
+    // Update current value
+    if (snapshots.length > 0) {
+        const latest = snapshots[0];
+        document.getElementById('currentNetWorth').textContent = WealthAgent.formatCurrency(latest.net_worth || 0);
+    }
+}
+
+function openAddModal() {
+    document.getElementById('addModal').classList.add('show');
+}
+
+function closeAddModal() {
+    document.getElementById('addModal').classList.remove('show');
+}
+
+async function saveSnapshot() {
+    const form = document.getElementById('snapshotForm');
+    const formData = new FormData(form);
+
+    const cash = parseFloat(formData.get('cash') || 0);
+    const investments = parseFloat(formData.get('investments') || 0);
+    const realEstate = parseFloat(formData.get('real_estate') || 0);
+    const otherAssets = parseFloat(formData.get('other_assets') || 0);
+    const mortgage = parseFloat(formData.get('mortgage') || 0);
+    const studentLoans = parseFloat(formData.get('student_loans') || 0);
+    const otherDebts = parseFloat(formData.get('other_debts') || 0);
+
+    const totalAssets = cash + investments + realEstate + otherAssets;
+    const totalLiabilities = mortgage + studentLoans + otherDebts;
+    const netWorth = totalAssets - totalLiabilities;
+
+    try {
+        await WealthAgent.apiCall('/wealth/api/net-worth', 'POST', {
+            cash,
+            investments,
+            real_estate: realEstate,
+            other_assets: otherAssets,
+            total_assets: totalAssets,
+            mortgage,
+            student_loans: studentLoans,
+            other_debts: otherDebts,
+            total_liabilities: totalLiabilities,
+            net_worth: netWorth
+        });
+
+        WealthAgent.showToast('Snapshot sparad!', 'success');
+        closeAddModal();
+        loadNetWorthData();
+        form.reset();
+    } catch (error) {
+        WealthAgent.showToast('Kunde inte spara', 'error');
+    }
+}
+</script>
+{% endblock %}

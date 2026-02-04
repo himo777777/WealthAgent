@@ -1,0 +1,800 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Formogenhetsprognos - AI Wealth Agent{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1><i class="fas fa-rocket"></i> Formogenhetsprognos</h1>
+        <p>Se hur din formogenhet vaxer over tid - med hakansyn till inflation</p>
+    </div>
+</div>
+
+<!-- Current Wealth Summary -->
+<div class="wealth-summary-card mb-4">
+    <div class="wealth-current">
+        <span class="wealth-label">Nuvarande nettoformogenhet</span>
+        <span class="wealth-value" id="currentWealth">{{ profile.net_worth|default(500000) | int }} kr</span>
+    </div>
+    <div class="wealth-projections">
+        <div class="projection-item">
+            <span class="projection-label">Om 10 ar</span>
+            <span class="projection-value" id="wealth10yr">-</span>
+            <span class="projection-real" id="wealth10yrReal">-</span>
+        </div>
+        <div class="projection-item">
+            <span class="projection-label">Om 20 ar</span>
+            <span class="projection-value" id="wealth20yr">-</span>
+            <span class="projection-real" id="wealth20yrReal">-</span>
+        </div>
+        <div class="projection-item highlight">
+            <span class="projection-label">Om 30 ar</span>
+            <span class="projection-value" id="wealth30yr">-</span>
+            <span class="projection-real" id="wealth30yrReal">-</span>
+        </div>
+    </div>
+</div>
+
+<!-- Parameters -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-sliders-h"></i> Antaganden</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group mb-3">
+                    <label class="form-label">Startkapital (kr)</label>
+                    <input type="number" id="startCapital" class="form-control" value="500000">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Manatligt sparande (kr)</label>
+                    <input type="number" id="monthlySavings" class="form-control" value="5000">
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Arlig sparandeokning (%)</label>
+                    <input type="number" id="savingsGrowth" class="form-control" value="3" step="0.5">
+                    <small class="text-muted">T.ex. loneokning</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group mb-3">
+                    <label class="form-label">Forvatad avkastning (%)</label>
+                    <input type="range" id="expectedReturn" class="form-range" min="1" max="15" value="7" step="0.5">
+                    <div class="d-flex justify-content-between">
+                        <span>1%</span>
+                        <span class="badge bg-primary" id="returnValue">7%</span>
+                        <span>15%</span>
+                    </div>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Inflation (%)</label>
+                    <input type="range" id="inflation" class="form-range" min="0" max="10" value="2" step="0.5">
+                    <div class="d-flex justify-content-between">
+                        <span>0%</span>
+                        <span class="badge bg-warning" id="inflationValue">2%</span>
+                        <span>10%</span>
+                    </div>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Tidshorisont (ar)</label>
+                    <input type="range" id="timeHorizon" class="form-range" min="5" max="50" value="30">
+                    <div class="d-flex justify-content-between">
+                        <span>5 ar</span>
+                        <span class="badge bg-success" id="yearsValue">30 ar</span>
+                        <span>50 ar</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="real-return-box">
+                    <div class="real-return-label">Realavkastning (efter inflation)</div>
+                    <div class="real-return-value" id="realReturn">5.0%</div>
+                    <div class="real-return-formula">
+                        <span id="nominalReturn">7%</span> - <span id="inflationRate">2%</span> = <span id="realReturnCalc">5%</span>
+                    </div>
+                </div>
+                <div class="info-box mt-3">
+                    <i class="fas fa-info-circle text-info"></i>
+                    <small>Realavkastning visar din faktiska kopkraft efter inflation.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Chart -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3><i class="fas fa-chart-area"></i> Formogenhetsutveckling</h3>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary active" onclick="setChartMode('nominal')">Nominellt</button>
+            <button class="btn btn-outline-primary" onclick="setChartMode('real')">Realvarde</button>
+            <button class="btn btn-outline-primary" onclick="setChartMode('both')">Bada</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <canvas id="wealthChart" height="350"></canvas>
+    </div>
+</div>
+
+<!-- Purchasing Power Impact -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-shopping-cart"></i> Kopkraftens erosion</h3>
+    </div>
+    <div class="card-body">
+        <div class="purchasing-power-demo">
+            <p class="mb-3">Om du har <strong>100 000 kr</strong> idag, vad ar de vardes i framtiden?</p>
+            <div class="power-timeline">
+                <div class="power-item">
+                    <span class="power-year">Idag</span>
+                    <span class="power-value">100 000 kr</span>
+                    <div class="power-bar" style="width: 100%"></div>
+                </div>
+                <div class="power-item">
+                    <span class="power-year">Om 10 ar</span>
+                    <span class="power-value" id="power10">-</span>
+                    <div class="power-bar" id="powerBar10" style="width: 82%"></div>
+                </div>
+                <div class="power-item">
+                    <span class="power-year">Om 20 ar</span>
+                    <span class="power-value" id="power20">-</span>
+                    <div class="power-bar" id="powerBar20" style="width: 67%"></div>
+                </div>
+                <div class="power-item">
+                    <span class="power-year">Om 30 ar</span>
+                    <span class="power-value" id="power30">-</span>
+                    <div class="power-bar" id="powerBar30" style="width: 55%"></div>
+                </div>
+            </div>
+            <div class="power-insight mt-3">
+                <i class="fas fa-exclamation-triangle text-warning"></i>
+                <span id="powerInsight">Vid 2% inflation tappar dina pengar halva kopkraften pa 35 ar.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Milestones & Goals -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3><i class="fas fa-flag-checkered"></i> Milstolpar</h3>
+            </div>
+            <div class="card-body">
+                <div class="milestones-list" id="milestonesList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3><i class="fas fa-bullseye"></i> Mal</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group mb-3">
+                    <label class="form-label">Formogenhetsmal (kr)</label>
+                    <input type="number" id="wealthGoal" class="form-control" value="10000000">
+                </div>
+                <div class="goal-progress">
+                    <div class="goal-header">
+                        <span>Tid till mal</span>
+                        <span class="goal-time" id="timeToGoal">-</span>
+                    </div>
+                    <div class="progress-bar-large">
+                        <div class="progress-fill" id="goalProgressBar" style="width: 5%"></div>
+                    </div>
+                    <div class="goal-details">
+                        <span>Nuvarande: <strong id="goalCurrent">500 000 kr</strong></span>
+                        <span>Mal: <strong id="goalTargetDisplay">10 000 000 kr</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scenarios Comparison -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-balance-scale"></i> Scenariojamforelse</h3>
+    </div>
+    <div class="card-body">
+        <div class="scenarios-grid">
+            <div class="scenario-card pessimistic">
+                <div class="scenario-header">
+                    <i class="fas fa-cloud-rain"></i>
+                    <span>Pessimistiskt</span>
+                </div>
+                <div class="scenario-params">4% avkastning, 4% inflation</div>
+                <div class="scenario-result" id="scenarioPess">-</div>
+                <div class="scenario-real" id="scenarioPessReal">-</div>
+            </div>
+            <div class="scenario-card moderate">
+                <div class="scenario-header">
+                    <i class="fas fa-cloud-sun"></i>
+                    <span>Moderat</span>
+                </div>
+                <div class="scenario-params">7% avkastning, 2% inflation</div>
+                <div class="scenario-result" id="scenarioMod">-</div>
+                <div class="scenario-real" id="scenarioModReal">-</div>
+            </div>
+            <div class="scenario-card optimistic">
+                <div class="scenario-header">
+                    <i class="fas fa-sun"></i>
+                    <span>Optimistiskt</span>
+                </div>
+                <div class="scenario-params">10% avkastning, 2% inflation</div>
+                <div class="scenario-result" id="scenarioOpt">-</div>
+                <div class="scenario-real" id="scenarioOptReal">-</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.wealth-summary-card {
+    background: linear-gradient(135deg, var(--primary), #4f46e5);
+    color: white;
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wealth-current {
+    display: flex;
+    flex-direction: column;
+}
+
+.wealth-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.wealth-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.wealth-projections {
+    display: flex;
+    gap: 2rem;
+}
+
+.projection-item {
+    text-align: center;
+    padding: 1rem;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+}
+
+.projection-item.highlight {
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.3);
+}
+
+.projection-label {
+    display: block;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.projection-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.projection-real {
+    display: block;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.real-return-box {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), transparent);
+    border: 2px solid var(--success);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.real-return-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.real-return-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--success);
+}
+
+.real-return-formula {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+.info-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+}
+
+.purchasing-power-demo {
+    padding: 1rem;
+}
+
+.power-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.power-item {
+    display: grid;
+    grid-template-columns: 100px 120px 1fr;
+    align-items: center;
+    gap: 1rem;
+}
+
+.power-year {
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.power-value {
+    font-weight: 700;
+}
+
+.power-bar {
+    height: 24px;
+    background: linear-gradient(90deg, var(--success), #4ade80);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.power-insight {
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.1), transparent);
+    border-radius: 8px;
+}
+
+.milestones-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.milestone-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.milestone-item.reached {
+    border-color: var(--success);
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05), transparent);
+}
+
+.milestone-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.milestone-item.reached .milestone-icon {
+    background: var(--success);
+    color: white;
+}
+
+.milestone-content {
+    flex: 1;
+}
+
+.milestone-amount {
+    font-weight: 600;
+}
+
+.milestone-time {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.goal-progress {
+    margin-top: 1rem;
+}
+
+.goal-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.goal-time {
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.progress-bar-large {
+    height: 20px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #818cf8);
+    transition: width 0.5s ease;
+}
+
+.goal-details {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.scenarios-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.scenario-card {
+    text-align: center;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+}
+
+.scenario-card.pessimistic {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), transparent);
+}
+
+.scenario-card.moderate {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), transparent);
+}
+
+.scenario-card.optimistic {
+    border-color: #22c55e;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05), transparent);
+}
+
+.scenario-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.scenario-header i {
+    font-size: 1.25rem;
+}
+
+.pessimistic .scenario-header i { color: #ef4444; }
+.moderate .scenario-header i { color: #f59e0b; }
+.optimistic .scenario-header i { color: #22c55e; }
+
+.scenario-params {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.scenario-result {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.scenario-real {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+    .wealth-summary-card {
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
+    }
+
+    .wealth-projections {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .power-item {
+        grid-template-columns: 1fr;
+        gap: 0.25rem;
+    }
+
+    .scenarios-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let wealthChart = null;
+let chartMode = 'both';
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize sliders
+    ['expectedReturn', 'inflation', 'timeHorizon'].forEach(id => {
+        document.getElementById(id).addEventListener('input', function() {
+            const valueId = id === 'expectedReturn' ? 'returnValue' :
+                           id === 'inflation' ? 'inflationValue' : 'yearsValue';
+            const suffix = id === 'timeHorizon' ? ' ar' : '%';
+            document.getElementById(valueId).textContent = this.value + suffix;
+            updateRealReturn();
+            calculateProjection();
+        });
+    });
+
+    // Input listeners
+    ['startCapital', 'monthlySavings', 'savingsGrowth', 'wealthGoal'].forEach(id => {
+        document.getElementById(id).addEventListener('change', calculateProjection);
+    });
+
+    calculateProjection();
+});
+
+function updateRealReturn() {
+    const nominal = parseFloat(document.getElementById('expectedReturn').value);
+    const inflation = parseFloat(document.getElementById('inflation').value);
+    const real = nominal - inflation;
+
+    document.getElementById('realReturn').textContent = real.toFixed(1) + '%';
+    document.getElementById('nominalReturn').textContent = nominal + '%';
+    document.getElementById('inflationRate').textContent = inflation + '%';
+    document.getElementById('realReturnCalc').textContent = real.toFixed(1) + '%';
+}
+
+function calculateProjection() {
+    const startCapital = parseFloat(document.getElementById('startCapital').value) || 0;
+    const monthlySavings = parseFloat(document.getElementById('monthlySavings').value) || 0;
+    const savingsGrowth = parseFloat(document.getElementById('savingsGrowth').value) / 100;
+    const expectedReturn = parseFloat(document.getElementById('expectedReturn').value) / 100;
+    const inflation = parseFloat(document.getElementById('inflation').value) / 100;
+    const years = parseInt(document.getElementById('timeHorizon').value);
+    const goal = parseFloat(document.getElementById('wealthGoal').value) || 0;
+
+    const monthlyReturn = expectedReturn / 12;
+    const monthlyInflation = inflation / 12;
+
+    let nominalData = [];
+    let realData = [];
+    let depositsData = [];
+
+    let balance = startCapital;
+    let currentSavings = monthlySavings;
+    let totalDeposits = startCapital;
+    let goalReachedYear = null;
+
+    for (let y = 0; y <= years; y++) {
+        const inflationFactor = Math.pow(1 + inflation, y);
+        nominalData.push({ year: y, value: balance });
+        realData.push({ year: y, value: balance / inflationFactor });
+        depositsData.push({ year: y, value: totalDeposits });
+
+        if (balance >= goal && goalReachedYear === null) {
+            goalReachedYear = y;
+        }
+
+        for (let m = 0; m < 12; m++) {
+            balance = balance * (1 + monthlyReturn) + currentSavings;
+            totalDeposits += currentSavings;
+        }
+        currentSavings *= (1 + savingsGrowth);
+    }
+
+    // Update summary
+    const getValueAtYear = (data, yr) => data.find(d => d.year === yr)?.value || 0;
+
+    document.getElementById('wealth10yr').textContent = formatCurrency(getValueAtYear(nominalData, 10));
+    document.getElementById('wealth10yrReal').textContent = '(' + formatCurrency(getValueAtYear(realData, 10)) + ' realt)';
+    document.getElementById('wealth20yr').textContent = formatCurrency(getValueAtYear(nominalData, 20));
+    document.getElementById('wealth20yrReal').textContent = '(' + formatCurrency(getValueAtYear(realData, 20)) + ' realt)';
+    document.getElementById('wealth30yr').textContent = formatCurrency(getValueAtYear(nominalData, Math.min(30, years)));
+    document.getElementById('wealth30yrReal').textContent = '(' + formatCurrency(getValueAtYear(realData, Math.min(30, years))) + ' realt)';
+
+    // Update purchasing power
+    updatePurchasingPower(inflation);
+
+    // Update goal progress
+    const progress = (startCapital / goal) * 100;
+    document.getElementById('goalProgressBar').style.width = Math.min(100, progress) + '%';
+    document.getElementById('goalCurrent').textContent = formatCurrency(startCapital);
+    document.getElementById('goalTargetDisplay').textContent = formatCurrency(goal);
+    document.getElementById('timeToGoal').textContent = goalReachedYear !== null ? goalReachedYear + ' ar' : 'Utanfor horisont';
+
+    // Update milestones
+    updateMilestones(nominalData);
+
+    // Update scenarios
+    calculateScenarios(startCapital, monthlySavings, savingsGrowth, years);
+
+    // Update chart
+    updateChart(nominalData, realData, depositsData);
+}
+
+function updatePurchasingPower(inflation) {
+    const power10 = 100000 / Math.pow(1 + inflation, 10);
+    const power20 = 100000 / Math.pow(1 + inflation, 20);
+    const power30 = 100000 / Math.pow(1 + inflation, 30);
+
+    document.getElementById('power10').textContent = formatCurrency(power10);
+    document.getElementById('power20').textContent = formatCurrency(power20);
+    document.getElementById('power30').textContent = formatCurrency(power30);
+
+    document.getElementById('powerBar10').style.width = (power10 / 1000) + '%';
+    document.getElementById('powerBar20').style.width = (power20 / 1000) + '%';
+    document.getElementById('powerBar30').style.width = (power30 / 1000) + '%';
+
+    const halvingYears = Math.log(0.5) / Math.log(1 - inflation);
+    document.getElementById('powerInsight').textContent =
+        `Vid ${(inflation * 100).toFixed(0)}% inflation tappar dina pengar halva kopkraften pa ${Math.round(halvingYears)} ar.`;
+}
+
+function updateMilestones(data) {
+    const milestones = [1000000, 2000000, 5000000, 10000000];
+    const container = document.getElementById('milestonesList');
+    container.innerHTML = '';
+
+    milestones.forEach(milestone => {
+        const reachedYear = data.find(d => d.value >= milestone);
+        const item = document.createElement('div');
+        item.className = 'milestone-item' + (reachedYear ? ' reached' : '');
+
+        const icon = milestone >= 10000000 ? 'crown' : 'flag';
+
+        item.innerHTML = `
+            <div class="milestone-icon bg-${reachedYear ? 'success' : 'secondary'}">
+                <i class="fas fa-${icon}"></i>
+            </div>
+            <div class="milestone-content">
+                <div class="milestone-amount">${formatCurrency(milestone)}</div>
+                <div class="milestone-time">${reachedYear ? 'Nas efter ' + reachedYear.year + ' ar' : 'Utanfor horisont'}</div>
+            </div>
+            ${reachedYear ? '<i class="fas fa-check text-success"></i>' : ''}
+        `;
+
+        container.appendChild(item);
+    });
+}
+
+function calculateScenarios(start, monthly, growth, years) {
+    const scenarios = [
+        { id: 'Pess', return_: 0.04, inflation: 0.04 },
+        { id: 'Mod', return_: 0.07, inflation: 0.02 },
+        { id: 'Opt', return_: 0.10, inflation: 0.02 }
+    ];
+
+    scenarios.forEach(s => {
+        let balance = start;
+        let savings = monthly;
+        const monthlyReturn = s.return_ / 12;
+
+        for (let y = 0; y < years; y++) {
+            for (let m = 0; m < 12; m++) {
+                balance = balance * (1 + monthlyReturn) + savings;
+            }
+            savings *= (1 + growth);
+        }
+
+        const realValue = balance / Math.pow(1 + s.inflation, years);
+
+        document.getElementById('scenario' + s.id).textContent = formatCurrency(balance);
+        document.getElementById('scenario' + s.id + 'Real').textContent = '(' + formatCurrency(realValue) + ' realt)';
+    });
+}
+
+function updateChart(nominalData, realData, depositsData) {
+    const ctx = document.getElementById('wealthChart').getContext('2d');
+
+    if (wealthChart) {
+        wealthChart.destroy();
+    }
+
+    const datasets = [];
+
+    if (chartMode === 'nominal' || chartMode === 'both') {
+        datasets.push({
+            label: 'Nominellt varde',
+            data: nominalData.map(d => d.value),
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            fill: chartMode === 'nominal',
+            tension: 0.3
+        });
+    }
+
+    if (chartMode === 'real' || chartMode === 'both') {
+        datasets.push({
+            label: 'Realvarde (efter inflation)',
+            data: realData.map(d => d.value),
+            borderColor: '#22c55e',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            fill: chartMode === 'real',
+            tension: 0.3
+        });
+    }
+
+    datasets.push({
+        label: 'Insatt kapital',
+        data: depositsData.map(d => d.value),
+        borderColor: '#6b7280',
+        borderDash: [5, 5],
+        fill: false,
+        tension: 0.3
+    });
+
+    wealthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: nominalData.map(d => 'Ar ' + d.year),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ctx.dataset.label + ': ' + formatCurrency(ctx.raw)
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: v => formatCurrency(v)
+                    }
+                }
+            }
+        }
+    });
+}
+
+function setChartMode(mode) {
+    chartMode = mode;
+    document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    calculateProjection();
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('sv-SE', {
+        style: 'currency',
+        currency: 'SEK',
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+</script>
+{% endblock %}

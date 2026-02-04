@@ -1,0 +1,649 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Ekonomisk Halsa - AI Wealth Agent{% endblock %}
+{% block page_title %}Ekonomisk Halsa{% endblock %}
+
+{% block content %}
+<div class="health-score-page">
+    <!-- Score Display -->
+    <div class="score-hero">
+        <div class="score-circle">
+            <svg viewBox="0 0 200 200">
+                <defs>
+                    <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#22c55e"/>
+                        <stop offset="50%" style="stop-color:#eab308"/>
+                        <stop offset="100%" style="stop-color:#ef4444"/>
+                    </linearGradient>
+                </defs>
+                <circle class="score-bg" cx="100" cy="100" r="90"></circle>
+                <circle class="score-progress" id="scoreProgress" cx="100" cy="100" r="90"></circle>
+            </svg>
+            <div class="score-content">
+                <span class="score-value" id="totalScore">--</span>
+                <span class="score-grade" id="scoreGrade">-</span>
+            </div>
+        </div>
+        <div class="score-info">
+            <h2>Din ekonomiska halsapoang</h2>
+            <p id="scoreDescription">Berakna din ekonomiska halsa for att fa personliga rekommendationer</p>
+            <button class="btn btn-primary" onclick="showCalculateModal()">
+                <i class="fas fa-calculator"></i> Berakna nu
+            </button>
+        </div>
+    </div>
+
+    <!-- Component Scores -->
+    <div class="component-scores" id="componentScores" style="display: none;">
+        <h3>Delpoang</h3>
+        <div class="scores-grid">
+            <div class="score-card">
+                <div class="score-icon green">
+                    <i class="fas fa-piggy-bank"></i>
+                </div>
+                <div class="score-details">
+                    <span class="score-label">Sparande</span>
+                    <div class="score-bar">
+                        <div class="score-fill" id="savingsFill" style="width: 0%"></div>
+                    </div>
+                    <span class="score-number" id="savingsScore">0</span>
+                </div>
+            </div>
+            <div class="score-card">
+                <div class="score-icon red">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <div class="score-details">
+                    <span class="score-label">Skulder</span>
+                    <div class="score-bar">
+                        <div class="score-fill" id="debtFill" style="width: 0%"></div>
+                    </div>
+                    <span class="score-number" id="debtScore">0</span>
+                </div>
+            </div>
+            <div class="score-card">
+                <div class="score-icon purple">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="score-details">
+                    <span class="score-label">Investeringar</span>
+                    <div class="score-bar">
+                        <div class="score-fill" id="investmentFill" style="width: 0%"></div>
+                    </div>
+                    <span class="score-number" id="investmentScore">0</span>
+                </div>
+            </div>
+            <div class="score-card">
+                <div class="score-icon blue">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="score-details">
+                    <span class="score-label">Budget</span>
+                    <div class="score-bar">
+                        <div class="score-fill" id="budgetFill" style="width: 0%"></div>
+                    </div>
+                    <span class="score-number" id="budgetScore">0</span>
+                </div>
+            </div>
+            <div class="score-card">
+                <div class="score-icon orange">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="score-details">
+                    <span class="score-label">Skydd</span>
+                    <div class="score-bar">
+                        <div class="score-fill" id="protectionFill" style="width: 0%"></div>
+                    </div>
+                    <span class="score-number" id="protectionScore">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="recommendations-section" id="recommendationsSection" style="display: none;">
+        <h3><i class="fas fa-lightbulb"></i> Rekommendationer</h3>
+        <div id="recommendationsList" class="recommendations-list"></div>
+    </div>
+
+    <!-- History Chart -->
+    <div class="history-section">
+        <h3><i class="fas fa-chart-line"></i> Historik</h3>
+        <canvas id="historyChart" height="200"></canvas>
+    </div>
+</div>
+
+<!-- Calculate Modal -->
+<div class="modal" id="calculateModal">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h3><i class="fas fa-calculator"></i> Berakna din ekonomiska halsa</h3>
+            <button class="modal-close" onclick="closeModal('calculateModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="healthScoreForm">
+                <div class="form-section">
+                    <h4>Inkomst & Utgifter</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Manadsinkomst (netto)</label>
+                            <input type="number" id="monthlyIncome" placeholder="45000" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Manatliga utgifter</label>
+                            <input type="number" id="monthlyExpenses" placeholder="30000" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Sparande & Skulder</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Buffert/Nodsparkonto</label>
+                            <input type="number" id="emergencyFund" placeholder="100000">
+                        </div>
+                        <div class="form-group">
+                            <label>Totala skulder (exkl. bolan)</label>
+                            <input type="number" id="totalDebt" placeholder="0">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Manatlig skuldbetalning</label>
+                            <input type="number" id="monthlyDebtPayment" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Totala investeringar</label>
+                            <input type="number" id="investments" placeholder="200000">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Skydd</h4>
+                    <div class="form-row checkboxes">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="hasInsurance">
+                            <span>Har hemforsakring & livforsakring</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="hasWill">
+                            <span>Har testamente/fullmakt</span>
+                        </label>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('calculateModal')">Avbryt</button>
+            <button class="btn btn-primary" onclick="calculateHealthScore()">
+                <i class="fas fa-calculator"></i> Berakna
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.health-score-page { max-width: 1000px; }
+
+.score-hero {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(34, 197, 94, 0.05));
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+}
+
+.score-circle {
+    width: 200px;
+    height: 200px;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.score-circle svg {
+    transform: rotate(-90deg);
+}
+
+.score-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 12;
+}
+
+.score-progress {
+    fill: none;
+    stroke: var(--success);
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-dasharray: 565;
+    stroke-dashoffset: 565;
+    transition: stroke-dashoffset 1.5s ease, stroke 0.5s ease;
+}
+
+.score-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.score-value {
+    font-size: 3.5rem;
+    font-weight: 700;
+    display: block;
+    line-height: 1;
+}
+
+.score-grade {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.score-info h2 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.score-info p {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+.component-scores h3,
+.recommendations-section h3,
+.history-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.scores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.score-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.score-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.score-icon.green { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.score-icon.red { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.score-icon.purple { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+.score-icon.blue { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+.score-icon.orange { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
+.score-details {
+    flex: 1;
+}
+
+.score-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.score-bar {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.score-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.score-number {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.recommendations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.recommendation-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--surface);
+    border-radius: 12px;
+    border-left: 4px solid var(--warning);
+}
+
+.recommendation-item.high {
+    border-left-color: var(--danger);
+}
+
+.recommendation-item.medium {
+    border-left-color: var(--warning);
+}
+
+.recommendation-item.low {
+    border-left-color: var(--success);
+}
+
+.recommendation-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.recommendation-item.high .recommendation-icon {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.history-section {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active { display: flex; }
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-content.large { max-width: 600px; }
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.modal-body { padding: 1.25rem; }
+.modal-footer {
+    padding: 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.form-section {
+    margin-bottom: 1.5rem;
+}
+
+.form-section h4 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-row.checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.form-group input[type="number"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+}
+
+.checkbox-label input {
+    width: 18px;
+    height: 18px;
+}
+
+@media (max-width: 768px) {
+    .score-hero { flex-direction: column; text-align: center; }
+    .form-row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let historyChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadHistory();
+});
+
+function showCalculateModal() {
+    document.getElementById('calculateModal').classList.add('active');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+async function calculateHealthScore() {
+    const data = {
+        monthly_income: parseFloat(document.getElementById('monthlyIncome').value) || 0,
+        monthly_expenses: parseFloat(document.getElementById('monthlyExpenses').value) || 0,
+        emergency_fund: parseFloat(document.getElementById('emergencyFund').value) || 0,
+        total_debt: parseFloat(document.getElementById('totalDebt').value) || 0,
+        monthly_debt_payment: parseFloat(document.getElementById('monthlyDebtPayment').value) || 0,
+        investments: parseFloat(document.getElementById('investments').value) || 0,
+        has_insurance: document.getElementById('hasInsurance').checked,
+        has_will: document.getElementById('hasWill').checked
+    };
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/health-score/calculate', 'POST', data);
+        if (response.success) {
+            displayScore(response.health_score);
+            closeModal('calculateModal');
+            WealthAgent.showToast('Halsopoang beraknad!', 'success');
+        }
+    } catch (error) {
+        WealthAgent.showToast('Kunde inte berakna', 'error');
+    }
+}
+
+function displayScore(result) {
+    const { total, grade, scores, recommendations } = result;
+
+    // Update main score
+    document.getElementById('totalScore').textContent = total;
+    document.getElementById('scoreGrade').textContent = grade;
+
+    // Update score circle
+    const circumference = 2 * Math.PI * 90;
+    const offset = circumference - (total / 100 * circumference);
+    const progress = document.getElementById('scoreProgress');
+    progress.style.strokeDashoffset = offset;
+
+    // Color based on score
+    if (total >= 70) {
+        progress.style.stroke = '#22c55e';
+    } else if (total >= 50) {
+        progress.style.stroke = '#eab308';
+    } else {
+        progress.style.stroke = '#ef4444';
+    }
+
+    // Update description
+    let desc = '';
+    if (total >= 80) desc = 'Utmarkt! Din ekonomi ar i fantastisk form.';
+    else if (total >= 60) desc = 'Bra! Med nagra forbattringar kan du na toppen.';
+    else if (total >= 40) desc = 'Det finns potential. Fokusera pa rekommendationerna.';
+    else desc = 'Din ekonomi behover uppmärksamhet. Borja med det viktigaste.';
+    document.getElementById('scoreDescription').textContent = desc;
+
+    // Show component scores
+    document.getElementById('componentScores').style.display = 'block';
+
+    // Update each component
+    ['savings', 'debt', 'investment', 'budget', 'protection'].forEach(key => {
+        const score = scores[key] || 0;
+        document.getElementById(key + 'Score').textContent = score;
+        document.getElementById(key + 'Fill').style.width = score + '%';
+    });
+
+    // Show recommendations
+    if (recommendations && recommendations.length > 0) {
+        document.getElementById('recommendationsSection').style.display = 'block';
+        const list = document.getElementById('recommendationsList');
+        list.innerHTML = recommendations.map(rec => `
+            <div class="recommendation-item ${rec.priority}">
+                <div class="recommendation-icon">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <div class="recommendation-text">
+                    <strong>${rec.area}</strong>
+                    <p>${rec.text}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    loadHistory();
+}
+
+async function loadHistory() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/health-score/history');
+        if (response.success && response.history.length > 0) {
+            renderHistoryChart(response.history);
+        }
+    } catch (error) {
+        console.log('No history yet');
+    }
+}
+
+function renderHistoryChart(history) {
+    const ctx = document.getElementById('historyChart').getContext('2d');
+
+    if (historyChart) historyChart.destroy();
+
+    const labels = history.map(h => new Date(h.calculated_at).toLocaleDateString('sv-SE')).reverse();
+    const data = history.map(h => h.total_score).reverse();
+
+    historyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Halsopoang',
+                data: data,
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    min: 0,
+                    max: 100,
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

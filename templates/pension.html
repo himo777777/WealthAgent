@@ -1,0 +1,591 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Pensionsprognos - AI Wealth Agent{% endblock %}
+{% block page_title %}Pensionsprognos{% endblock %}
+
+{% block content %}
+<div class="pension-page">
+    <!-- Pension Summary -->
+    <div class="pension-summary" id="pensionSummary" style="display: none;">
+        <div class="pension-total">
+            <div class="pension-circle">
+                <span class="pension-amount" id="totalPension">0 kr</span>
+                <span class="pension-label">per manad</span>
+            </div>
+            <div class="pension-meta">
+                <div class="replacement-rate">
+                    <span class="rate-value" id="replacementRate">0%</span>
+                    <span class="rate-label">av nuvarande lon</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="pension-breakdown">
+            <div class="breakdown-item allman">
+                <div class="breakdown-bar">
+                    <div class="breakdown-fill" id="allmanFill" style="width: 0%"></div>
+                </div>
+                <div class="breakdown-info">
+                    <span class="breakdown-label"><i class="fas fa-landmark"></i> Allman pension</span>
+                    <span class="breakdown-value" id="allmanPension">0 kr</span>
+                </div>
+            </div>
+            <div class="breakdown-item tjanste">
+                <div class="breakdown-bar">
+                    <div class="breakdown-fill" id="tjansteFill" style="width: 0%"></div>
+                </div>
+                <div class="breakdown-info">
+                    <span class="breakdown-label"><i class="fas fa-building"></i> Tjanstepension</span>
+                    <span class="breakdown-value" id="tjanstePension">0 kr</span>
+                </div>
+            </div>
+            <div class="breakdown-item privat">
+                <div class="breakdown-bar">
+                    <div class="breakdown-fill" id="privatFill" style="width: 0%"></div>
+                </div>
+                <div class="breakdown-info">
+                    <span class="breakdown-label"><i class="fas fa-piggy-bank"></i> Privat sparande</span>
+                    <span class="breakdown-value" id="privatPension">0 kr</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calculator Form -->
+    <div class="pension-calculator">
+        <div class="calc-header">
+            <h3><i class="fas fa-calculator"></i> Berakna din pension</h3>
+            <p>Ange dina uppgifter for att fa en prognos</p>
+        </div>
+
+        <form id="pensionForm">
+            <div class="form-section">
+                <h4>Personlig information</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Fodelsear</label>
+                        <input type="number" id="birthYear" placeholder="1985" min="1950" max="2010" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Onskat pensionsar</label>
+                        <select id="retirementAge">
+                            <option value="62">62 ar</option>
+                            <option value="63">63 ar</option>
+                            <option value="64">64 ar</option>
+                            <option value="65" selected>65 ar</option>
+                            <option value="66">66 ar</option>
+                            <option value="67">67 ar</option>
+                            <option value="68">68 ar</option>
+                            <option value="70">70 ar</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h4>Nuvarande ekonomi</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Manadslon (brutto)</label>
+                        <input type="number" id="currentSalary" placeholder="45000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Onskat pensionsbelopp/manad</label>
+                        <input type="number" id="desiredIncome" placeholder="30000">
+                        <small>Lamma tomt for 80% av nuvarande lon</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h4>Tjanstepension</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Typ av tjanstepension</label>
+                        <select id="tjanstepensionProvider">
+                            <option value="ITP1">ITP1 (Privatanstallda, fodd efter 1979)</option>
+                            <option value="ITP2">ITP2 (Privatanstallda, fodd fore 1979)</option>
+                            <option value="SAF-LO">SAF-LO (Arbetare)</option>
+                            <option value="KAP-KL">KAP-KL (Kommunal/Region)</option>
+                            <option value="PA16">PA 16 (Statligt anstallda)</option>
+                            <option value="none">Ingen tjanstepension</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h4>Privat sparande</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Privat pensionsforsakring</label>
+                        <input type="number" id="privatPension" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>ISK/Aktiedepot</label>
+                        <input type="number" id="iskSavings" placeholder="200000">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg btn-block">
+                <i class="fas fa-calculator"></i> Berakna pension
+            </button>
+        </form>
+    </div>
+
+    <!-- Gap Analysis -->
+    <div class="gap-analysis" id="gapAnalysis" style="display: none;">
+        <h3><i class="fas fa-exclamation-triangle"></i> Gap-analys</h3>
+        <div class="gap-content">
+            <div class="gap-visual">
+                <div class="gap-bar">
+                    <div class="gap-current" id="gapCurrent"></div>
+                    <div class="gap-needed" id="gapNeeded"></div>
+                </div>
+                <div class="gap-labels">
+                    <span>Prognostiserad: <strong id="gapProgLabel">0 kr</strong></span>
+                    <span>Onskat: <strong id="gapDesiredLabel">0 kr</strong></span>
+                </div>
+            </div>
+            <div class="gap-message" id="gapMessage"></div>
+            <div class="gap-action" id="gapAction"></div>
+        </div>
+    </div>
+
+    <!-- Scenarios -->
+    <div class="scenarios-section" id="scenariosSection" style="display: none;">
+        <h3><i class="fas fa-chart-line"></i> Scenarier</h3>
+        <div class="scenarios-grid" id="scenariosGrid"></div>
+    </div>
+</div>
+
+<style>
+.pension-page { max-width: 900px; }
+
+.pension-summary {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(34, 197, 94, 0.05));
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.pension-total {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.pension-circle {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #a855f7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.pension-amount {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.pension-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.replacement-rate {
+    text-align: center;
+}
+
+.rate-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--success);
+    display: block;
+}
+
+.rate-label {
+    color: var(--text-muted);
+}
+
+.pension-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.breakdown-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.breakdown-bar {
+    height: 12px;
+    background: var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.breakdown-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.5s ease;
+}
+
+.breakdown-item.allman .breakdown-fill { background: #6366f1; }
+.breakdown-item.tjanste .breakdown-fill { background: #a855f7; }
+.breakdown-item.privat .breakdown-fill { background: #22c55e; }
+
+.breakdown-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+
+.breakdown-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+}
+
+.breakdown-value {
+    font-weight: 600;
+}
+
+.pension-calculator {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.calc-header {
+    margin-bottom: 2rem;
+}
+
+.calc-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.calc-header p {
+    color: var(--text-muted);
+}
+
+.form-section {
+    margin-bottom: 1.5rem;
+}
+
+.form-section h4 {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-group {
+    margin-bottom: 0.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.btn-block { width: 100%; }
+.btn-lg { padding: 1rem 2rem; font-size: 1.1rem; }
+
+.gap-analysis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.gap-analysis h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: var(--warning);
+}
+
+.gap-visual {
+    margin-bottom: 1rem;
+}
+
+.gap-bar {
+    height: 24px;
+    background: var(--border);
+    border-radius: 12px;
+    display: flex;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.gap-current {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #a855f7);
+    transition: width 0.5s ease;
+}
+
+.gap-needed {
+    height: 100%;
+    background: rgba(239, 68, 68, 0.3);
+    border-left: 2px dashed var(--danger);
+}
+
+.gap-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+}
+
+.gap-message {
+    padding: 1rem;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 10px;
+    margin-bottom: 1rem;
+}
+
+.gap-action {
+    font-weight: 500;
+    color: var(--primary);
+}
+
+.scenarios-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.scenarios-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.scenarios-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.scenario-card {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.scenario-card h4 {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.scenario-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.scenario-years {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+    .pension-total { flex-direction: column; text-align: center; }
+    .form-row { grid-template-columns: 1fr; }
+    .scenarios-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('pensionForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    calculatePension();
+});
+
+async function calculatePension() {
+    const data = {
+        birth_year: parseInt(document.getElementById('birthYear').value),
+        retirement_age: parseInt(document.getElementById('retirementAge').value),
+        current_salary: parseFloat(document.getElementById('currentSalary').value),
+        desired_income: parseFloat(document.getElementById('desiredIncome').value) || null,
+        tjanstepension_provider: document.getElementById('tjanstepensionProvider').value,
+        privat_pension: parseFloat(document.getElementById('privatPension').value) || 0,
+        isk_savings: parseFloat(document.getElementById('iskSavings').value) || 0
+    };
+
+    if (!data.desired_income) {
+        data.desired_income = data.current_salary * 0.8;
+    }
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/pension/calculate', 'POST', data);
+        if (response.success) {
+            displayPensionResult(response.forecast, data.desired_income);
+        }
+    } catch (error) {
+        // Calculate locally
+        const result = calculatePensionLocally(data);
+        displayPensionResult(result, data.desired_income);
+    }
+}
+
+function calculatePensionLocally(data) {
+    const currentYear = new Date().getFullYear();
+    const currentAge = currentYear - data.birth_year;
+    const yearsToRetirement = Math.max(0, data.retirement_age - currentAge);
+    const yearsWorked = Math.max(0, currentAge - 25);
+
+    // Allman pension (simplified)
+    const yearlyIncome = data.current_salary * 12;
+    const pensionBase = Math.min(yearlyIncome, 600000);
+    const inkomstpension = (pensionBase * 0.16 * yearsWorked / 240) * 0.95;
+    const premiepension = (pensionBase * 0.025 * yearsWorked / 240) * 1.5;
+    const totalAllman = inkomstpension + premiepension;
+
+    // Tjanstepension
+    let tjansteRate = 0.045;
+    if (data.tjanstepension_provider === 'ITP2') tjansteRate = 0.10;
+    const tjanstePension = (yearlyIncome * tjansteRate * yearsWorked / 240);
+
+    // Privat
+    const privatCapital = (data.privat_pension + data.isk_savings) * Math.pow(1.05, yearsToRetirement);
+    const privatPension = privatCapital / 240;
+
+    const total = totalAllman + tjanstePension + privatPension;
+
+    return {
+        allman_pension: { total: totalAllman },
+        tjanstepension: { monthly: tjanstePension },
+        privat_pension: { monthly: privatPension },
+        total_monthly_pension: total,
+        replacement_rate: (total / data.current_salary) * 100,
+        gap_analysis: {
+            desired_income: data.desired_income,
+            monthly_gap: Math.max(0, data.desired_income - total)
+        }
+    };
+}
+
+function displayPensionResult(result, desiredIncome) {
+    const summary = document.getElementById('pensionSummary');
+    summary.style.display = 'block';
+
+    const total = result.total_monthly_pension;
+    const allman = result.allman_pension?.total || 0;
+    const tjanste = result.tjanstepension?.monthly || 0;
+    const privat = result.privat_pension?.monthly || 0;
+
+    document.getElementById('totalPension').textContent = WealthAgent.formatCurrency(total);
+    document.getElementById('replacementRate').textContent = Math.round(result.replacement_rate) + '%';
+
+    document.getElementById('allmanPension').textContent = WealthAgent.formatCurrency(allman);
+    document.getElementById('tjanstePension').textContent = WealthAgent.formatCurrency(tjanste);
+    document.getElementById('privatPension').textContent = WealthAgent.formatCurrency(privat);
+
+    // Update bars
+    const maxVal = Math.max(allman, tjanste, privat);
+    document.getElementById('allmanFill').style.width = (allman / maxVal * 100) + '%';
+    document.getElementById('tjansteFill').style.width = (tjanste / maxVal * 100) + '%';
+    document.getElementById('privatFill').style.width = (privat / maxVal * 100) + '%';
+
+    // Gap analysis
+    const gap = result.gap_analysis;
+    if (gap && gap.monthly_gap > 0) {
+        const gapSection = document.getElementById('gapAnalysis');
+        gapSection.style.display = 'block';
+
+        const ratio = total / desiredIncome;
+        document.getElementById('gapCurrent').style.width = (ratio * 100) + '%';
+        document.getElementById('gapNeeded').style.width = ((1 - ratio) * 100) + '%';
+
+        document.getElementById('gapProgLabel').textContent = WealthAgent.formatCurrency(total);
+        document.getElementById('gapDesiredLabel').textContent = WealthAgent.formatCurrency(desiredIncome);
+
+        document.getElementById('gapMessage').innerHTML = `
+            Du saknar <strong>${WealthAgent.formatCurrency(gap.monthly_gap)}</strong> per manad
+            for att na ditt mal om ${WealthAgent.formatCurrency(desiredIncome)}/manad.
+        `;
+
+        const extraSavings = gap.monthly_gap * 240 / 20 / 12;
+        document.getElementById('gapAction').innerHTML = `
+            <i class="fas fa-lightbulb"></i> Tips: Spara extra ${WealthAgent.formatCurrency(extraSavings)}/manad
+            for att stanga gapet.
+        `;
+    } else {
+        document.getElementById('gapAnalysis').style.display = 'none';
+    }
+
+    // Scenarios
+    const scenarios = document.getElementById('scenariosSection');
+    scenarios.style.display = 'block';
+
+    document.getElementById('scenariosGrid').innerHTML = `
+        <div class="scenario-card">
+            <h4>Pension vid 65</h4>
+            <span class="scenario-value">${WealthAgent.formatCurrency(total)}</span>
+            <span class="scenario-years">Normal pension</span>
+        </div>
+        <div class="scenario-card">
+            <h4>Pension vid 67</h4>
+            <span class="scenario-value">${WealthAgent.formatCurrency(total * 1.15)}</span>
+            <span class="scenario-years">+15% hogre</span>
+        </div>
+        <div class="scenario-card">
+            <h4>Pension vid 70</h4>
+            <span class="scenario-value">${WealthAgent.formatCurrency(total * 1.35)}</span>
+            <span class="scenario-years">+35% hogre</span>
+        </div>
+    `;
+
+    // Scroll to results
+    summary.scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+{% endblock %}

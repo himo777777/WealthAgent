@@ -1,0 +1,530 @@
+openapi: 3.0.3
+info:
+  title: ComplicationAI API
+  description: |
+    Clinical-grade ML system for predicting post-surgical complications in orthopedic surgeries.
+
+    ## Authentication
+    All endpoints except `/health` require JWT authentication. Include the token in the `Authorization` header:
+    ```
+    Authorization: Bearer <your-token>
+    ```
+
+    ## HIPAA Compliance
+    - All PHI is encrypted at rest
+    - Patient IDs are hashed in audit logs
+    - All API calls are logged for compliance
+
+    ## Rate Limits
+    - Predictions: 30 requests/minute
+    - Authentication: 10 requests/minute
+    - Other endpoints: 100 requests/hour
+  version: 4.0.0
+  contact:
+    name: ComplicationAI Support
+    email: support@complicationai.example.com
+  license:
+    name: Proprietary
+    url: https://complicationai.example.com/license
+
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Development server
+  - url: https://api.complicationai.example.com/api/v1
+    description: Production server
+
+tags:
+  - name: Health
+    description: System health and status
+  - name: Authentication
+    description: User authentication and 2FA
+  - name: Predictions
+    description: Complication risk predictions
+  - name: Reports
+    description: PDF report generation
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns system health status and model information
+      operationId: healthCheck
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: System is degraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /model/info:
+    get:
+      tags: [Health]
+      summary: Model information
+      description: Returns detailed information about loaded ML models
+      operationId: modelInfo
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Model information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelInfo'
+        '503':
+          description: Models not loaded
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      description: Authenticate with username and password
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      description: Register a new clinician account
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/2fa/setup:
+    post:
+      tags: [Authentication]
+      summary: Setup 2FA
+      description: Generate 2FA secret and QR code for authenticator app
+      operationId: setup2fa
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 2FA setup data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwoFactorSetupResponse'
+
+  /auth/2fa/verify:
+    post:
+      tags: [Authentication]
+      summary: Verify 2FA code
+      description: Verify TOTP code and enable 2FA
+      operationId: verify2fa
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorVerifyRequest'
+      responses:
+        '200':
+          description: 2FA enabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Invalid code
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Current user info
+      description: Get information about the currently authenticated user
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  /predict:
+    post:
+      tags: [Predictions]
+      summary: Generate prediction
+      description: |
+        Generate complication risk prediction for a patient.
+
+        ## Supported Procedures
+        - total_knee_arthroplasty
+        - total_hip_arthroplasty
+        - spinal_fusion
+        - rotator_cuff_repair
+        - acl_reconstruction
+
+        ## Lab Values
+        Support both conventional and SI units (set `lab_units` field)
+      operationId: predict
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PredictionRequest'
+            examples:
+              standard:
+                summary: Standard prediction request
+                value:
+                  patient_id: "P-12345"
+                  patient_data:
+                    age: 65
+                    sex: "female"
+                    bmi: 28.5
+                    procedure: "total_knee_arthroplasty"
+                    body_region: "knee"
+                    surgery_duration_minutes: 120
+                    asa_score: 2
+                    has_diabetes_type2: true
+                    has_hypertension: true
+                    lab_hemoglobin: 12.5
+                    lab_creatinine: 1.1
+              si_units:
+                summary: With Swedish SI units
+                value:
+                  patient_id: "P-12345"
+                  patient_data:
+                    age: 65
+                    sex: "male"
+                    bmi: 30.0
+                    procedure: "total_hip_arthroplasty"
+                    lab_units: "si"
+                    lab_hemoglobin: 125
+                    lab_creatinine: 97
+      responses:
+        '200':
+          description: Prediction successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictionResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable
+
+  /reports/prediction/{prediction_id}:
+    get:
+      tags: [Reports]
+      summary: Generate PDF report
+      description: Generate a PDF report for a prediction
+      operationId: generateReport
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: prediction_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The prediction request ID
+      responses:
+        '200':
+          description: PDF report
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Prediction not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from /auth/login
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        models_loaded:
+          type: boolean
+        model_version:
+          type: string
+
+    ModelInfo:
+      type: object
+      properties:
+        loaded:
+          type: boolean
+        version:
+          type: string
+        training_date:
+          type: string
+        features:
+          type: array
+          items:
+            type: string
+        target_complications:
+          type: array
+          items:
+            type: string
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          minLength: 3
+        password:
+          type: string
+          minLength: 8
+        totp_code:
+          type: string
+          description: 6-digit 2FA code (if enabled)
+          pattern: '^\d{6}$'
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+        expires_in:
+          type: integer
+          description: Token expiry in seconds
+        requires_2fa:
+          type: boolean
+          description: True if 2FA verification needed
+
+    RegisterRequest:
+      type: object
+      required: [username, password, full_name]
+      properties:
+        username:
+          type: string
+          minLength: 3
+        password:
+          type: string
+          minLength: 8
+        full_name:
+          type: string
+
+    TwoFactorSetupResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        secret:
+          type: string
+          description: Base32 encoded secret
+        qr_code:
+          type: string
+          description: Base64 encoded QR code image
+        otpauth_url:
+          type: string
+          description: URL for authenticator apps
+
+    TwoFactorVerifyRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          pattern: '^\d{6}$'
+
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+        full_name:
+          type: string
+        role:
+          type: string
+          enum: [clinician, admin, researcher]
+        two_factor_enabled:
+          type: boolean
+
+    UserResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/User'
+
+    PredictionRequest:
+      type: object
+      required: [patient_id, patient_data]
+      properties:
+        patient_id:
+          type: string
+          description: Unique patient identifier
+        patient_data:
+          $ref: '#/components/schemas/PatientData'
+
+    PatientData:
+      type: object
+      required: [age, sex, bmi, procedure]
+      properties:
+        age:
+          type: integer
+          minimum: 18
+          maximum: 120
+        sex:
+          type: string
+          enum: [male, female]
+        bmi:
+          type: number
+          minimum: 10
+          maximum: 80
+        procedure:
+          type: string
+        body_region:
+          type: string
+        surgery_duration_minutes:
+          type: integer
+        anesthesia_type:
+          type: string
+          enum: [general, spinal, regional, local]
+        asa_score:
+          type: integer
+          minimum: 1
+          maximum: 5
+        is_revision:
+          type: boolean
+        has_diabetes_type2:
+          type: boolean
+        has_hypertension:
+          type: boolean
+        is_smoker:
+          type: boolean
+        lab_units:
+          type: string
+          enum: [conventional, si]
+          default: conventional
+        lab_hemoglobin:
+          type: number
+        lab_creatinine:
+          type: number
+        lab_albumin:
+          type: number
+        lab_glucose:
+          type: number
+
+    PredictionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        request_id:
+          type: string
+        predictions:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ComplicationPrediction'
+        risk_level:
+          type: string
+          enum: [low, moderate, high, very_high]
+        explanations:
+          type: object
+
+    ComplicationPrediction:
+      type: object
+      properties:
+        probability:
+          type: number
+          minimum: 0
+          maximum: 1
+        risk_level:
+          type: string
+        confidence_interval:
+          type: object
+          properties:
+            lower:
+              type: number
+            upper:
+              type: number
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: false
+        error:
+          type: string
+        message:
+          type: string

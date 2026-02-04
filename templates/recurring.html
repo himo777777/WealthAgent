@@ -1,0 +1,777 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Aterkommande Transaktioner - AI Wealth Agent{% endblock %}
+{% block page_title %}Aterkommande Transaktioner{% endblock %}
+
+{% block content %}
+<div class="recurring-page">
+    <!-- Summary Cards -->
+    <div class="summary-row">
+        <div class="summary-card income">
+            <div class="summary-icon">
+                <i class="fas fa-arrow-down"></i>
+            </div>
+            <div class="summary-info">
+                <span class="summary-label">Aterkommande inkomster</span>
+                <span class="summary-value" id="totalIncome">0 kr</span>
+                <span class="summary-count" id="incomeCount">0 transaktioner</span>
+            </div>
+        </div>
+        <div class="summary-card expense">
+            <div class="summary-icon">
+                <i class="fas fa-arrow-up"></i>
+            </div>
+            <div class="summary-info">
+                <span class="summary-label">Aterkommande utgifter</span>
+                <span class="summary-value" id="totalExpense">0 kr</span>
+                <span class="summary-count" id="expenseCount">0 transaktioner</span>
+            </div>
+        </div>
+        <div class="summary-card net">
+            <div class="summary-icon">
+                <i class="fas fa-balance-scale"></i>
+            </div>
+            <div class="summary-info">
+                <span class="summary-label">Netto per manad</span>
+                <span class="summary-value" id="netAmount">0 kr</span>
+                <span class="summary-hint">Automatiskt kassaflode</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Transaction -->
+    <div class="action-bar">
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">Alla</button>
+            <button class="filter-tab" data-filter="income">Inkomster</button>
+            <button class="filter-tab" data-filter="expense">Utgifter</button>
+            <button class="filter-tab" data-filter="paused">Pausade</button>
+        </div>
+        <button class="btn btn-primary" onclick="showAddModal()">
+            <i class="fas fa-plus"></i> Lagg till
+        </button>
+    </div>
+
+    <!-- Upcoming Section -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-calendar-alt"></i> Kommande 7 dagar</h3>
+        </div>
+        <div id="upcomingList" class="upcoming-list">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- All Recurring Transactions -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-sync-alt"></i> Alla aterkommande</h3>
+        </div>
+        <div id="recurringList" class="recurring-list">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="transactionModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Lagg till aterkommande</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="transactionForm">
+            <input type="hidden" id="transactionId">
+            <div class="form-group">
+                <label>Namn</label>
+                <input type="text" id="txName" required placeholder="t.ex. Lon, Hyra, Netflix">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Typ</label>
+                    <select id="txType" required>
+                        <option value="income">Inkomst</option>
+                        <option value="expense">Utgift</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <select id="txCategory" required>
+                        <optgroup label="Inkomster">
+                            <option value="salary">Lon</option>
+                            <option value="freelance">Frilans</option>
+                            <option value="rental">Hyresinkomst</option>
+                            <option value="dividend">Utdelning</option>
+                            <option value="pension">Pension</option>
+                            <option value="other_income">Ovrigt</option>
+                        </optgroup>
+                        <optgroup label="Utgifter">
+                            <option value="housing">Boende</option>
+                            <option value="utilities">El/Vatten/Gas</option>
+                            <option value="insurance">Forsakring</option>
+                            <option value="subscription">Prenumeration</option>
+                            <option value="transport">Transport</option>
+                            <option value="loan">Lan/Amortering</option>
+                            <option value="savings">Sparande</option>
+                            <option value="other_expense">Ovrigt</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Belopp (kr)</label>
+                    <input type="number" id="txAmount" required min="0" step="0.01" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>Frekvens</label>
+                    <select id="txFrequency" required>
+                        <option value="daily">Dagligen</option>
+                        <option value="weekly">Veckovis</option>
+                        <option value="biweekly">Varannan vecka</option>
+                        <option value="monthly" selected>Manadsvis</option>
+                        <option value="quarterly">Kvartalsvis</option>
+                        <option value="yearly">Arsvis</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Dag i manaden</label>
+                    <input type="number" id="txDayOfMonth" min="1" max="31" value="25" placeholder="25">
+                </div>
+                <div class="form-group">
+                    <label>Startdatum</label>
+                    <input type="date" id="txStartDate">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Notering (valfritt)</label>
+                <input type="text" id="txNote" placeholder="Extra information...">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Avbryt</button>
+                <button type="submit" class="btn btn-primary">Spara</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.recurring-page { max-width: 900px; }
+
+.summary-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.summary-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.summary-card.income .summary-icon {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success);
+}
+
+.summary-card.expense .summary-icon {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.summary-card.net .summary-icon {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--primary);
+}
+
+.summary-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: block;
+}
+
+.summary-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: block;
+}
+
+.summary-card.income .summary-value { color: var(--success); }
+.summary-card.expense .summary-value { color: var(--danger); }
+
+.summary-count, .summary-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.filter-tab {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-tab:hover { background: var(--surface-light); }
+.filter-tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.section-header h3 i { color: var(--primary); }
+
+.upcoming-list, .recurring-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.recurring-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+}
+
+.recurring-item:last-child { border-bottom: none; }
+.recurring-item:hover { background: var(--surface-light); }
+.recurring-item.paused { opacity: 0.5; }
+
+.item-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.item-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.item-icon.income { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+.item-icon.expense { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+.item-name {
+    font-weight: 500;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.item-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.item-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.item-amount {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.item-amount.income { color: var(--success); }
+.item-amount.expense { color: var(--danger); }
+
+.item-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.item-actions button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.item-actions button:hover {
+    background: var(--border);
+    color: var(--text);
+}
+
+.next-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.paused-badge {
+    background: var(--warning);
+    color: #000;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+#transactionForm {
+    padding: 1.25rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.empty-state {
+    padding: 3rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+    .summary-row { grid-template-columns: 1fr; }
+    .action-bar { flex-direction: column; gap: 1rem; }
+    .filter-tabs { width: 100%; overflow-x: auto; }
+    .form-row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allTransactions = [];
+let currentFilter = 'all';
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadRecurring();
+
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = this.dataset.filter;
+            renderTransactions();
+        });
+    });
+
+    document.getElementById('transactionForm').addEventListener('submit', saveTransaction);
+});
+
+async function loadRecurring() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/recurring');
+        if (response.success) {
+            allTransactions = response.transactions;
+            updateSummary(response.summary);
+            renderTransactions();
+            renderUpcoming(response.upcoming);
+        }
+    } catch (error) {
+        // Sample data
+        allTransactions = getSampleTransactions();
+        updateSummary(calculateSummary());
+        renderTransactions();
+        renderUpcoming(getUpcoming());
+    }
+}
+
+function getSampleTransactions() {
+    return [
+        { id: 1, name: 'Lon', type: 'income', category: 'salary', amount: 45000, frequency: 'monthly', day_of_month: 25, is_active: true, next_date: '2025-01-25' },
+        { id: 2, name: 'Hyra', type: 'expense', category: 'housing', amount: 12500, frequency: 'monthly', day_of_month: 1, is_active: true, next_date: '2025-02-01' },
+        { id: 3, name: 'Elavgift', type: 'expense', category: 'utilities', amount: 850, frequency: 'monthly', day_of_month: 15, is_active: true, next_date: '2025-01-15' },
+        { id: 4, name: 'Netflix', type: 'expense', category: 'subscription', amount: 139, frequency: 'monthly', day_of_month: 10, is_active: true, next_date: '2025-01-10' },
+        { id: 5, name: 'Spotify', type: 'expense', category: 'subscription', amount: 119, frequency: 'monthly', day_of_month: 5, is_active: true, next_date: '2025-01-05' },
+        { id: 6, name: 'Manadens sparande', type: 'expense', category: 'savings', amount: 5000, frequency: 'monthly', day_of_month: 26, is_active: true, next_date: '2025-01-26' },
+        { id: 7, name: 'Gymkort', type: 'expense', category: 'subscription', amount: 399, frequency: 'monthly', day_of_month: 1, is_active: false, next_date: null },
+        { id: 8, name: 'Utdelning Investor', type: 'income', category: 'dividend', amount: 2500, frequency: 'quarterly', day_of_month: 15, is_active: true, next_date: '2025-03-15' },
+    ];
+}
+
+function calculateSummary() {
+    const active = allTransactions.filter(t => t.is_active);
+    const incomeTotal = active.filter(t => t.type === 'income').reduce((s, t) => s + normalizeToMonthly(t.amount, t.frequency), 0);
+    const expenseTotal = active.filter(t => t.type === 'expense').reduce((s, t) => s + normalizeToMonthly(t.amount, t.frequency), 0);
+    return {
+        income_total: incomeTotal,
+        expense_total: expenseTotal,
+        net: incomeTotal - expenseTotal,
+        income_count: active.filter(t => t.type === 'income').length,
+        expense_count: active.filter(t => t.type === 'expense').length
+    };
+}
+
+function normalizeToMonthly(amount, frequency) {
+    switch(frequency) {
+        case 'daily': return amount * 30;
+        case 'weekly': return amount * 4.33;
+        case 'biweekly': return amount * 2.17;
+        case 'monthly': return amount;
+        case 'quarterly': return amount / 3;
+        case 'yearly': return amount / 12;
+        default: return amount;
+    }
+}
+
+function getUpcoming() {
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+
+    return allTransactions
+        .filter(t => t.is_active && t.next_date)
+        .filter(t => {
+            const date = new Date(t.next_date);
+            return date >= today && date <= nextWeek;
+        })
+        .sort((a, b) => new Date(a.next_date) - new Date(b.next_date));
+}
+
+function updateSummary(summary) {
+    document.getElementById('totalIncome').textContent = WealthAgent.formatCurrency(summary.income_total);
+    document.getElementById('totalExpense').textContent = WealthAgent.formatCurrency(summary.expense_total);
+    document.getElementById('netAmount').textContent = WealthAgent.formatCurrency(summary.net);
+    document.getElementById('incomeCount').textContent = `${summary.income_count} transaktioner`;
+    document.getElementById('expenseCount').textContent = `${summary.expense_count} transaktioner`;
+
+    const netEl = document.getElementById('netAmount');
+    netEl.style.color = summary.net >= 0 ? 'var(--success)' : 'var(--danger)';
+}
+
+function renderTransactions() {
+    const list = document.getElementById('recurringList');
+
+    let filtered = allTransactions;
+    if (currentFilter === 'income') filtered = allTransactions.filter(t => t.type === 'income');
+    else if (currentFilter === 'expense') filtered = allTransactions.filter(t => t.type === 'expense');
+    else if (currentFilter === 'paused') filtered = allTransactions.filter(t => !t.is_active);
+
+    if (filtered.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-sync-alt"></i>
+                <p>Inga aterkommande transaktioner</p>
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = filtered.map(t => renderItem(t)).join('');
+}
+
+function renderUpcoming(upcoming) {
+    const list = document.getElementById('upcomingList');
+
+    if (!upcoming || upcoming.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state" style="padding: 2rem;">
+                <i class="fas fa-calendar-check"></i>
+                <p>Inga kommande transaktioner denna vecka</p>
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = upcoming.map(t => renderItem(t, true)).join('');
+}
+
+function renderItem(t, showDate = false) {
+    const icon = getIcon(t.category);
+    const freqLabel = getFrequencyLabel(t.frequency);
+
+    return `
+        <div class="recurring-item ${!t.is_active ? 'paused' : ''}">
+            <div class="item-left">
+                <div class="item-icon ${t.type}">
+                    <i class="fas fa-${icon}"></i>
+                </div>
+                <div>
+                    <span class="item-name">${t.name}</span>
+                    <span class="item-meta">${freqLabel}${t.day_of_month ? ', dag ' + t.day_of_month : ''}</span>
+                </div>
+            </div>
+            <div class="item-right">
+                ${!t.is_active ? '<span class="paused-badge">Pausad</span>' : ''}
+                ${showDate && t.next_date ? `<span class="next-date"><i class="fas fa-clock"></i> ${formatDate(t.next_date)}</span>` : ''}
+                <span class="item-amount ${t.type}">${t.type === 'income' ? '+' : '-'}${WealthAgent.formatCurrency(t.amount)}</span>
+                <div class="item-actions">
+                    <button onclick="editTransaction(${t.id})" title="Redigera">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="togglePause(${t.id})" title="${t.is_active ? 'Pausa' : 'Aktivera'}">
+                        <i class="fas fa-${t.is_active ? 'pause' : 'play'}"></i>
+                    </button>
+                    <button onclick="deleteTransaction(${t.id})" title="Ta bort">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getIcon(category) {
+    const icons = {
+        salary: 'briefcase', freelance: 'laptop', rental: 'home', dividend: 'chart-line',
+        pension: 'umbrella-beach', other_income: 'plus-circle',
+        housing: 'home', utilities: 'bolt', insurance: 'shield-alt', subscription: 'tv',
+        transport: 'car', loan: 'landmark', savings: 'piggy-bank', other_expense: 'receipt'
+    };
+    return icons[category] || 'circle';
+}
+
+function getFrequencyLabel(freq) {
+    const labels = {
+        daily: 'Dagligen', weekly: 'Veckovis', biweekly: 'Varannan vecka',
+        monthly: 'Manadsvis', quarterly: 'Kvartalsvis', yearly: 'Arsvis'
+    };
+    return labels[freq] || freq;
+}
+
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
+}
+
+function showAddModal() {
+    document.getElementById('modalTitle').textContent = 'Lagg till aterkommande';
+    document.getElementById('transactionForm').reset();
+    document.getElementById('transactionId').value = '';
+    document.getElementById('txStartDate').valueAsDate = new Date();
+    document.getElementById('transactionModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('transactionModal').classList.remove('active');
+}
+
+function editTransaction(id) {
+    const tx = allTransactions.find(t => t.id === id);
+    if (!tx) return;
+
+    document.getElementById('modalTitle').textContent = 'Redigera transaktion';
+    document.getElementById('transactionId').value = id;
+    document.getElementById('txName').value = tx.name;
+    document.getElementById('txType').value = tx.type;
+    document.getElementById('txCategory').value = tx.category;
+    document.getElementById('txAmount').value = tx.amount;
+    document.getElementById('txFrequency').value = tx.frequency;
+    document.getElementById('txDayOfMonth').value = tx.day_of_month || '';
+    document.getElementById('txNote').value = tx.note || '';
+
+    document.getElementById('transactionModal').classList.add('active');
+}
+
+async function saveTransaction(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('transactionId').value;
+    const data = {
+        name: document.getElementById('txName').value,
+        type: document.getElementById('txType').value,
+        category: document.getElementById('txCategory').value,
+        amount: parseFloat(document.getElementById('txAmount').value),
+        frequency: document.getElementById('txFrequency').value,
+        day_of_month: parseInt(document.getElementById('txDayOfMonth').value) || null,
+        start_date: document.getElementById('txStartDate').value || null,
+        note: document.getElementById('txNote').value
+    };
+
+    try {
+        let response;
+        if (id) {
+            response = await WealthAgent.apiCall(`/wealth/api/recurring/${id}`, 'PUT', data);
+        } else {
+            response = await WealthAgent.apiCall('/wealth/api/recurring', 'POST', data);
+        }
+
+        if (response.success) {
+            WealthAgent.showToast(id ? 'Uppdaterad!' : 'Tillagd!', 'success');
+            closeModal();
+            loadRecurring();
+        }
+    } catch (error) {
+        // Local update for demo
+        if (id) {
+            const idx = allTransactions.findIndex(t => t.id == id);
+            if (idx >= 0) allTransactions[idx] = { ...allTransactions[idx], ...data };
+        } else {
+            allTransactions.push({ id: Date.now(), ...data, is_active: true });
+        }
+        WealthAgent.showToast(id ? 'Uppdaterad!' : 'Tillagd!', 'success');
+        closeModal();
+        updateSummary(calculateSummary());
+        renderTransactions();
+    }
+}
+
+async function togglePause(id) {
+    const tx = allTransactions.find(t => t.id === id);
+    if (!tx) return;
+
+    try {
+        const response = await WealthAgent.apiCall(`/wealth/api/recurring/${id}/toggle`, 'POST');
+        if (response.success) {
+            loadRecurring();
+        }
+    } catch (error) {
+        tx.is_active = !tx.is_active;
+        updateSummary(calculateSummary());
+        renderTransactions();
+        WealthAgent.showToast(tx.is_active ? 'Aktiverad' : 'Pausad', 'success');
+    }
+}
+
+async function deleteTransaction(id) {
+    if (!confirm('Ta bort denna aterkommande transaktion?')) return;
+
+    try {
+        const response = await WealthAgent.apiCall(`/wealth/api/recurring/${id}`, 'DELETE');
+        if (response.success) {
+            WealthAgent.showToast('Borttagen!', 'success');
+            loadRecurring();
+        }
+    } catch (error) {
+        allTransactions = allTransactions.filter(t => t.id !== id);
+        updateSummary(calculateSummary());
+        renderTransactions();
+        WealthAgent.showToast('Borttagen!', 'success');
+    }
+}
+</script>
+{% endblock %}

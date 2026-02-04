@@ -1,0 +1,1099 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Första 1000 Kunderna - Wealth Agent{% endblock %}
+
+{% block extra_css %}
+<style>
+    .customers-hero {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .customers-hero h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .milestone-tracker {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 2rem;
+        position: relative;
+    }
+
+    .milestone-tracker::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 10%;
+        right: 10%;
+        height: 4px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 2px;
+    }
+
+    .milestone {
+        text-align: center;
+        position: relative;
+        z-index: 1;
+    }
+
+    .milestone-dot {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+        font-weight: 600;
+    }
+
+    .milestone-dot.achieved {
+        background: white;
+        color: #f59e0b;
+    }
+
+    .milestone-dot.current {
+        background: white;
+        color: #f59e0b;
+        box-shadow: 0 0 0 4px rgba(255,255,255,0.3);
+    }
+
+    .milestone-label {
+        font-size: 0.75rem;
+        opacity: 0.9;
+    }
+
+    .milestone-value {
+        font-weight: 600;
+    }
+
+    /* Progress Input */
+    .progress-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .progress-input-group {
+        display: flex;
+        gap: 1rem;
+        align-items: end;
+    }
+
+    .progress-bar-container {
+        margin-top: 1rem;
+    }
+
+    .progress-bar-bg {
+        height: 24px;
+        background: var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #f59e0b, #d97706);
+        border-radius: 12px;
+        transition: width 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Strategy Cards */
+    .strategy-section {
+        margin-bottom: 2rem;
+    }
+
+    .strategy-section h5 {
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .strategy-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+
+    .strategy-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+        transition: all 0.2s ease;
+    }
+
+    .strategy-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    .strategy-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .strategy-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .strategy-icon.free { background: rgba(16, 185, 129, 0.1); }
+    .strategy-icon.paid { background: rgba(59, 130, 246, 0.1); }
+    .strategy-icon.community { background: rgba(139, 92, 246, 0.1); }
+    .strategy-icon.content { background: rgba(236, 72, 153, 0.1); }
+
+    .strategy-cost {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+    }
+
+    .strategy-cost.free {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .strategy-cost.low {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .strategy-cost.medium {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+
+    .strategy-cost.high {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .strategy-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .strategy-desc {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
+    .strategy-metrics {
+        display: flex;
+        gap: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+
+    .strategy-metric {
+        flex: 1;
+        text-align: center;
+    }
+
+    .strategy-metric-value {
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .strategy-metric-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+    }
+
+    .strategy-steps {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+
+    .strategy-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .step-number {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        flex-shrink: 0;
+    }
+
+    /* CAC Calculator */
+    .calculator-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .calc-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .calc-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .calc-results {
+        background: var(--background);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    .calc-result-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .calc-result-item:last-child {
+        border-bottom: none;
+    }
+
+    .calc-result-item.highlight {
+        font-weight: 600;
+        font-size: 1.125rem;
+    }
+
+    .calc-health {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .calc-health.good {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .calc-health.warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+    }
+
+    .calc-health.bad {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    /* Phases */
+    .phases-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .phase-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .phase-tab {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        color: var(--text);
+    }
+
+    .phase-tab.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    .phase-content {
+        display: none;
+    }
+
+    .phase-content.active {
+        display: block;
+    }
+
+    .phase-checklist {
+        list-style: none;
+        padding: 0;
+    }
+
+    .phase-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: var(--background);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+
+    .phase-checkbox {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border);
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .phase-checkbox.checked {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    .phase-text {
+        flex: 1;
+    }
+
+    .phase-text strong {
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .phase-text small {
+        color: var(--text-muted);
+    }
+
+    /* Community Tips */
+    .tips-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .tip-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+    }
+
+    .tip-icon {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .tip-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .tip-text {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    /* Where to Find */
+    .channels-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .channel-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+
+    .channel-card:hover {
+        border-color: var(--primary);
+    }
+
+    .channel-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .channel-name {
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .channel-type {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Hero Section -->
+    <div class="customers-hero">
+        <h1>Dina Första 1000 Kunder</h1>
+        <p class="mb-0 opacity-75">Strategier för att hitta, konvertera och behålla dina första kunder</p>
+
+        <div class="milestone-tracker">
+            <div class="milestone">
+                <div class="milestone-dot achieved">1</div>
+                <div class="milestone-value">1</div>
+                <div class="milestone-label">Första kund</div>
+            </div>
+            <div class="milestone">
+                <div class="milestone-dot">10</div>
+                <div class="milestone-value">10</div>
+                <div class="milestone-label">Validering</div>
+            </div>
+            <div class="milestone">
+                <div class="milestone-dot">100</div>
+                <div class="milestone-value">100</div>
+                <div class="milestone-label">Traction</div>
+            </div>
+            <div class="milestone">
+                <div class="milestone-dot">1000</div>
+                <div class="milestone-value">1000</div>
+                <div class="milestone-label">Product-market fit</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Tracker -->
+    <div class="progress-section">
+        <h5 class="mb-3">📊 Spåra din progress</h5>
+        <div class="progress-input-group">
+            <div class="flex-grow-1">
+                <label class="form-label">Antal kunder just nu</label>
+                <input type="number" class="form-control" id="currentCustomers" value="0" onchange="updateProgress()">
+            </div>
+            <button class="btn btn-primary" onclick="updateProgress()">Uppdatera</button>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressFill" style="width: 0%">0%</div>
+            </div>
+        </div>
+        <div class="d-flex justify-content-between mt-2 text-muted small">
+            <span>0</span>
+            <span id="nextMilestone">Nästa mål: 10 kunder</span>
+            <span>1000</span>
+        </div>
+    </div>
+
+    <!-- Free Strategies -->
+    <div class="strategy-section">
+        <h5>🆓 Gratis strategier (0 kr)</h5>
+        <div class="strategy-grid">
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <div class="strategy-icon free">👥</div>
+                    <span class="strategy-cost free">Gratis</span>
+                </div>
+                <div class="strategy-title">Personligt nätverk</div>
+                <div class="strategy-desc">Börja med vänner, familj och kollegor. Be om feedback och be dem sprida vidare till sitt nätverk.</div>
+                <div class="strategy-metrics">
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">20-50</div>
+                        <div class="strategy-metric-label">Potentiella</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">Hög</div>
+                        <div class="strategy-metric-label">Konvertering</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">1-2 veckor</div>
+                        <div class="strategy-metric-label">Tid</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <div class="strategy-icon community">💬</div>
+                    <span class="strategy-cost free">Gratis</span>
+                </div>
+                <div class="strategy-title">Online-communities</div>
+                <div class="strategy-desc">Delta aktivt i Facebook-grupper, Reddit, Discord och forum där din målgrupp finns.</div>
+                <div class="strategy-metrics">
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">∞</div>
+                        <div class="strategy-metric-label">Potentiella</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">Medium</div>
+                        <div class="strategy-metric-label">Konvertering</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">2-4 veckor</div>
+                        <div class="strategy-metric-label">Tid</div>
+                    </div>
+                </div>
+                <div class="strategy-steps">
+                    <div class="strategy-step"><span class="step-number">1</span> Identifiera 5-10 relevanta grupper</div>
+                    <div class="strategy-step"><span class="step-number">2</span> Var aktiv och hjälpsam i 2 veckor</div>
+                    <div class="strategy-step"><span class="step-number">3</span> Introducera din lösning naturligt</div>
+                </div>
+            </div>
+
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <div class="strategy-icon content">📝</div>
+                    <span class="strategy-cost free">Gratis</span>
+                </div>
+                <div class="strategy-title">Content Marketing</div>
+                <div class="strategy-desc">Skapa värdefullt innehåll som löser problem för din målgrupp. Blogginlägg, YouTube, podcasts.</div>
+                <div class="strategy-metrics">
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">∞</div>
+                        <div class="strategy-metric-label">Potentiella</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">Låg-Medium</div>
+                        <div class="strategy-metric-label">Konvertering</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">3-6 mån</div>
+                        <div class="strategy-metric-label">Tid</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <div class="strategy-icon free">🤝</div>
+                    <span class="strategy-cost free">Gratis</span>
+                </div>
+                <div class="strategy-title">Partnerskap</div>
+                <div class="strategy-desc">Hitta kompletterande företag eller influencers som redan har din målgrupp.</div>
+                <div class="strategy-metrics">
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">Varierar</div>
+                        <div class="strategy-metric-label">Potentiella</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">Hög</div>
+                        <div class="strategy-metric-label">Konvertering</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">2-4 veckor</div>
+                        <div class="strategy-metric-label">Tid</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paid Strategies -->
+    <div class="strategy-section">
+        <h5>💰 Betalda strategier</h5>
+        <div class="strategy-grid">
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <div class="strategy-icon paid">📱</div>
+                    <span class="strategy-cost medium">Medium</span>
+                </div>
+                <div class="strategy-title">Facebook/Instagram Ads</div>
+                <div class="strategy-desc">Målgruppsanpassade annonser för att snabbt nå potentiella kunder.</div>
+                <div class="strategy-metrics">
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">50-500 kr</div>
+                        <div class="strategy-metric-label">CAC</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">1-3%</div>
+                        <div class="strategy-metric-label">Konvertering</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">Omedelbart</div>
+                        <div class="strategy-metric-label">Tid</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <div class="strategy-icon paid">🔍</div>
+                    <span class="strategy-cost high">Hög</span>
+                </div>
+                <div class="strategy-title">Google Ads</div>
+                <div class="strategy-desc">Fånga folk som aktivt söker efter din typ av lösning.</div>
+                <div class="strategy-metrics">
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">100-1000 kr</div>
+                        <div class="strategy-metric-label">CAC</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">2-5%</div>
+                        <div class="strategy-metric-label">Konvertering</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">Omedelbart</div>
+                        <div class="strategy-metric-label">Tid</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <div class="strategy-icon paid">🎯</div>
+                    <span class="strategy-cost low">Låg</span>
+                </div>
+                <div class="strategy-title">LinkedIn Outreach</div>
+                <div class="strategy-desc">Direkt kontakt med beslutsfattare (B2B). Premium krävs för InMail.</div>
+                <div class="strategy-metrics">
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">200-800 kr</div>
+                        <div class="strategy-metric-label">CAC</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">5-15%</div>
+                        <div class="strategy-metric-label">Svarsfrekvens</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">1-2 veckor</div>
+                        <div class="strategy-metric-label">Tid</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <div class="strategy-icon paid">📧</div>
+                    <span class="strategy-cost low">Låg</span>
+                </div>
+                <div class="strategy-title">Cold Email</div>
+                <div class="strategy-desc">Personaliserade mail till kvalificerade leads. Kräver bra lista.</div>
+                <div class="strategy-metrics">
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">50-200 kr</div>
+                        <div class="strategy-metric-label">CAC</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">1-5%</div>
+                        <div class="strategy-metric-label">Svarsfrekvens</div>
+                    </div>
+                    <div class="strategy-metric">
+                        <div class="strategy-metric-value">2-4 veckor</div>
+                        <div class="strategy-metric-label">Tid</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CAC Calculator -->
+    <div class="calculator-section">
+        <h5 class="mb-4">🧮 CAC Kalkylator (Customer Acquisition Cost)</h5>
+        <div class="calc-grid">
+            <div>
+                <div class="mb-3">
+                    <label class="form-label">Total marknadsföringskostnad (kr)</label>
+                    <input type="number" class="form-control" id="marketingCost" value="10000" onchange="calculateCAC()">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Antal nya kunder</label>
+                    <input type="number" class="form-control" id="newCustomers" value="20" onchange="calculateCAC()">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Genomsnittligt kundvärde (LTV) (kr)</label>
+                    <input type="number" class="form-control" id="ltv" value="2500" onchange="calculateCAC()">
+                </div>
+            </div>
+            <div class="calc-results">
+                <h6 class="mb-3">Resultat</h6>
+                <div class="calc-result-item highlight">
+                    <span class="label">CAC (kostnad per kund)</span>
+                    <span class="value" id="cacResult">500 kr</span>
+                </div>
+                <div class="calc-result-item">
+                    <span class="label">LTV:CAC ratio</span>
+                    <span class="value" id="ltvCacRatio">5:1</span>
+                </div>
+                <div class="calc-result-item">
+                    <span class="label">Payback-period</span>
+                    <span class="value" id="paybackPeriod">~1 mån</span>
+                </div>
+                <div class="calc-health good" id="cacHealth">
+                    <strong>✓ Hälsosam ratio!</strong><br>
+                    <small>LTV:CAC över 3:1 är bra. Du har utrymme att skala.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Growth Phases -->
+    <div class="phases-section">
+        <h5 class="mb-3">📈 Tillväxtfaser - Checklista</h5>
+        <div class="phase-tabs">
+            <button class="phase-tab active" onclick="showPhase('phase1')">Fas 1: 0→10</button>
+            <button class="phase-tab" onclick="showPhase('phase2')">Fas 2: 10→100</button>
+            <button class="phase-tab" onclick="showPhase('phase3')">Fas 3: 100→1000</button>
+        </div>
+
+        <div class="phase-content active" id="phase1">
+            <p class="text-muted mb-3">Fokus: Validera idén och hitta product-market fit</p>
+            <ul class="phase-checklist">
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Definiera ICP (Ideal Customer Profile)</strong>
+                        <small>Vem är din perfekta kund? Var specifik.</small>
+                    </div>
+                </li>
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Prata med 10 potentiella kunder</strong>
+                        <small>Förstå deras problem innan du säljer lösningen.</small>
+                    </div>
+                </li>
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Få din första betalande kund</strong>
+                        <small>Fokusera på en enda kund och leverera exceptionellt.</small>
+                    </div>
+                </li>
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Samla feedback och iterera</strong>
+                        <small>Använd feedback för att förbättra produkten.</small>
+                    </div>
+                </li>
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Be om referrals</strong>
+                        <small>Nöjda kunder rekommenderar gärna.</small>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="phase-content" id="phase2">
+            <p class="text-muted mb-3">Fokus: Hitta repeterbar process för kundanskaffning</p>
+            <ul class="phase-checklist">
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Identifiera vilken kanal som fungerar</strong>
+                        <small>Dubbelkolla vilken källa som ger bäst kunder.</small>
+                    </div>
+                </li>
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Skapa en enkel säljprocess</strong>
+                        <small>Dokumentera vad som fungerar.</small>
+                    </div>
+                </li>
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Samla testimonials/case studies</strong>
+                        <small>Social proof ökar konvertering dramatiskt.</small>
+                    </div>
+                </li>
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Testa betalda annonser (liten budget)</strong>
+                        <small>500-1000 kr för att testa konceptet.</small>
+                    </div>
+                </li>
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Bygg email-lista</strong>
+                        <small>Egen kanal är guld värt.</small>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="phase-content" id="phase3">
+            <p class="text-muted mb-3">Fokus: Skala det som fungerar</p>
+            <ul class="phase-checklist">
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Öka budget på vinnande kanaler</strong>
+                        <small>Investera mer där du får bäst ROI.</small>
+                    </div>
+                </li>
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Automatisera onboarding</strong>
+                        <small>Du kan inte hantera varje kund manuellt.</small>
+                    </div>
+                </li>
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Skapa referral-program</strong>
+                        <small>Belöna kunder som rekommenderar dig.</small>
+                    </div>
+                </li>
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Bygg content-maskin</strong>
+                        <small>SEO börjar ge effekt efter ~6 månader.</small>
+                    </div>
+                </li>
+                <li class="phase-item">
+                    <div class="phase-checkbox" onclick="toggleCheck(this)"></div>
+                    <div class="phase-text">
+                        <strong>Överväg att anställa/outsourca</strong>
+                        <small>Fokusera på det du är bäst på.</small>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Where to Find Customers -->
+    <h5 class="mb-3">🔍 Var hittar du dina kunder?</h5>
+    <div class="channels-grid mb-4">
+        <div class="channel-card">
+            <div class="channel-icon">📘</div>
+            <div class="channel-name">Facebook-grupper</div>
+            <div class="channel-type">Nischade communities</div>
+        </div>
+        <div class="channel-card">
+            <div class="channel-icon">💼</div>
+            <div class="channel-name">LinkedIn</div>
+            <div class="channel-type">B2B, professionella</div>
+        </div>
+        <div class="channel-card">
+            <div class="channel-icon">🔴</div>
+            <div class="channel-name">Reddit</div>
+            <div class="channel-type">Nischade subreddits</div>
+        </div>
+        <div class="channel-card">
+            <div class="channel-icon">💬</div>
+            <div class="channel-name">Discord</div>
+            <div class="channel-type">Tech, gaming, crypto</div>
+        </div>
+        <div class="channel-card">
+            <div class="channel-icon">🐦</div>
+            <div class="channel-name">Twitter/X</div>
+            <div class="channel-type">Tech, startups, media</div>
+        </div>
+        <div class="channel-card">
+            <div class="channel-icon">📸</div>
+            <div class="channel-name">Instagram</div>
+            <div class="channel-type">B2C, lifestyle, kreativa</div>
+        </div>
+        <div class="channel-card">
+            <div class="channel-icon">🎬</div>
+            <div class="channel-name">TikTok</div>
+            <div class="channel-type">Gen Z, viral potential</div>
+        </div>
+        <div class="channel-card">
+            <div class="channel-icon">📧</div>
+            <div class="channel-name">Nyhetsbrev</div>
+            <div class="channel-type">Nischade listor</div>
+        </div>
+    </div>
+
+    <!-- Tips -->
+    <h5 class="mb-3">💡 Tips från framgångsrika grundare</h5>
+    <div class="tips-grid">
+        <div class="tip-card">
+            <div class="tip-icon">🎯</div>
+            <div class="tip-title">Gör saker som inte skalar</div>
+            <div class="tip-text">I början, gör allt personligt. Ring kunder, leverera extra värde, bygg relationer. Skalning kommer senare.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-icon">👂</div>
+            <div class="tip-title">Lyssna mer än du pratar</div>
+            <div class="tip-text">Dina första kunder är en guldgruva av insikter. Förstå deras problem på djupet.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-icon">🚀</div>
+            <div class="tip-title">Lansera tidigt</div>
+            <div class="tip-text">En okej produkt i händerna på kunder > en perfekt produkt som aldrig lanseras.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-icon">🔄</div>
+            <div class="tip-title">Fokusera på retention</div>
+            <div class="tip-text">Det är 5x billigare att behålla en kund än att hitta en ny. Leverera värde konsekvent.</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        updateProgress();
+        calculateCAC();
+        loadChecklist();
+    });
+
+    function updateProgress() {
+        const customers = parseInt(document.getElementById('currentCustomers').value) || 0;
+        const percentage = Math.min(100, (customers / 1000) * 100);
+
+        document.getElementById('progressFill').style.width = percentage + '%';
+        document.getElementById('progressFill').textContent = percentage.toFixed(1) + '%';
+
+        // Update milestones
+        const milestones = [1, 10, 100, 1000];
+        const dots = document.querySelectorAll('.milestone-dot');
+
+        dots.forEach((dot, index) => {
+            dot.classList.remove('achieved', 'current');
+            if (customers >= milestones[index]) {
+                dot.classList.add('achieved');
+            } else if (index === 0 || customers >= milestones[index - 1]) {
+                dot.classList.add('current');
+            }
+        });
+
+        // Update next milestone text
+        let nextMilestone = 'Du har nått 1000 kunder! 🎉';
+        for (const m of milestones) {
+            if (customers < m) {
+                nextMilestone = `Nästa mål: ${m} kunder (${m - customers} kvar)`;
+                break;
+            }
+        }
+        document.getElementById('nextMilestone').textContent = nextMilestone;
+
+        // Save to localStorage
+        localStorage.setItem('customer_count', customers);
+    }
+
+    function calculateCAC() {
+        const marketingCost = parseFloat(document.getElementById('marketingCost').value) || 0;
+        const newCustomers = parseFloat(document.getElementById('newCustomers').value) || 1;
+        const ltv = parseFloat(document.getElementById('ltv').value) || 0;
+
+        const cac = marketingCost / newCustomers;
+        const ratio = ltv / cac;
+        const payback = cac / (ltv / 12); // Assuming 12 month LTV period
+
+        document.getElementById('cacResult').textContent = formatCurrency(cac);
+        document.getElementById('ltvCacRatio').textContent = ratio.toFixed(1) + ':1';
+        document.getElementById('paybackPeriod').textContent = payback < 1 ? '<1 mån' : '~' + Math.round(payback) + ' mån';
+
+        // Health indicator
+        const healthEl = document.getElementById('cacHealth');
+        healthEl.classList.remove('good', 'warning', 'bad');
+
+        if (ratio >= 3) {
+            healthEl.classList.add('good');
+            healthEl.innerHTML = '<strong>✓ Hälsosam ratio!</strong><br><small>LTV:CAC över 3:1 är bra. Du har utrymme att skala.</small>';
+        } else if (ratio >= 1) {
+            healthEl.classList.add('warning');
+            healthEl.innerHTML = '<strong>⚠ Marginal ratio</strong><br><small>Sikta på minst 3:1 för hållbar tillväxt.</small>';
+        } else {
+            healthEl.classList.add('bad');
+            healthEl.innerHTML = '<strong>✗ Ohållbar ratio</strong><br><small>Du förlorar pengar på varje kund. Optimera!</small>';
+        }
+    }
+
+    function showPhase(phaseId) {
+        document.querySelectorAll('.phase-tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.phase-content').forEach(content => content.classList.remove('active'));
+
+        event.target.classList.add('active');
+        document.getElementById(phaseId).classList.add('active');
+    }
+
+    function toggleCheck(element) {
+        element.classList.toggle('checked');
+        if (element.classList.contains('checked')) {
+            element.innerHTML = '<i class="fas fa-check" style="font-size: 0.75rem;"></i>';
+        } else {
+            element.innerHTML = '';
+        }
+        saveChecklist();
+    }
+
+    function saveChecklist() {
+        const checkboxes = document.querySelectorAll('.phase-checkbox');
+        const states = [];
+        checkboxes.forEach(cb => {
+            states.push(cb.classList.contains('checked'));
+        });
+        localStorage.setItem('customer_checklist', JSON.stringify(states));
+    }
+
+    function loadChecklist() {
+        const states = JSON.parse(localStorage.getItem('customer_checklist') || '[]');
+        const checkboxes = document.querySelectorAll('.phase-checkbox');
+        checkboxes.forEach((cb, index) => {
+            if (states[index]) {
+                cb.classList.add('checked');
+                cb.innerHTML = '<i class="fas fa-check" style="font-size: 0.75rem;"></i>';
+            }
+        });
+
+        // Load customer count
+        const savedCount = localStorage.getItem('customer_count');
+        if (savedCount) {
+            document.getElementById('currentCustomers').value = savedCount;
+            updateProgress();
+        }
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('sv-SE', {
+            style: 'decimal',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount) + ' kr';
+    }
+</script>
+{% endblock %}

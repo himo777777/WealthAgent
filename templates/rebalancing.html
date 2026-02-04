@@ -1,0 +1,526 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Ombalansering - AI Wealth Agent{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1><i class="fas fa-balance-scale-right"></i> Portfolj-ombalansering</h1>
+        <p>Halla din portfolj i linje med din strategi</p>
+    </div>
+</div>
+
+<!-- Current vs Target Allocation -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-pie"></i> Nuvarande vs Mallokering</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 text-center">
+                <h5>Nuvarande allokering</h5>
+                <canvas id="currentAllocationChart" height="250"></canvas>
+            </div>
+            <div class="col-md-6 text-center">
+                <h5>Mallokering</h5>
+                <canvas id="targetAllocationChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Drift Analysis -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3><i class="fas fa-exclamation-triangle"></i> Avvikelser fran mal</h3>
+        <span class="badge bg-warning" id="driftBadge">3 tillgangsklasser utanfor tolerans</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tillgangsklass</th>
+                        <th class="text-center">Nuvarande</th>
+                        <th class="text-center">Mal</th>
+                        <th class="text-center">Avvikelse</th>
+                        <th class="text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="driftTable">
+                    <tr>
+                        <td><i class="fas fa-chart-line text-primary"></i> Svenska aktier</td>
+                        <td class="text-center">45%</td>
+                        <td class="text-center">40%</td>
+                        <td class="text-center text-danger">+5%</td>
+                        <td class="text-center"><span class="badge bg-danger">Overvaxt</span></td>
+                    </tr>
+                    <tr>
+                        <td><i class="fas fa-globe text-info"></i> Globala aktier</td>
+                        <td class="text-center">28%</td>
+                        <td class="text-center">30%</td>
+                        <td class="text-center text-warning">-2%</td>
+                        <td class="text-center"><span class="badge bg-warning">Undervaxt</span></td>
+                    </tr>
+                    <tr>
+                        <td><i class="fas fa-building text-secondary"></i> Fastigheter</td>
+                        <td class="text-center">8%</td>
+                        <td class="text-center">10%</td>
+                        <td class="text-center text-warning">-2%</td>
+                        <td class="text-center"><span class="badge bg-warning">Undervaxt</span></td>
+                    </tr>
+                    <tr>
+                        <td><i class="fas fa-coins text-warning"></i> Rantefonder</td>
+                        <td class="text-center">12%</td>
+                        <td class="text-center">15%</td>
+                        <td class="text-center text-danger">-3%</td>
+                        <td class="text-center"><span class="badge bg-danger">Undervaxt</span></td>
+                    </tr>
+                    <tr>
+                        <td><i class="fas fa-piggy-bank text-success"></i> Likvider</td>
+                        <td class="text-center">7%</td>
+                        <td class="text-center">5%</td>
+                        <td class="text-center text-success">+2%</td>
+                        <td class="text-center"><span class="badge bg-success">OK</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Target Allocation Setup -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3><i class="fas fa-sliders-h"></i> Stallning mallokering</h3>
+        <button class="btn btn-outline-primary btn-sm" onclick="resetToDefault()">
+            <i class="fas fa-undo"></i> Aterstall standard
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="allocation-sliders">
+            <div class="allocation-row">
+                <div class="allocation-label">
+                    <i class="fas fa-chart-line text-primary"></i>
+                    <span>Svenska aktier</span>
+                </div>
+                <input type="range" class="form-range allocation-slider" id="sweStocks" min="0" max="100" value="40" data-class="swe-stocks">
+                <span class="allocation-value" id="sweStocksValue">40%</span>
+            </div>
+            <div class="allocation-row">
+                <div class="allocation-label">
+                    <i class="fas fa-globe text-info"></i>
+                    <span>Globala aktier</span>
+                </div>
+                <input type="range" class="form-range allocation-slider" id="globalStocks" min="0" max="100" value="30" data-class="global-stocks">
+                <span class="allocation-value" id="globalStocksValue">30%</span>
+            </div>
+            <div class="allocation-row">
+                <div class="allocation-label">
+                    <i class="fas fa-building text-secondary"></i>
+                    <span>Fastigheter</span>
+                </div>
+                <input type="range" class="form-range allocation-slider" id="realEstate" min="0" max="100" value="10" data-class="real-estate">
+                <span class="allocation-value" id="realEstateValue">10%</span>
+            </div>
+            <div class="allocation-row">
+                <div class="allocation-label">
+                    <i class="fas fa-coins text-warning"></i>
+                    <span>Rantefonder</span>
+                </div>
+                <input type="range" class="form-range allocation-slider" id="bonds" min="0" max="100" value="15" data-class="bonds">
+                <span class="allocation-value" id="bondsValue">15%</span>
+            </div>
+            <div class="allocation-row">
+                <div class="allocation-label">
+                    <i class="fas fa-piggy-bank text-success"></i>
+                    <span>Likvider</span>
+                </div>
+                <input type="range" class="form-range allocation-slider" id="cash" min="0" max="100" value="5" data-class="cash">
+                <span class="allocation-value" id="cashValue">5%</span>
+            </div>
+        </div>
+        <div class="allocation-total mt-3">
+            <span>Total:</span>
+            <span class="fw-bold" id="totalAllocation">100%</span>
+            <span id="allocationWarning" class="text-danger ms-2" style="display: none;">
+                <i class="fas fa-exclamation-circle"></i> Maste vara 100%
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Rebalancing Recommendations -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-tasks"></i> Ombalanseringsforslag</h3>
+    </div>
+    <div class="card-body">
+        <div class="rebalance-actions" id="rebalanceActions">
+            <div class="rebalance-action sell">
+                <div class="action-icon">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="action-details">
+                    <span class="action-type">SALJ</span>
+                    <span class="action-asset">Svenska aktier</span>
+                </div>
+                <div class="action-amount">
+                    25 000 kr
+                </div>
+            </div>
+            <div class="rebalance-action buy">
+                <div class="action-icon">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div class="action-details">
+                    <span class="action-type">KOP</span>
+                    <span class="action-asset">Rantefonder</span>
+                </div>
+                <div class="action-amount">
+                    15 000 kr
+                </div>
+            </div>
+            <div class="rebalance-action buy">
+                <div class="action-icon">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div class="action-details">
+                    <span class="action-type">KOP</span>
+                    <span class="action-asset">Fastigheter</span>
+                </div>
+                <div class="action-amount">
+                    10 000 kr
+                </div>
+            </div>
+        </div>
+        <div class="rebalance-summary mt-3">
+            <div class="summary-item">
+                <span>Totalt att flytta:</span>
+                <strong>25 000 kr</strong>
+            </div>
+            <div class="summary-item">
+                <span>Transaktioner:</span>
+                <strong>3 st</strong>
+            </div>
+            <div class="summary-item">
+                <span>Uppskattad kostnad:</span>
+                <strong>0 kr</strong>
+                <small>(ISK)</small>
+            </div>
+        </div>
+        <button class="btn btn-primary mt-3" onclick="executeRebalancing()">
+            <i class="fas fa-check"></i> Utfor ombalansering
+        </button>
+    </div>
+</div>
+
+<!-- Rebalancing Settings -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-cog"></i> Ombalanseringsinställningar</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">Toleransband (%)</label>
+                    <input type="number" class="form-control" value="5" min="1" max="20">
+                    <small class="text-muted">Ombalansering foreslås vid avvikelse over detta</small>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Ombalanseringsfrekvens</label>
+                    <select class="form-select">
+                        <option value="monthly">Manatlig kontroll</option>
+                        <option value="quarterly" selected>Kvartalsvis kontroll</option>
+                        <option value="yearly">Arlig kontroll</option>
+                        <option value="threshold">Endast vid avvikelse</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">Minimumbelopp for transaktion</label>
+                    <input type="number" class="form-control" value="5000" step="1000">
+                    <small class="text-muted">Undvik for sma transaktioner</small>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="autoRebalance">
+                    <label class="form-check-label" for="autoRebalance">
+                        Automatisk ombalansering (simulerad)
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="taxEfficient" checked>
+                    <label class="form-check-label" for="taxEfficient">
+                        Skatteeffektiv ombalansering
+                    </label>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-primary">
+            <i class="fas fa-save"></i> Spara installningar
+        </button>
+    </div>
+</div>
+
+<style>
+.allocation-sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.allocation-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 60px;
+    align-items: center;
+    gap: 1rem;
+}
+
+.allocation-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.allocation-label i {
+    width: 20px;
+}
+
+.allocation-value {
+    font-weight: 700;
+    text-align: right;
+}
+
+.allocation-total {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 2px solid var(--border);
+    font-size: 1.1rem;
+}
+
+.rebalance-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.rebalance-action {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.rebalance-action.sell {
+    border-left: 4px solid #ef4444;
+}
+
+.rebalance-action.buy {
+    border-left: 4px solid #22c55e;
+}
+
+.action-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.rebalance-action.sell .action-icon {
+    background: #ef4444;
+}
+
+.rebalance-action.buy .action-icon {
+    background: #22c55e;
+}
+
+.action-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.action-type {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.rebalance-action.sell .action-type {
+    color: #ef4444;
+}
+
+.rebalance-action.buy .action-type {
+    color: #22c55e;
+}
+
+.action-asset {
+    font-weight: 600;
+}
+
+.action-amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.rebalance-summary {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem;
+    background: var(--surface);
+    border-radius: 8px;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.summary-item small {
+    color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+    .allocation-row {
+        grid-template-columns: 1fr 60px;
+    }
+
+    .allocation-label {
+        grid-column: span 2;
+    }
+
+    .rebalance-summary {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let currentChart = null;
+let targetChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initCharts();
+    initSliders();
+});
+
+function initCharts() {
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    };
+
+    // Current allocation
+    const currentCtx = document.getElementById('currentAllocationChart').getContext('2d');
+    currentChart = new Chart(currentCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Svenska aktier', 'Globala aktier', 'Fastigheter', 'Rantefonder', 'Likvider'],
+            datasets: [{
+                data: [45, 28, 8, 12, 7],
+                backgroundColor: ['#6366f1', '#3b82f6', '#6b7280', '#f59e0b', '#22c55e']
+            }]
+        },
+        options: chartOptions
+    });
+
+    // Target allocation
+    const targetCtx = document.getElementById('targetAllocationChart').getContext('2d');
+    targetChart = new Chart(targetCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Svenska aktier', 'Globala aktier', 'Fastigheter', 'Rantefonder', 'Likvider'],
+            datasets: [{
+                data: [40, 30, 10, 15, 5],
+                backgroundColor: ['#6366f1', '#3b82f6', '#6b7280', '#f59e0b', '#22c55e']
+            }]
+        },
+        options: chartOptions
+    });
+}
+
+function initSliders() {
+    const sliders = document.querySelectorAll('.allocation-slider');
+
+    sliders.forEach(slider => {
+        slider.addEventListener('input', function() {
+            const valueId = this.id + 'Value';
+            document.getElementById(valueId).textContent = this.value + '%';
+            updateTotalAllocation();
+            updateTargetChart();
+        });
+    });
+}
+
+function updateTotalAllocation() {
+    const sliders = document.querySelectorAll('.allocation-slider');
+    let total = 0;
+
+    sliders.forEach(slider => {
+        total += parseInt(slider.value);
+    });
+
+    document.getElementById('totalAllocation').textContent = total + '%';
+
+    const warning = document.getElementById('allocationWarning');
+    if (total !== 100) {
+        warning.style.display = 'inline';
+        document.getElementById('totalAllocation').classList.add('text-danger');
+    } else {
+        warning.style.display = 'none';
+        document.getElementById('totalAllocation').classList.remove('text-danger');
+    }
+}
+
+function updateTargetChart() {
+    const values = [
+        parseInt(document.getElementById('sweStocks').value),
+        parseInt(document.getElementById('globalStocks').value),
+        parseInt(document.getElementById('realEstate').value),
+        parseInt(document.getElementById('bonds').value),
+        parseInt(document.getElementById('cash').value)
+    ];
+
+    targetChart.data.datasets[0].data = values;
+    targetChart.update();
+}
+
+function resetToDefault() {
+    document.getElementById('sweStocks').value = 40;
+    document.getElementById('globalStocks').value = 30;
+    document.getElementById('realEstate').value = 10;
+    document.getElementById('bonds').value = 15;
+    document.getElementById('cash').value = 5;
+
+    ['sweStocks', 'globalStocks', 'realEstate', 'bonds', 'cash'].forEach(id => {
+        document.getElementById(id + 'Value').textContent = document.getElementById(id).value + '%';
+    });
+
+    updateTotalAllocation();
+    updateTargetChart();
+}
+
+function executeRebalancing() {
+    if (confirm('Vill du utfora ombalanseringen? (Simulerad)')) {
+        alert('Ombalansering genomford! (Simulerad)');
+    }
+}
+</script>
+{% endblock %}

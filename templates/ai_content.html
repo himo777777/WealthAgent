@@ -1,0 +1,1052 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}AI Content Monetization - Wealth Agent{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ai-hero {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .ai-hero h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .hero-stat {
+        text-align: center;
+    }
+
+    .hero-stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+
+    .hero-stat-label {
+        opacity: 0.9;
+        font-size: 0.875rem;
+    }
+
+    /* Content Ideas Grid */
+    .ideas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .idea-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .idea-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    .idea-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .idea-icon.ebook { background: rgba(59, 130, 246, 0.1); }
+    .idea-icon.art { background: rgba(236, 72, 153, 0.1); }
+    .idea-icon.audio { background: rgba(139, 92, 246, 0.1); }
+    .idea-icon.video { background: rgba(239, 68, 68, 0.1); }
+    .idea-icon.code { background: rgba(16, 185, 129, 0.1); }
+    .idea-icon.social { background: rgba(245, 158, 11, 0.1); }
+
+    .idea-title {
+        font-weight: 600;
+        font-size: 1.125rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .idea-desc {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
+    .idea-stats {
+        display: flex;
+        gap: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+
+    .idea-stat {
+        flex: 1;
+        text-align: center;
+    }
+
+    .idea-stat-value {
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .idea-stat-value.high { color: var(--success); }
+    .idea-stat-value.medium { color: var(--warning); }
+    .idea-stat-value.low { color: var(--text-muted); }
+
+    .idea-stat-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+    }
+
+    .idea-tools {
+        margin-top: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+    }
+
+    .idea-tool {
+        padding: 0.25rem 0.5rem;
+        background: var(--background);
+        border-radius: 4px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    /* Prompt Templates */
+    .prompts-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .prompt-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .prompt-tab {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        color: var(--text);
+    }
+
+    .prompt-tab.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    .prompt-content {
+        display: none;
+    }
+
+    .prompt-content.active {
+        display: block;
+    }
+
+    .prompt-card {
+        background: var(--background);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .prompt-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+
+    .prompt-card-title {
+        font-weight: 600;
+    }
+
+    .prompt-copy-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .prompt-text {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 1rem;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        font-family: monospace;
+        white-space: pre-wrap;
+    }
+
+    .prompt-variables {
+        margin-top: 0.75rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .prompt-var {
+        padding: 0.25rem 0.5rem;
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+        border-radius: 4px;
+        font-size: 0.75rem;
+    }
+
+    /* Copyright Guide */
+    .copyright-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .copyright-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+
+    .copyright-card {
+        padding: 1.25rem;
+        border-radius: 8px;
+    }
+
+    .copyright-card.allowed {
+        background: rgba(16, 185, 129, 0.05);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .copyright-card.caution {
+        background: rgba(245, 158, 11, 0.05);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .copyright-card.forbidden {
+        background: rgba(239, 68, 68, 0.05);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .copyright-card-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .copyright-card-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .copyright-card ul {
+        margin: 0;
+        padding-left: 1.25rem;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .copyright-card li {
+        margin-bottom: 0.25rem;
+    }
+
+    /* Income Calculator */
+    .calculator-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .calc-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .calc-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .calc-results {
+        background: var(--background);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    .calc-result-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .calc-result-item:last-child {
+        border-bottom: none;
+    }
+
+    .calc-result-item.highlight {
+        font-weight: 600;
+        font-size: 1.125rem;
+        color: var(--success);
+    }
+
+    /* Platforms */
+    .platforms-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .platform-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+
+    .platform-card:hover {
+        border-color: var(--primary);
+    }
+
+    .platform-icon {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .platform-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .platform-type {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+
+    .platform-cut {
+        font-size: 0.875rem;
+        color: var(--success);
+    }
+
+    /* Tips */
+    .tips-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .tip-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+    }
+
+    .tip-number {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+
+    .tip-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .tip-text {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    /* Warning Box */
+    .warning-box {
+        background: rgba(245, 158, 11, 0.05);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .warning-box h6 {
+        color: #f59e0b;
+        margin-bottom: 0.5rem;
+    }
+
+    .warning-box p {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Hero Section -->
+    <div class="ai-hero">
+        <h1>AI Content Monetization</h1>
+        <p class="mb-0 opacity-75">Skapa och sälj AI-genererat innehåll - etiskt och lönsamt</p>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-value">$100B+</div>
+                <div class="hero-stat-label">AI content marknad 2025</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">10x</div>
+                <div class="hero-stat-label">Snabbare produktion</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-value">80%</div>
+                <div class="hero-stat-label">Marginal möjlig</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warning Box -->
+    <div class="warning-box">
+        <h6>⚠️ Viktigt om AI-genererat innehåll</h6>
+        <p>AI-verktyg är fantastiska assistenter, men var alltid transparent om hur innehållet skapats. Redigera, förädla och lägg till ditt eget värde. Sälj aldrig råa AI-outputs som "handgjorda" eller "original".</p>
+    </div>
+
+    <!-- Content Ideas -->
+    <h5 class="mb-3">💡 Innehållsidéer att monetarisera</h5>
+    <div class="ideas-grid">
+        <div class="idea-card">
+            <div class="idea-icon ebook">📚</div>
+            <div class="idea-title">E-böcker & Guider</div>
+            <div class="idea-desc">Nischade guides, how-to's, och informationsrika e-böcker. AI hjälper med research och utkast.</div>
+            <div class="idea-stats">
+                <div class="idea-stat">
+                    <div class="idea-stat-value high">50-500 kr</div>
+                    <div class="idea-stat-label">Pris</div>
+                </div>
+                <div class="idea-stat">
+                    <div class="idea-stat-value medium">Medium</div>
+                    <div class="idea-stat-label">Konkurrens</div>
+                </div>
+                <div class="idea-stat">
+                    <div class="idea-stat-value high">Hög</div>
+                    <div class="idea-stat-label">Skalbarhet</div>
+                </div>
+            </div>
+            <div class="idea-tools">
+                <span class="idea-tool">ChatGPT</span>
+                <span class="idea-tool">Claude</span>
+                <span class="idea-tool">Canva</span>
+            </div>
+        </div>
+
+        <div class="idea-card">
+            <div class="idea-icon art">🎨</div>
+            <div class="idea-title">AI-konst & Bilder</div>
+            <div class="idea-desc">Unika mönster, bakgrunder, ikoner, och illustrationer för print-on-demand eller stock.</div>
+            <div class="idea-stats">
+                <div class="idea-stat">
+                    <div class="idea-stat-value medium">10-200 kr</div>
+                    <div class="idea-stat-label">Pris</div>
+                </div>
+                <div class="idea-stat">
+                    <div class="idea-stat-value high">Hög</div>
+                    <div class="idea-stat-label">Konkurrens</div>
+                </div>
+                <div class="idea-stat">
+                    <div class="idea-stat-value high">Hög</div>
+                    <div class="idea-stat-label">Skalbarhet</div>
+                </div>
+            </div>
+            <div class="idea-tools">
+                <span class="idea-tool">Midjourney</span>
+                <span class="idea-tool">DALL-E</span>
+                <span class="idea-tool">Stable Diffusion</span>
+            </div>
+        </div>
+
+        <div class="idea-card">
+            <div class="idea-icon audio">🎵</div>
+            <div class="idea-title">Musik & Ljud</div>
+            <div class="idea-desc">Bakgrundsmusik, ljudeffekter, och jingles för content creators och företag.</div>
+            <div class="idea-stats">
+                <div class="idea-stat">
+                    <div class="idea-stat-value medium">20-500 kr</div>
+                    <div class="idea-stat-label">Pris</div>
+                </div>
+                <div class="idea-stat">
+                    <div class="idea-stat-value low">Låg</div>
+                    <div class="idea-stat-label">Konkurrens</div>
+                </div>
+                <div class="idea-stat">
+                    <div class="idea-stat-value high">Hög</div>
+                    <div class="idea-stat-label">Skalbarhet</div>
+                </div>
+            </div>
+            <div class="idea-tools">
+                <span class="idea-tool">Suno AI</span>
+                <span class="idea-tool">AIVA</span>
+                <span class="idea-tool">Soundraw</span>
+            </div>
+        </div>
+
+        <div class="idea-card">
+            <div class="idea-icon video">🎬</div>
+            <div class="idea-title">Video & Animation</div>
+            <div class="idea-desc">Korta videos, animationer, och footage för sociala medier och marknadsföring.</div>
+            <div class="idea-stats">
+                <div class="idea-stat">
+                    <div class="idea-stat-value high">100-2000 kr</div>
+                    <div class="idea-stat-label">Pris</div>
+                </div>
+                <div class="idea-stat">
+                    <div class="idea-stat-value medium">Medium</div>
+                    <div class="idea-stat-label">Konkurrens</div>
+                </div>
+                <div class="idea-stat">
+                    <div class="idea-stat-value medium">Medium</div>
+                    <div class="idea-stat-label">Skalbarhet</div>
+                </div>
+            </div>
+            <div class="idea-tools">
+                <span class="idea-tool">Runway</span>
+                <span class="idea-tool">Pika</span>
+                <span class="idea-tool">HeyGen</span>
+            </div>
+        </div>
+
+        <div class="idea-card">
+            <div class="idea-icon code">💻</div>
+            <div class="idea-title">Kod & Automation</div>
+            <div class="idea-desc">Scripts, plugins, templates, och no-code automationer för företag.</div>
+            <div class="idea-stats">
+                <div class="idea-stat">
+                    <div class="idea-stat-value high">200-5000 kr</div>
+                    <div class="idea-stat-label">Pris</div>
+                </div>
+                <div class="idea-stat">
+                    <div class="idea-stat-value medium">Medium</div>
+                    <div class="idea-stat-label">Konkurrens</div>
+                </div>
+                <div class="idea-stat">
+                    <div class="idea-stat-value high">Hög</div>
+                    <div class="idea-stat-label">Skalbarhet</div>
+                </div>
+            </div>
+            <div class="idea-tools">
+                <span class="idea-tool">GitHub Copilot</span>
+                <span class="idea-tool">Claude</span>
+                <span class="idea-tool">GPT-4</span>
+            </div>
+        </div>
+
+        <div class="idea-card">
+            <div class="idea-icon social">📱</div>
+            <div class="idea-title">Social Media Content</div>
+            <div class="idea-desc">Mallar, captions, content calendars, och hook-bibliotek för influencers.</div>
+            <div class="idea-stats">
+                <div class="idea-stat">
+                    <div class="idea-stat-value medium">50-300 kr</div>
+                    <div class="idea-stat-label">Pris</div>
+                </div>
+                <div class="idea-stat">
+                    <div class="idea-stat-value high">Hög</div>
+                    <div class="idea-stat-label">Konkurrens</div>
+                </div>
+                <div class="idea-stat">
+                    <div class="idea-stat-value high">Hög</div>
+                    <div class="idea-stat-label">Skalbarhet</div>
+                </div>
+            </div>
+            <div class="idea-tools">
+                <span class="idea-tool">ChatGPT</span>
+                <span class="idea-tool">Canva AI</span>
+                <span class="idea-tool">Copy.ai</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompt Templates -->
+    <div class="prompts-section">
+        <h5 class="mb-3">📝 Prompt-mallar för olika produkter</h5>
+
+        <div class="prompt-tabs">
+            <button class="prompt-tab active" onclick="showPromptTab('ebook')">E-bok</button>
+            <button class="prompt-tab" onclick="showPromptTab('art')">AI-konst</button>
+            <button class="prompt-tab" onclick="showPromptTab('social')">Social Media</button>
+            <button class="prompt-tab" onclick="showPromptTab('code')">Kod/Automation</button>
+        </div>
+
+        <!-- E-book Prompts -->
+        <div class="prompt-content active" id="prompt-ebook">
+            <div class="prompt-card">
+                <div class="prompt-card-header">
+                    <div class="prompt-card-title">📖 E-bok Outline Generator</div>
+                    <button class="btn btn-sm btn-outline-primary prompt-copy-btn" onclick="copyPrompt(this)">
+                        <i class="fas fa-copy me-1"></i> Kopiera
+                    </button>
+                </div>
+                <div class="prompt-text">Du är en erfaren författare och innehållsstrateg. Skapa en detaljerad outline för en e-bok om [ÄMNE].
+
+Målgrupp: [MÅLGRUPP]
+Ton: [PROFESSIONELL/CASUAL/INSPIRERANDE]
+Längd: Cirka [ANTAL] kapitel
+
+För varje kapitel, inkludera:
+- Kapiteltitel
+- 3-5 huvudpunkter
+- 1 praktisk övning eller action item
+- 1 "key takeaway"
+
+Avsluta med förslag på bonus-material som kan ingå.</div>
+                <div class="prompt-variables">
+                    <span class="prompt-var">[ÄMNE]</span>
+                    <span class="prompt-var">[MÅLGRUPP]</span>
+                    <span class="prompt-var">[TON]</span>
+                    <span class="prompt-var">[ANTAL]</span>
+                </div>
+            </div>
+
+            <div class="prompt-card">
+                <div class="prompt-card-header">
+                    <div class="prompt-card-title">✍️ Kapitelskrivare</div>
+                    <button class="btn btn-sm btn-outline-primary prompt-copy-btn" onclick="copyPrompt(this)">
+                        <i class="fas fa-copy me-1"></i> Kopiera
+                    </button>
+                </div>
+                <div class="prompt-text">Skriv kapitel [NUMMER] av min e-bok om [ÄMNE].
+
+Kapiteltitel: [TITEL]
+Huvudpunkter att täcka:
+[PUNKT 1]
+[PUNKT 2]
+[PUNKT 3]
+
+Riktlinjer:
+- Använd en [TON] ton
+- Inkludera 2-3 praktiska exempel
+- Avsluta med en kort sammanfattning
+- Längd: cirka 1500-2000 ord
+- Använd underrubriker för läsbarhet</div>
+            </div>
+        </div>
+
+        <!-- Art Prompts -->
+        <div class="prompt-content" id="prompt-art">
+            <div class="prompt-card">
+                <div class="prompt-card-header">
+                    <div class="prompt-card-title">🎨 Seamless Pattern</div>
+                    <button class="btn btn-sm btn-outline-primary prompt-copy-btn" onclick="copyPrompt(this)">
+                        <i class="fas fa-copy me-1"></i> Kopiera
+                    </button>
+                </div>
+                <div class="prompt-text">seamless repeating pattern of [MOTIV], [STIL] style, [FÄRGSCHEMA] color palette, high resolution, suitable for fabric printing, clean edges, tileable --tile</div>
+                <div class="prompt-variables">
+                    <span class="prompt-var">[MOTIV]</span>
+                    <span class="prompt-var">[STIL]</span>
+                    <span class="prompt-var">[FÄRGSCHEMA]</span>
+                </div>
+            </div>
+
+            <div class="prompt-card">
+                <div class="prompt-card-header">
+                    <div class="prompt-card-title">📸 Stock Photo Style</div>
+                    <button class="btn btn-sm btn-outline-primary prompt-copy-btn" onclick="copyPrompt(this)">
+                        <i class="fas fa-copy me-1"></i> Kopiera
+                    </button>
+                </div>
+                <div class="prompt-text">[SCENARIO], professional stock photography, natural lighting, shallow depth of field, [MOOD] atmosphere, high resolution, commercial use, clean composition, modern aesthetic --ar 16:9 --style raw</div>
+            </div>
+
+            <div class="prompt-card">
+                <div class="prompt-card-header">
+                    <div class="prompt-card-title">🖼️ Digital Art Print</div>
+                    <button class="btn btn-sm btn-outline-primary prompt-copy-btn" onclick="copyPrompt(this)">
+                        <i class="fas fa-copy me-1"></i> Kopiera
+                    </button>
+                </div>
+                <div class="prompt-text">[MOTIV], [KONSTSTIL] art style, suitable for wall art print, [FÄRGER], highly detailed, museum quality, [STÄMNING] mood, 4k resolution --ar 3:4 --stylize 750</div>
+            </div>
+        </div>
+
+        <!-- Social Media Prompts -->
+        <div class="prompt-content" id="prompt-social">
+            <div class="prompt-card">
+                <div class="prompt-card-header">
+                    <div class="prompt-card-title">📱 Hook Generator</div>
+                    <button class="btn btn-sm btn-outline-primary prompt-copy-btn" onclick="copyPrompt(this)">
+                        <i class="fas fa-copy me-1"></i> Kopiera
+                    </button>
+                </div>
+                <div class="prompt-text">Generera 20 virala hooks för [PLATTFORM] inom nischen [NISCH].
+
+Varje hook ska:
+- Vara max 10 ord
+- Skapa nyfikenhet eller FOMO
+- Passa för [PLATTFORM]s algoritm
+- Kunna användas som video-intro eller post-start
+
+Kategorisera i: Kontroversiella, Värde-baserade, Story-baserade, Frågebaserade</div>
+            </div>
+
+            <div class="prompt-card">
+                <div class="prompt-card-header">
+                    <div class="prompt-card-title">📅 Content Calendar</div>
+                    <button class="btn btn-sm btn-outline-primary prompt-copy-btn" onclick="copyPrompt(this)">
+                        <i class="fas fa-copy me-1"></i> Kopiera
+                    </button>
+                </div>
+                <div class="prompt-text">Skapa en månads content calendar för [NISCH/BRAND] på [PLATTFORM].
+
+Inkludera för varje dag:
+- Content-typ (carousel, reel, story, etc.)
+- Hook/titel
+- Kort beskrivning av innehållet
+- Bästa publiceringstid
+- Relevanta hashtags (5-10 st)
+
+Balansera: 40% värde, 30% underhållning, 20% sälj, 10% personligt</div>
+            </div>
+        </div>
+
+        <!-- Code Prompts -->
+        <div class="prompt-content" id="prompt-code">
+            <div class="prompt-card">
+                <div class="prompt-card-header">
+                    <div class="prompt-card-title">⚡ Automation Script</div>
+                    <button class="btn btn-sm btn-outline-primary prompt-copy-btn" onclick="copyPrompt(this)">
+                        <i class="fas fa-copy me-1"></i> Kopiera
+                    </button>
+                </div>
+                <div class="prompt-text">Skapa ett [SPRÅK] script som automatiserar [UPPGIFT].
+
+Krav:
+- Ska vara enkelt att konfigurera (config-fil eller variabler i toppen)
+- Felhantering med tydliga meddelanden
+- Logga alla viktiga händelser
+- Inkludera README med installationsinstruktioner
+- Kommentera koden på svenska
+
+Input: [INPUT_FORMAT]
+Output: [OUTPUT_FORMAT]</div>
+            </div>
+
+            <div class="prompt-card">
+                <div class="prompt-card-header">
+                    <div class="prompt-card-title">🔌 API Integration</div>
+                    <button class="btn btn-sm btn-outline-primary prompt-copy-btn" onclick="copyPrompt(this)">
+                        <i class="fas fa-copy me-1"></i> Kopiera
+                    </button>
+                </div>
+                <div class="prompt-text">Skapa en [SPRÅK] integration mellan [API_1] och [API_2].
+
+Funktionalitet:
+- Hämta data från [API_1]
+- Transformera enligt [LOGIK]
+- Skicka till [API_2]
+- Schemalägg att köra [FREKVENS]
+
+Inkludera:
+- Rate limiting
+- Retry-logik
+- Error notifications
+- Dokumentation</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copyright Guide -->
+    <div class="copyright-section">
+        <h5 class="mb-3">⚖️ Copyright & Etik Guide</h5>
+        <div class="copyright-grid">
+            <div class="copyright-card allowed">
+                <div class="copyright-card-icon">✅</div>
+                <div class="copyright-card-title">Tillåtet</div>
+                <ul>
+                    <li>Sälja AI-assisterat innehåll du förädlat</li>
+                    <li>Använda AI för research och idégenerering</li>
+                    <li>Skapa original-verk med AI som verktyg</li>
+                    <li>Vara transparent om AI-användning</li>
+                    <li>Kombinera AI-output med egen expertis</li>
+                </ul>
+            </div>
+            <div class="copyright-card caution">
+                <div class="copyright-card-icon">⚠️</div>
+                <div class="copyright-card-title">Försiktighet</div>
+                <ul>
+                    <li>Kontrollera plattformens AI-policy</li>
+                    <li>Vissa stock-sidor kräver disclosure</li>
+                    <li>Amazon KDP har specifika AI-regler</li>
+                    <li>Kommersiella licenser varierar per AI-verktyg</li>
+                    <li>Trademark/varumärken i prompts</li>
+                </ul>
+            </div>
+            <div class="copyright-card forbidden">
+                <div class="copyright-card-icon">❌</div>
+                <div class="copyright-card-title">Undvik</div>
+                <ul>
+                    <li>Påstå att AI-content är "handgjort"</li>
+                    <li>Kopiera kända konstnärers stil exakt</li>
+                    <li>Använda träningsdata utan tillstånd</li>
+                    <li>Generera deepfakes/misinfo</li>
+                    <li>Bryta mot plattformars ToS</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Income Calculator -->
+    <div class="calculator-section">
+        <h5 class="mb-4">🧮 Intäktskalkylator för AI-content</h5>
+        <div class="calc-grid">
+            <div>
+                <div class="mb-3">
+                    <label class="form-label">Produkttyp</label>
+                    <select class="form-select" id="calc-product" onchange="calculateAIIncome()">
+                        <option value="ebook">E-bok/Guide</option>
+                        <option value="templates">Mallar/Templates</option>
+                        <option value="art">AI-konst/Patterns</option>
+                        <option value="audio">Musik/Ljud</option>
+                        <option value="code">Kod/Automation</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Pris per produkt (kr)</label>
+                    <input type="number" class="form-control" id="calc-price" value="199" onchange="calculateAIIncome()">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Antal produkter du skapar per månad</label>
+                    <input type="number" class="form-control" id="calc-products" value="4" onchange="calculateAIIncome()">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Uppskattade sälj per produkt/månad</label>
+                    <input type="number" class="form-control" id="calc-sales" value="20" onchange="calculateAIIncome()">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Plattformsavgift (%)</label>
+                    <input type="number" class="form-control" id="calc-fee" value="30" onchange="calculateAIIncome()">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">AI-verktygskostnad per månad (kr)</label>
+                    <input type="number" class="form-control" id="calc-tools" value="500" onchange="calculateAIIncome()">
+                </div>
+            </div>
+            <div class="calc-results">
+                <h6 class="mb-3">Projicerad inkomst</h6>
+                <div class="calc-result-item">
+                    <span>Bruttointäkt/mån</span>
+                    <span id="result-gross">15 920 kr</span>
+                </div>
+                <div class="calc-result-item">
+                    <span>Plattformsavgift</span>
+                    <span id="result-fee">-4 776 kr</span>
+                </div>
+                <div class="calc-result-item">
+                    <span>AI-verktyg</span>
+                    <span id="result-tools">-500 kr</span>
+                </div>
+                <div class="calc-result-item highlight">
+                    <span>Nettointäkt/mån</span>
+                    <span id="result-net">10 644 kr</span>
+                </div>
+                <div class="calc-result-item">
+                    <span>Projicerad årsinkomst</span>
+                    <span id="result-yearly">127 728 kr</span>
+                </div>
+                <div class="mt-3 text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Passiv inkomst växer över tid när du bygger katalog
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Platforms -->
+    <h5 class="mb-3">🏪 Var sälja AI-genererat innehåll</h5>
+    <div class="platforms-grid">
+        <div class="platform-card">
+            <div class="platform-icon">📚</div>
+            <div class="platform-name">Gumroad</div>
+            <div class="platform-type">Digitala produkter</div>
+            <div class="platform-cut">Du behåller 90%</div>
+        </div>
+        <div class="platform-card">
+            <div class="platform-icon">🛒</div>
+            <div class="platform-name">Etsy</div>
+            <div class="platform-type">Digitala downloads</div>
+            <div class="platform-cut">~80% efter avgifter</div>
+        </div>
+        <div class="platform-card">
+            <div class="platform-icon">📖</div>
+            <div class="platform-name">Amazon KDP</div>
+            <div class="platform-type">E-böcker</div>
+            <div class="platform-cut">35-70% royalty</div>
+        </div>
+        <div class="platform-card">
+            <div class="platform-icon">🎨</div>
+            <div class="platform-name">Creative Market</div>
+            <div class="platform-type">Design assets</div>
+            <div class="platform-cut">Du behåller 70%</div>
+        </div>
+        <div class="platform-card">
+            <div class="platform-icon">📷</div>
+            <div class="platform-name">Adobe Stock</div>
+            <div class="platform-type">Bilder & video</div>
+            <div class="platform-cut">33% per försäljning</div>
+        </div>
+        <div class="platform-card">
+            <div class="platform-icon">🎵</div>
+            <div class="platform-name">Pond5</div>
+            <div class="platform-type">Musik & ljud</div>
+            <div class="platform-cut">25-60% royalty</div>
+        </div>
+        <div class="platform-card">
+            <div class="platform-icon">💻</div>
+            <div class="platform-name">CodeCanyon</div>
+            <div class="platform-type">Kod & scripts</div>
+            <div class="platform-cut">37.5-87.5%</div>
+        </div>
+        <div class="platform-card">
+            <div class="platform-icon">📝</div>
+            <div class="platform-name">Notion Market</div>
+            <div class="platform-type">Templates</div>
+            <div class="platform-cut">Du behåller 100%</div>
+        </div>
+    </div>
+
+    <!-- Tips -->
+    <h5 class="mb-3">💡 Tips för framgång</h5>
+    <div class="tips-grid">
+        <div class="tip-card">
+            <div class="tip-number">1</div>
+            <div class="tip-title">Niche down</div>
+            <div class="tip-text">Istället för "e-böcker" - fokusera på "sourdough-guider för nybörjare". Specifikt = mindre konkurrens.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-number">2</div>
+            <div class="tip-title">Lägg till mänskligt värde</div>
+            <div class="tip-text">AI skapar basen - du lägger till expertis, personlighet och polish. Det är din edge.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-number">3</div>
+            <div class="tip-title">Bygg katalog</div>
+            <div class="tip-text">En produkt säljer lite. 50 produkter skapar en inkomstström. Volym är nyckeln till passiv inkomst.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-number">4</div>
+            <div class="tip-title">Testa och iterera</div>
+            <div class="tip-text">Släpp snabbt, se vad som säljer, gör mer av det. Data > gissningar.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-number">5</div>
+            <div class="tip-title">Bygg email-lista</div>
+            <div class="tip-text">Plattformar kan ändra regler. Din email-lista är din - bygg den tidigt.</div>
+        </div>
+        <div class="tip-card">
+            <div class="tip-number">6</div>
+            <div class="tip-title">Var transparent</div>
+            <div class="tip-text">"AI-assisterad" är inte negativt - det är effektivt. Ärlighet bygger förtroende.</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        calculateAIIncome();
+    });
+
+    function showPromptTab(tabId) {
+        document.querySelectorAll('.prompt-tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.prompt-content').forEach(content => content.classList.remove('active'));
+
+        event.target.classList.add('active');
+        document.getElementById(`prompt-${tabId}`).classList.add('active');
+    }
+
+    function copyPrompt(button) {
+        const promptCard = button.closest('.prompt-card');
+        const promptText = promptCard.querySelector('.prompt-text').textContent;
+
+        navigator.clipboard.writeText(promptText).then(() => {
+            button.innerHTML = '<i class="fas fa-check me-1"></i> Kopierad!';
+            setTimeout(() => {
+                button.innerHTML = '<i class="fas fa-copy me-1"></i> Kopiera';
+            }, 2000);
+        });
+    }
+
+    function calculateAIIncome() {
+        const price = parseFloat(document.getElementById('calc-price').value) || 0;
+        const products = parseFloat(document.getElementById('calc-products').value) || 0;
+        const sales = parseFloat(document.getElementById('calc-sales').value) || 0;
+        const feePercent = parseFloat(document.getElementById('calc-fee').value) || 0;
+        const tools = parseFloat(document.getElementById('calc-tools').value) || 0;
+
+        // Assuming cumulative sales from all products
+        const totalProducts = products; // New products per month
+        const totalSales = products * sales; // Total sales across all new products
+        const gross = price * totalSales;
+        const fee = gross * (feePercent / 100);
+        const net = gross - fee - tools;
+        const yearly = net * 12;
+
+        document.getElementById('result-gross').textContent = formatCurrency(gross);
+        document.getElementById('result-fee').textContent = '-' + formatCurrency(fee);
+        document.getElementById('result-tools').textContent = '-' + formatCurrency(tools);
+        document.getElementById('result-net').textContent = formatCurrency(net);
+        document.getElementById('result-yearly').textContent = formatCurrency(yearly);
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('sv-SE', {
+            style: 'decimal',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount) + ' kr';
+    }
+</script>
+{% endblock %}

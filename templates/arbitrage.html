@@ -1,0 +1,1144 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Arbitrage Finder - Wealth Agent{% endblock %}
+
+{% block page_title %}Arbitrage Finder{% endblock %}
+
+{% block content %}
+<div class="arbitrage-page">
+    <!-- Intro Section -->
+    <div class="intro-section">
+        <div class="intro-card">
+            <div class="intro-icon">
+                <i class="fas fa-search-dollar"></i>
+            </div>
+            <div class="intro-content">
+                <h2>Hitta prisskillnader mellan plattformar</h2>
+                <p>Arbitrage handlar om att kopa billigt pa en plattform och salja dyrare pa en annan.
+                   Lagg till produkter du bevakar for att se var du kan hitta basta priserna.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-eye"></i></div>
+            <div class="stat-content">
+                <span class="stat-value" id="watchingCount">0</span>
+                <span class="stat-label">Produkter du bevakar</span>
+            </div>
+        </div>
+        <div class="stat-card highlight">
+            <div class="stat-icon"><i class="fas fa-fire"></i></div>
+            <div class="stat-content">
+                <span class="stat-value" id="hotDealsCount">0</span>
+                <span class="stat-label">Heta mojligheter</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+            <div class="stat-content">
+                <span class="stat-value" id="potentialProfit">0 kr</span>
+                <span class="stat-label">Potentiell vinst</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Watch Item -->
+    <div class="add-section">
+        <button class="btn-primary" onclick="openAddWatchModal()">
+            <i class="fas fa-plus"></i> Lagg till produkt att bevaka
+        </button>
+    </div>
+
+    <!-- Hot Deals -->
+    <div class="section">
+        <div class="section-header">
+            <h3><i class="fas fa-fire"></i> Heta mojligheter just nu</h3>
+        </div>
+        <div class="deals-grid" id="hotDeals">
+            <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <p>Lagg till produkter du vill bevaka for att hitta arbitrage-mojligheter</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Watching List -->
+    <div class="section">
+        <div class="section-header">
+            <h3><i class="fas fa-eye"></i> Produkter du bevakar</h3>
+            <div class="filter-chips">
+                <button class="chip active" data-filter="all">Alla</button>
+                <button class="chip" data-filter="electronics">Elektronik</button>
+                <button class="chip" data-filter="fashion">Klader</button>
+                <button class="chip" data-filter="collectibles">Samlarforemol</button>
+                <button class="chip" data-filter="other">Ovrigt</button>
+            </div>
+        </div>
+        <div class="watch-list" id="watchList">
+            <div class="empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                <p>Du bevakar inga produkter an</p>
+                <button class="btn-secondary" onclick="openAddWatchModal()">Lagg till din forsta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Platform Guide -->
+    <div class="section">
+        <div class="section-header">
+            <h3><i class="fas fa-store"></i> Plattformsguide for arbitrage</h3>
+        </div>
+        <div class="platforms-guide">
+            <div class="platform-guide-card buy">
+                <h4><i class="fas fa-shopping-cart"></i> Bast att KOPA fran</h4>
+                <div class="platform-list">
+                    <div class="platform-item">
+                        <span class="platform-name">Blocket</span>
+                        <span class="platform-tip">Privatpersoner underprissatter ofta</span>
+                    </div>
+                    <div class="platform-item">
+                        <span class="platform-name">Facebook Marketplace</span>
+                        <span class="platform-tip">Lokala fynd, inga avgifter</span>
+                    </div>
+                    <div class="platform-item">
+                        <span class="platform-name">Loppisar & Secondhand</span>
+                        <span class="platform-tip">Kunskapsarbitrage - de vet inte vardet</span>
+                    </div>
+                    <div class="platform-item">
+                        <span class="platform-name">Konkursauktioner</span>
+                        <span class="platform-tip">Stora partier till laga priser</span>
+                    </div>
+                    <div class="platform-item">
+                        <span class="platform-name">Dodsbon</span>
+                        <span class="platform-tip">Ofta vintage och samlarforemol</span>
+                    </div>
+                </div>
+            </div>
+            <div class="platform-guide-card sell">
+                <h4><i class="fas fa-cash-register"></i> Bast att SALJA pa</h4>
+                <div class="platform-list">
+                    <div class="platform-item">
+                        <span class="platform-name">eBay</span>
+                        <span class="platform-tip">Global rackvidd, hogre priser</span>
+                    </div>
+                    <div class="platform-item">
+                        <span class="platform-name">Tradera</span>
+                        <span class="platform-tip">Auktionsformat driver upp priser</span>
+                    </div>
+                    <div class="platform-item">
+                        <span class="platform-name">Nischade grupper</span>
+                        <span class="platform-tip">FB-grupper for samlare betalar premium</span>
+                    </div>
+                    <div class="platform-item">
+                        <span class="platform-name">Etsy</span>
+                        <span class="platform-tip">Vintage & handgjort till premium</span>
+                    </div>
+                    <div class="platform-item">
+                        <span class="platform-name">Stockholms Auktionsverk</span>
+                        <span class="platform-tip">Exklusiva foremol</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories with Good Margins -->
+    <div class="section">
+        <div class="section-header">
+            <h3><i class="fas fa-tags"></i> Kategorier med hog marginal</h3>
+        </div>
+        <div class="categories-grid">
+            <div class="category-card">
+                <div class="category-icon"><i class="fas fa-gamepad"></i></div>
+                <h5>Retro-spel</h5>
+                <p>NES, SNES, N64-spel kan vara varda 1000-tals kronor</p>
+                <span class="margin-badge">50-500% marginal</span>
+            </div>
+            <div class="category-card">
+                <div class="category-icon"><i class="fas fa-record-vinyl"></i></div>
+                <h5>Vinyl & Skivor</h5>
+                <p>Forsta pressningar och limiterade upplagor</p>
+                <span class="margin-badge">100-1000% marginal</span>
+            </div>
+            <div class="category-card">
+                <div class="category-icon"><i class="fas fa-couch"></i></div>
+                <h5>Designmobler</h5>
+                <p>Skandinavisk design fran 50-70-talet</p>
+                <span class="margin-badge">50-200% marginal</span>
+            </div>
+            <div class="category-card">
+                <div class="category-icon"><i class="fas fa-tshirt"></i></div>
+                <h5>Vintage-klader</h5>
+                <p>Band-tshirts, Levi's 501, designer</p>
+                <span class="margin-badge">100-500% marginal</span>
+            </div>
+            <div class="category-card">
+                <div class="category-icon"><i class="fas fa-camera-retro"></i></div>
+                <h5>Analog foto</h5>
+                <p>Filmkameror, linser, vintage tillbehor</p>
+                <span class="margin-badge">50-300% marginal</span>
+            </div>
+            <div class="category-card">
+                <div class="category-icon"><i class="fas fa-book"></i></div>
+                <h5>Forsta-upplagor</h5>
+                <p>Bocker fran kanda forfattare</p>
+                <span class="margin-badge">100-10000% marginal</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tips Section -->
+    <div class="section">
+        <div class="section-header">
+            <h3><i class="fas fa-lightbulb"></i> Arbitrage-tips</h3>
+        </div>
+        <div class="tips-list">
+            <div class="tip-item">
+                <span class="tip-number">1</span>
+                <div class="tip-content">
+                    <h5>Lar dig kanna igen varde</h5>
+                    <p>Studera priser pa eBay "Salda foremol" for att veta vad saker faktiskt saljs for.</p>
+                </div>
+            </div>
+            <div class="tip-item">
+                <span class="tip-number">2</span>
+                <div class="tip-content">
+                    <h5>Fokusera pa en nisch</h5>
+                    <p>Bli expert pa en kategori istallet for att kopa allt. Du ser deals andra missar.</p>
+                </div>
+            </div>
+            <div class="tip-item">
+                <span class="tip-number">3</span>
+                <div class="tip-content">
+                    <h5>Morgonstansen vinner</h5>
+                    <p>Kolla loppisar och secondhand tidigt - de basta fynden gar fort.</p>
+                </div>
+            </div>
+            <div class="tip-item">
+                <span class="tip-number">4</span>
+                <div class="tip-content">
+                    <h5>Satt upp prisalarmer</h5>
+                    <p>Anvand Tradera och eBay:s "Spara sokning" for att fa notiser om nya annonser.</p>
+                </div>
+            </div>
+            <div class="tip-item">
+                <span class="tip-number">5</span>
+                <div class="tip-content">
+                    <h5>Rakna alltid pa frakt</h5>
+                    <p>Internationell forsaljning kan ata upp hela marginalen om du inte tar betalt for frakt.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Watch Modal -->
+<div class="modal" id="addWatchModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-eye"></i> Bevaka produkt</h3>
+            <button class="modal-close" onclick="closeModal('addWatchModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="watchForm">
+                <div class="form-group">
+                    <label>Produktnamn *</label>
+                    <input type="text" id="watchName" placeholder="t.ex. iPhone 12 Pro 128GB" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select id="watchCategory">
+                            <option value="electronics">Elektronik</option>
+                            <option value="fashion">Klader</option>
+                            <option value="collectibles">Samlarforemol</option>
+                            <option value="furniture">Mobler</option>
+                            <option value="games">Spel & Leksaker</option>
+                            <option value="other">Ovrigt</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Marknadspris (ca)</label>
+                        <input type="number" id="watchMarketPrice" placeholder="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Kopgrans (max)</label>
+                        <input type="number" id="watchMaxBuy" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Forvantat forsaljningspris</label>
+                        <input type="number" id="watchSellPrice" placeholder="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Anteckningar</label>
+                    <textarea id="watchNotes" placeholder="Var du planerar kopa/salja, vad du letar efter..."></textarea>
+                </div>
+
+                <div class="margin-preview" id="marginPreview">
+                    <span>Potentiell marginal: <strong>0%</strong></span>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeModal('addWatchModal')">Avbryt</button>
+            <button class="btn-primary" onclick="saveWatch()">
+                <i class="fas fa-eye"></i> Borja bevaka
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.arbitrage-page {
+    padding: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.intro-section {
+    margin-bottom: 1.5rem;
+}
+
+.intro-card {
+    background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    color: white;
+}
+
+.intro-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.intro-content h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+}
+
+.intro-content p {
+    margin: 0;
+    opacity: 0.9;
+    line-height: 1.6;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid var(--border);
+}
+
+.stat-card.highlight {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border: none;
+}
+
+.stat-card.highlight .stat-icon {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.add-section {
+    margin-bottom: 1.5rem;
+}
+
+.btn-primary {
+    padding: 0.75rem 1.5rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.btn-secondary {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.section {
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-header h3 i {
+    color: var(--primary);
+}
+
+.filter-chips {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.chip {
+    padding: 0.4rem 0.75rem;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text);
+}
+
+.chip:hover {
+    border-color: var(--primary);
+}
+
+.chip.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.deals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.deal-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+    transition: all 0.2s;
+}
+
+.deal-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.deal-card.hot {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, transparent 100%);
+}
+
+.deal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.deal-name {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.deal-category {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.deal-badge {
+    background: #f59e0b;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.deal-prices {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.price-col {
+    text-align: center;
+}
+
+.price-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: block;
+}
+
+.price-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.price-value.buy {
+    color: var(--success);
+}
+
+.price-value.sell {
+    color: var(--primary);
+}
+
+.deal-margin {
+    text-align: center;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.margin-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.margin-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--success);
+}
+
+.watch-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.watch-item {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.watch-item .watch-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.watch-item .watch-info {
+    flex: 1;
+}
+
+.watch-item .watch-name {
+    font-weight: 600;
+}
+
+.watch-item .watch-meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.watch-item .watch-prices {
+    text-align: right;
+}
+
+.watch-item .watch-margin {
+    font-weight: 600;
+    color: var(--success);
+}
+
+.watch-item .watch-target {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.watch-item .watch-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.watch-item .action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.watch-item .action-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px dashed var(--border);
+}
+
+.empty-state i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Platforms Guide */
+.platforms-guide {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.platform-guide-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+}
+
+.platform-guide-card.buy {
+    border-left: 4px solid var(--success);
+}
+
+.platform-guide-card.sell {
+    border-left: 4px solid var(--primary);
+}
+
+.platform-guide-card h4 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.platform-guide-card.buy h4 i {
+    color: var(--success);
+}
+
+.platform-guide-card.sell h4 i {
+    color: var(--primary);
+}
+
+.platform-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.platform-list .platform-item {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.platform-list .platform-item:last-child {
+    border-bottom: none;
+}
+
+.platform-list .platform-name {
+    font-weight: 600;
+}
+
+.platform-list .platform-tip {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Categories Grid */
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
+.category-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.category-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.category-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin: 0 auto 0.75rem;
+}
+
+.category-card h5 {
+    margin: 0 0 0.5rem 0;
+}
+
+.category-card p {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.margin-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Tips List */
+.tips-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.tip-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.tip-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.tip-content h5 {
+    margin: 0 0 0.25rem 0;
+}
+
+.tip-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.modal-body {
+    padding: 1.25rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.form-group textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.margin-preview {
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.margin-preview strong {
+    color: var(--success);
+    font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+    .intro-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadWatchList();
+    initFilters();
+
+    // Margin preview
+    ['watchMaxBuy', 'watchSellPrice'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', updateMarginPreview);
+    });
+});
+
+function loadWatchList() {
+    const watchList = JSON.parse(localStorage.getItem('arbitrage_watch') || '[]');
+    updateStats(watchList);
+    renderWatchList(watchList);
+    renderHotDeals(watchList);
+}
+
+function updateStats(watchList) {
+    const hotDeals = watchList.filter(w => w.margin >= 50);
+    const potentialProfit = watchList.reduce((sum, w) => {
+        const profit = (w.sellPrice || 0) - (w.maxBuy || 0);
+        return sum + (profit > 0 ? profit : 0);
+    }, 0);
+
+    document.getElementById('watchingCount').textContent = watchList.length;
+    document.getElementById('hotDealsCount').textContent = hotDeals.length;
+    document.getElementById('potentialProfit').textContent = formatCurrency(potentialProfit);
+}
+
+function renderWatchList(watchList, filter = 'all') {
+    const container = document.getElementById('watchList');
+    const filtered = filter === 'all' ? watchList : watchList.filter(w => w.category === filter);
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                <p>Du bevakar inga produkter an</p>
+                <button class="btn-secondary" onclick="openAddWatchModal()">Lagg till din forsta</button>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = filtered.map(item => `
+        <div class="watch-item">
+            <div class="watch-icon">
+                <i class="fas fa-${getCategoryIcon(item.category)}"></i>
+            </div>
+            <div class="watch-info">
+                <div class="watch-name">${item.name}</div>
+                <div class="watch-meta">${getCategoryLabel(item.category)}</div>
+            </div>
+            <div class="watch-prices">
+                <div class="watch-margin">+${item.margin || 0}% marginal</div>
+                <div class="watch-target">Kop under ${formatCurrency(item.maxBuy || 0)}</div>
+            </div>
+            <div class="watch-actions">
+                <button class="action-btn" onclick="deleteWatch(${item.id})" title="Ta bort">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderHotDeals(watchList) {
+    const container = document.getElementById('hotDeals');
+    const hotDeals = watchList.filter(w => w.margin >= 50);
+
+    if (hotDeals.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <p>Lagg till produkter du vill bevaka for att hitta arbitrage-mojligheter</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = hotDeals.map(item => `
+        <div class="deal-card hot">
+            <div class="deal-header">
+                <div>
+                    <div class="deal-name">${item.name}</div>
+                    <div class="deal-category">${getCategoryLabel(item.category)}</div>
+                </div>
+                <span class="deal-badge">HOT</span>
+            </div>
+            <div class="deal-prices">
+                <div class="price-col">
+                    <span class="price-label">Kop under</span>
+                    <span class="price-value buy">${formatCurrency(item.maxBuy || 0)}</span>
+                </div>
+                <div class="price-col">
+                    <span class="price-label">Salj for</span>
+                    <span class="price-value sell">${formatCurrency(item.sellPrice || 0)}</span>
+                </div>
+            </div>
+            <div class="deal-margin">
+                <span class="margin-label">Potentiell marginal</span>
+                <div class="margin-value">+${item.margin}%</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function initFilters() {
+    document.querySelectorAll('.filter-chips .chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            document.querySelectorAll('.filter-chips .chip').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            const filter = this.dataset.filter;
+            const watchList = JSON.parse(localStorage.getItem('arbitrage_watch') || '[]');
+            renderWatchList(watchList, filter);
+        });
+    });
+}
+
+function openAddWatchModal() {
+    document.getElementById('watchForm').reset();
+    updateMarginPreview();
+    document.getElementById('addWatchModal').classList.add('active');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+function updateMarginPreview() {
+    const maxBuy = parseFloat(document.getElementById('watchMaxBuy').value) || 0;
+    const sellPrice = parseFloat(document.getElementById('watchSellPrice').value) || 0;
+
+    const margin = maxBuy > 0 ? Math.round(((sellPrice - maxBuy) / maxBuy) * 100) : 0;
+    document.getElementById('marginPreview').innerHTML = `
+        <span>Potentiell marginal: <strong style="color: ${margin >= 50 ? 'var(--success)' : 'var(--text)'}">${margin}%</strong></span>
+    `;
+}
+
+function saveWatch() {
+    const maxBuy = parseFloat(document.getElementById('watchMaxBuy').value) || 0;
+    const sellPrice = parseFloat(document.getElementById('watchSellPrice').value) || 0;
+    const margin = maxBuy > 0 ? Math.round(((sellPrice - maxBuy) / maxBuy) * 100) : 0;
+
+    const watch = {
+        id: Date.now(),
+        name: document.getElementById('watchName').value,
+        category: document.getElementById('watchCategory').value,
+        marketPrice: parseFloat(document.getElementById('watchMarketPrice').value) || null,
+        maxBuy: maxBuy,
+        sellPrice: sellPrice,
+        margin: margin,
+        notes: document.getElementById('watchNotes').value,
+        createdAt: new Date().toISOString()
+    };
+
+    const watchList = JSON.parse(localStorage.getItem('arbitrage_watch') || '[]');
+    watchList.push(watch);
+    localStorage.setItem('arbitrage_watch', JSON.stringify(watchList));
+
+    closeModal('addWatchModal');
+    loadWatchList();
+
+    if (window.WealthAgent) {
+        WealthAgent.showToast('Produkt tillagd!', 'success');
+    }
+}
+
+function deleteWatch(id) {
+    if (!confirm('Ta bort denna bevakning?')) return;
+
+    let watchList = JSON.parse(localStorage.getItem('arbitrage_watch') || '[]');
+    watchList = watchList.filter(w => w.id !== id);
+    localStorage.setItem('arbitrage_watch', JSON.stringify(watchList));
+    loadWatchList();
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK', maximumFractionDigits: 0 }).format(amount);
+}
+
+function getCategoryIcon(category) {
+    const icons = {
+        electronics: 'laptop',
+        fashion: 'tshirt',
+        collectibles: 'gem',
+        furniture: 'couch',
+        games: 'gamepad',
+        other: 'box'
+    };
+    return icons[category] || 'box';
+}
+
+function getCategoryLabel(category) {
+    const labels = {
+        electronics: 'Elektronik',
+        fashion: 'Klader',
+        collectibles: 'Samlarforemol',
+        furniture: 'Mobler',
+        games: 'Spel & Leksaker',
+        other: 'Ovrigt'
+    };
+    return labels[category] || category;
+}
+</script>
+{% endblock %}

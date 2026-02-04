@@ -1,0 +1,365 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Mina Mål - AI Wealth Agent{% endblock %}
+{% block page_title %}Mina Mål{% endblock %}
+
+{% block content %}
+<div class="goals-page">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-info">
+            <p>Sätt upp och följ dina ekonomiska mål</p>
+        </div>
+        <button class="btn btn-primary" onclick="openGoalModal()">
+            <i class="fas fa-plus"></i> Nytt mål
+        </button>
+    </div>
+
+    <!-- Goals Summary -->
+    <div class="goals-summary">
+        <div class="summary-card">
+            <div class="summary-icon">
+                <i class="fas fa-bullseye"></i>
+            </div>
+            <div class="summary-content">
+                <span class="summary-value" id="activeGoalsCount">{{ goals|selectattr('status', 'equalto', 'aktiv')|list|length }}</span>
+                <span class="summary-label">Aktiva mål</span>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-icon completed">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="summary-content">
+                <span class="summary-value">{{ goals|selectattr('status', 'equalto', 'slutförd')|list|length }}</span>
+                <span class="summary-label">Slutförda</span>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-icon total">
+                <i class="fas fa-coins"></i>
+            </div>
+            <div class="summary-content">
+                <span class="summary-value">{{ "{:,.0f}".format(goals|selectattr('status', 'equalto', 'aktiv')|map(attribute='current_amount')|sum) }}</span>
+                <span class="summary-label">Totalt sparat (SEK)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+        <button class="tab active" data-filter="all">Alla</button>
+        <button class="tab" data-filter="aktiv">Aktiva</button>
+        <button class="tab" data-filter="slutförd">Slutförda</button>
+    </div>
+
+    <!-- Goals Grid -->
+    <div class="goals-grid" id="goalsGrid">
+        {% if goals %}
+            {% for goal in goals %}
+            <div class="goal-card" data-status="{{ goal.status }}" data-id="{{ goal.id }}">
+                <div class="goal-header">
+                    <span class="goal-category {{ goal.category }}">
+                        {% if goal.category == 'sparande' %}
+                            <i class="fas fa-piggy-bank"></i>
+                        {% elif goal.category == 'investering' %}
+                            <i class="fas fa-chart-line"></i>
+                        {% elif goal.category == 'inkomst' %}
+                            <i class="fas fa-hand-holding-usd"></i>
+                        {% elif goal.category == 'företag' %}
+                            <i class="fas fa-briefcase"></i>
+                        {% else %}
+                            <i class="fas fa-flag"></i>
+                        {% endif %}
+                        {{ goal.category|title }}
+                    </span>
+                    <span class="goal-priority {{ goal.priority }}">{{ goal.priority|title }}</span>
+                </div>
+
+                <h3 class="goal-title">{{ goal.title }}</h3>
+                {% if goal.description %}
+                <p class="goal-description">{{ goal.description }}</p>
+                {% endif %}
+
+                <div class="goal-progress-section">
+                    <div class="progress-numbers">
+                        <span>{{ "{:,.0f}".format(goal.current_amount) }} {{ goal.currency }}</span>
+                        <span>av {{ "{:,.0f}".format(goal.target_amount) }} {{ goal.currency }}</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: {{ goal.progress_percent }}%"></div>
+                    </div>
+                    <span class="progress-percent">{{ goal.progress_percent }}%</span>
+                </div>
+
+                {% if goal.deadline %}
+                <div class="goal-deadline">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>{{ goal.deadline[:10] }}</span>
+                </div>
+                {% endif %}
+
+                <div class="goal-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="updateProgress({{ goal.id }})">
+                        <i class="fas fa-plus"></i> Uppdatera
+                    </button>
+                    <button class="btn btn-ghost btn-sm" onclick="editGoal({{ goal.id }})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-ghost btn-sm" onclick="deleteGoal({{ goal.id }})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-flag-checkered"></i>
+                <h3>Inga mål ännu</h3>
+                <p>Sätt upp ditt första ekonomiska mål för att börja!</p>
+                <button class="btn btn-primary" onclick="openGoalModal()">
+                    <i class="fas fa-plus"></i> Skapa mål
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Goal Modal -->
+<div class="modal" id="goalModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">Nytt mål</h2>
+            <button class="modal-close" onclick="closeGoalModal()">&times;</button>
+        </div>
+        <form id="goalForm">
+            <input type="hidden" id="goalId">
+
+            <div class="form-group">
+                <label for="goalTitle">Titel *</label>
+                <input type="text" id="goalTitle" required placeholder="T.ex. Spara 100 000 kr">
+            </div>
+
+            <div class="form-group">
+                <label for="goalDescription">Beskrivning</label>
+                <textarea id="goalDescription" placeholder="Beskriv ditt mål..."></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="goalCategory">Kategori</label>
+                    <select id="goalCategory">
+                        <option value="sparande">Sparande</option>
+                        <option value="investering">Investering</option>
+                        <option value="inkomst">Öka inkomst</option>
+                        <option value="företag">Företagande</option>
+                        <option value="skuld">Betala skuld</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="goalPriority">Prioritet</label>
+                    <select id="goalPriority">
+                        <option value="låg">Låg</option>
+                        <option value="medel" selected>Medel</option>
+                        <option value="hög">Hög</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="goalTarget">Målbelopp (SEK)</label>
+                    <input type="number" id="goalTarget" min="0" placeholder="100000">
+                </div>
+                <div class="form-group">
+                    <label for="goalCurrent">Nuvarande belopp (SEK)</label>
+                    <input type="number" id="goalCurrent" min="0" value="0" placeholder="0">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="goalDeadline">Deadline</label>
+                <input type="date" id="goalDeadline">
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeGoalModal()">Avbryt</button>
+                <button type="submit" class="btn btn-primary">Spara mål</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Progress Update Modal -->
+<div class="modal" id="progressModal">
+    <div class="modal-content modal-small">
+        <div class="modal-header">
+            <h2>Uppdatera framsteg</h2>
+            <button class="modal-close" onclick="closeProgressModal()">&times;</button>
+        </div>
+        <form id="progressForm">
+            <input type="hidden" id="progressGoalId">
+            <div class="form-group">
+                <label for="newAmount">Nytt belopp (SEK)</label>
+                <input type="number" id="newAmount" min="0" required>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeProgressModal()">Avbryt</button>
+                <button type="submit" class="btn btn-primary">Uppdatera</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Filter tabs
+    document.querySelectorAll('.filter-tabs .tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.filter-tabs .tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+
+            const filter = this.dataset.filter;
+            document.querySelectorAll('.goal-card').forEach(card => {
+                if (filter === 'all' || card.dataset.status === filter) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Goal Modal
+    function openGoalModal(goalId = null) {
+        document.getElementById('goalModal').classList.add('active');
+        document.getElementById('goalForm').reset();
+        document.getElementById('goalId').value = '';
+        document.getElementById('modalTitle').textContent = 'Nytt mål';
+    }
+
+    function closeGoalModal() {
+        document.getElementById('goalModal').classList.remove('active');
+    }
+
+    // Goal Form Submit
+    document.getElementById('goalForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const goalId = document.getElementById('goalId').value;
+        const data = {
+            title: document.getElementById('goalTitle').value,
+            description: document.getElementById('goalDescription').value,
+            category: document.getElementById('goalCategory').value,
+            priority: document.getElementById('goalPriority').value,
+            target_amount: parseFloat(document.getElementById('goalTarget').value) || 0,
+            current_amount: parseFloat(document.getElementById('goalCurrent').value) || 0,
+            deadline: document.getElementById('goalDeadline').value || null
+        };
+
+        const url = goalId ? `/wealth/api/goals/${goalId}` : '/wealth/api/goals';
+        const method = goalId ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                alert('Kunde inte spara målet. Försök igen.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Ett fel uppstod. Försök igen.');
+        }
+    });
+
+    // Edit goal
+    async function editGoal(goalId) {
+        try {
+            const response = await fetch(`/wealth/api/goals/${goalId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                const goal = data.goal;
+                document.getElementById('goalId').value = goal.id;
+                document.getElementById('goalTitle').value = goal.title;
+                document.getElementById('goalDescription').value = goal.description || '';
+                document.getElementById('goalCategory').value = goal.category;
+                document.getElementById('goalPriority').value = goal.priority;
+                document.getElementById('goalTarget').value = goal.target_amount || '';
+                document.getElementById('goalCurrent').value = goal.current_amount || '';
+                document.getElementById('goalDeadline').value = goal.deadline ? goal.deadline.split('T')[0] : '';
+                document.getElementById('modalTitle').textContent = 'Redigera mål';
+                document.getElementById('goalModal').classList.add('active');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Delete goal
+    async function deleteGoal(goalId) {
+        if (!confirm('Är du säker på att du vill ta bort detta mål?')) return;
+
+        try {
+            const response = await fetch(`/wealth/api/goals/${goalId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                document.querySelector(`.goal-card[data-id="${goalId}"]`).remove();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Progress Modal
+    function updateProgress(goalId) {
+        document.getElementById('progressGoalId').value = goalId;
+        const card = document.querySelector(`.goal-card[data-id="${goalId}"]`);
+        const currentText = card.querySelector('.progress-numbers span').textContent;
+        const currentAmount = parseFloat(currentText.replace(/[^0-9]/g, '')) || 0;
+        document.getElementById('newAmount').value = currentAmount;
+        document.getElementById('progressModal').classList.add('active');
+    }
+
+    function closeProgressModal() {
+        document.getElementById('progressModal').classList.remove('active');
+    }
+
+    document.getElementById('progressForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const goalId = document.getElementById('progressGoalId').value;
+        const newAmount = parseFloat(document.getElementById('newAmount').value);
+
+        try {
+            const response = await fetch(`/wealth/api/goals/${goalId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ current_amount: newAmount })
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+
+    // Close modal on outside click
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
+        });
+    });
+</script>
+{% endblock %}

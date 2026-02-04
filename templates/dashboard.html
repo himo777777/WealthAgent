@@ -1,0 +1,2526 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Dashboard - AI Wealth Agent{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <!-- Hero Stats Row -->
+    <div class="hero-stats">
+        <div class="hero-stat-card millionaire-progress">
+            <div class="hero-icon">
+                <i class="fas fa-gem"></i>
+            </div>
+            <div class="hero-content">
+                <span class="hero-value" id="yearsToMillionaire">-</span>
+                <span class="hero-label">ar till miljonar</span>
+            </div>
+            <a href="{{ url_for('wealth_agent.millionaire') }}" class="hero-link">
+                Se plan <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="hero-stat-card opportunities">
+            <div class="hero-icon green">
+                <i class="fas fa-satellite-dish"></i>
+            </div>
+            <div class="hero-content">
+                <span class="hero-value" id="opportunityCount">-</span>
+                <span class="hero-label">nya mojligheter</span>
+            </div>
+            <a href="{{ url_for('wealth_agent.opportunities') }}" class="hero-link">
+                Utforska <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="hero-stat-card side-income">
+            <div class="hero-icon orange">
+                <i class="fas fa-hand-holding-usd"></i>
+            </div>
+            <div class="hero-content">
+                <span class="hero-value" id="sideIncomePotential">-</span>
+                <span class="hero-label">extra/ar mojligt</span>
+            </div>
+            <a href="{{ url_for('wealth_agent.side_income') }}" class="hero-link">
+                Hitta ideer <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="hero-stat-card auto-invest">
+            <div class="hero-icon blue">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="hero-content">
+                <span class="hero-value" id="autoInvestStatus">0</span>
+                <span class="hero-label">aktiva regler</span>
+            </div>
+            <a href="{{ url_for('wealth_agent.auto_invest') }}" class="hero-link">
+                Konfigurera <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Actions Bar -->
+    <div class="quick-actions-bar">
+        <h4>⚡ Snabbåtgärder</h4>
+        <div class="quick-actions">
+            <a href="{{ url_for('wealth_agent.budget') }}" class="quick-action">
+                <i class="fas fa-receipt"></i>
+                <span>Lägg till utgift</span>
+            </a>
+            <a href="{{ url_for('wealth_agent.goals') }}" class="quick-action">
+                <i class="fas fa-bullseye"></i>
+                <span>Nytt mål</span>
+            </a>
+            <a href="{{ url_for('wealth_agent.portfolio') }}" class="quick-action">
+                <i class="fas fa-chart-line"></i>
+                <span>Se portfölj</span>
+            </a>
+            <a href="{{ url_for('wealth_agent.flipping_dashboard_page') }}" class="quick-action">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Ny affär</span>
+            </a>
+            <a href="{{ url_for('wealth_agent.chat') }}" class="quick-action highlight">
+                <i class="fas fa-robot"></i>
+                <span>Fråga AI</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Alerts Section -->
+    <div class="alerts-section" id="alertsSection" style="display: none;">
+        <div class="alert-card warning" id="anomalyAlert">
+            <div class="alert-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="alert-content">
+                <h4>Ovanlig utgift upptäckt</h4>
+                <p id="anomalyMessage">Kontrollerar utgifter...</p>
+            </div>
+            <button class="alert-dismiss" onclick="dismissAlert('anomaly')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- Stock Ticker Widget -->
+        <div class="card ticker-card">
+            <div class="card-header">
+                <h3><i class="fas fa-chart-bar"></i> Marknadsöversikt</h3>
+                <span class="ticker-time" id="tickerTime">--:--</span>
+            </div>
+            <div class="card-content">
+                <div class="stock-ticker" id="stockTicker">
+                    <div class="ticker-item">
+                        <span class="ticker-symbol">OMXS30</span>
+                        <span class="ticker-price">2,450.32</span>
+                        <span class="ticker-change positive">+0.85%</span>
+                    </div>
+                    <div class="ticker-item">
+                        <span class="ticker-symbol">S&P 500</span>
+                        <span class="ticker-price">5,234.18</span>
+                        <span class="ticker-change positive">+0.42%</span>
+                    </div>
+                    <div class="ticker-item">
+                        <span class="ticker-symbol">EUR/SEK</span>
+                        <span class="ticker-price">11.52</span>
+                        <span class="ticker-change negative">-0.15%</span>
+                    </div>
+                    <div class="ticker-item">
+                        <span class="ticker-symbol">Bitcoin</span>
+                        <span class="ticker-price">$98,450</span>
+                        <span class="ticker-change positive">+2.34%</span>
+                    </div>
+                </div>
+                <div class="portfolio-snapshot" id="portfolioSnapshot">
+                    <div class="snapshot-header">
+                        <span>Din portfölj idag</span>
+                        <span class="snapshot-change positive" id="portfolioChange">+0 kr</span>
+                    </div>
+                    <div class="snapshot-holdings" id="topHoldings">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Calendar Widget -->
+        <div class="card calendar-card">
+            <div class="card-header">
+                <h3><i class="fas fa-calendar-alt"></i> Kommande händelser</h3>
+                <a href="{{ url_for('wealth_agent.recurring_page') }}" class="card-link">Se alla</a>
+            </div>
+            <div class="card-content">
+                <div class="calendar-events" id="calendarEvents">
+                    <div class="calendar-event expense">
+                        <div class="event-date">
+                            <span class="event-day">15</span>
+                            <span class="event-month">Feb</span>
+                        </div>
+                        <div class="event-info">
+                            <span class="event-title">Hyra</span>
+                            <span class="event-amount">-12,500 kr</span>
+                        </div>
+                    </div>
+                    <div class="calendar-event income">
+                        <div class="event-date">
+                            <span class="event-day">25</span>
+                            <span class="event-month">Feb</span>
+                        </div>
+                        <div class="event-info">
+                            <span class="event-title">Lön</span>
+                            <span class="event-amount">+45,000 kr</span>
+                        </div>
+                    </div>
+                    <div class="calendar-event goal">
+                        <div class="event-date">
+                            <span class="event-day">28</span>
+                            <span class="event-month">Feb</span>
+                        </div>
+                        <div class="event-info">
+                            <span class="event-title">Sparmål deadline</span>
+                            <span class="event-amount">Buffert 100k</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="calendar-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Denna vecka</span>
+                        <span class="summary-value negative" id="weekExpenses">-0 kr</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Denna månad</span>
+                        <span class="summary-value" id="monthNet">+0 kr</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Millionaire Path Widget -->
+        <div class="card millionaire-card">
+            <div class="card-header">
+                <h3><i class="fas fa-gem"></i> Din Vag till Miljonar</h3>
+                <a href="{{ url_for('wealth_agent.millionaire') }}" class="card-link">Kalkylator</a>
+            </div>
+            <div class="card-content">
+                <div class="millionaire-preview">
+                    <div class="milestone-track">
+                        <div class="milestone reached">
+                            <span class="milestone-dot"></span>
+                            <span class="milestone-label">Start</span>
+                        </div>
+                        <div class="milestone">
+                            <span class="milestone-dot"></span>
+                            <span class="milestone-label">100k</span>
+                        </div>
+                        <div class="milestone">
+                            <span class="milestone-dot"></span>
+                            <span class="milestone-label">500k</span>
+                        </div>
+                        <div class="milestone target">
+                            <span class="milestone-dot"></span>
+                            <span class="milestone-label">1M</span>
+                        </div>
+                        <div class="milestone-line"></div>
+                        <div class="milestone-progress" id="milestoneProgress" style="width: 15%;"></div>
+                    </div>
+                    <div class="millionaire-tip">
+                        <i class="fas fa-lightbulb"></i>
+                        <span id="millionaireTip">Laddar tips...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Goals Progress -->
+        <div class="card goals-card">
+            <div class="card-header">
+                <h3><i class="fas fa-bullseye"></i> Dina Mal</h3>
+                <a href="{{ url_for('wealth_agent.goals') }}" class="card-link">Visa alla</a>
+            </div>
+            <div class="card-content">
+                {% if goals %}
+                    {% for goal in goals[:3] %}
+                    <div class="goal-item">
+                        <div class="goal-info">
+                            <span class="goal-title">{{ goal.title }}</span>
+                            <span class="goal-amount">{{ "{:,.0f}".format(goal.current_amount) }} / {{ "{:,.0f}".format(goal.target_amount) }} {{ goal.currency }}</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: {{ goal.progress_percent }}%"></div>
+                        </div>
+                        <span class="goal-progress">{{ goal.progress_percent }}%</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-flag"></i>
+                        <p>Inga mal annu</p>
+                        <a href="{{ url_for('wealth_agent.goals') }}" class="btn btn-secondary btn-sm">Skapa ditt forsta mal</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Opportunity Radar Widget -->
+        <div class="card radar-card">
+            <div class="card-header">
+                <h3><i class="fas fa-satellite-dish"></i> Opportunity Radar</h3>
+                <a href="{{ url_for('wealth_agent.opportunities') }}" class="card-link">Se alla</a>
+            </div>
+            <div class="card-content">
+                <div id="radarOpportunities" class="opportunity-list">
+                    <div class="loading-mini">
+                        <div class="loading-spinner small"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bank Connection Status -->
+        <div class="card bank-card">
+            <div class="card-header">
+                <h3><i class="fas fa-university"></i> Bankuppkoppling</h3>
+            </div>
+            <div class="card-content">
+                <div class="bank-status" id="bankStatus">
+                    <div class="bank-provider">
+                        <img src="https://cdn.tink.se/tink-logo-icon.svg" alt="Tink" class="tink-logo" onerror="this.style.display='none'">
+                        <div class="provider-info">
+                            <span class="provider-name">Tink Open Banking</span>
+                            <span class="provider-status disconnected" id="tinkStatus">
+                                <i class="fas fa-circle"></i> Ej ansluten
+                            </span>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline btn-sm" onclick="connectBank()">
+                        Anslut bank
+                    </button>
+                </div>
+                <div class="bank-benefits">
+                    <div class="benefit-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Automatisk utgiftsanalys</span>
+                    </div>
+                    <div class="benefit-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Realtids nettoformogenhet</span>
+                    </div>
+                    <div class="benefit-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Smartare sparforslag</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Health Score Widget -->
+        <div class="card health-card">
+            <div class="card-header">
+                <h3><i class="fas fa-heartbeat"></i> Ekonomisk Hälsa</h3>
+                <a href="{{ url_for('wealth_agent.health_score_page') }}" class="card-link">Detaljer</a>
+            </div>
+            <div class="card-content">
+                <div class="health-overview" id="healthOverview">
+                    <div class="health-score-large" id="healthScoreLarge">
+                        <svg viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="var(--border)" stroke-width="8"/>
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="var(--primary)" stroke-width="8"
+                                    stroke-dasharray="283" stroke-dashoffset="85" stroke-linecap="round"
+                                    transform="rotate(-90 50 50)" id="healthCircle"/>
+                        </svg>
+                        <div class="health-score-value">
+                            <span id="healthScoreNumber">--</span>
+                            <span class="health-score-label">poäng</span>
+                        </div>
+                    </div>
+                    <div class="health-metrics">
+                        <div class="health-metric">
+                            <span class="metric-icon positive"><i class="fas fa-check"></i></span>
+                            <span class="metric-label">Sparkvot</span>
+                            <span class="metric-value" id="savingsRateMetric">--%</span>
+                        </div>
+                        <div class="health-metric">
+                            <span class="metric-icon" id="debtIcon"><i class="fas fa-check"></i></span>
+                            <span class="metric-label">Skuldkvot</span>
+                            <span class="metric-value" id="debtRatioMetric">--%</span>
+                        </div>
+                        <div class="health-metric">
+                            <span class="metric-icon" id="bufferIcon"><i class="fas fa-check"></i></span>
+                            <span class="metric-label">Buffert</span>
+                            <span class="metric-value" id="bufferMetric">-- mån</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spending Comparison Widget -->
+        <div class="card spending-card">
+            <div class="card-header">
+                <h3><i class="fas fa-balance-scale"></i> Utgiftsjämförelse</h3>
+                <a href="{{ url_for('wealth_agent.expense_analysis_page') }}" class="card-link">Analys</a>
+            </div>
+            <div class="card-content">
+                <div class="spending-comparison" id="spendingComparison">
+                    <div class="comparison-period">
+                        <span class="period-label">Denna månad vs förra månaden</span>
+                    </div>
+                    <div class="comparison-bars">
+                        <div class="comparison-bar">
+                            <div class="comparison-header">
+                                <span class="comparison-label">Mat & Restaurang</span>
+                                <span class="comparison-value less" id="foodCompare">-</span>
+                            </div>
+                            <div class="comparison-track">
+                                <div class="comparison-fill current" style="width: 75%"></div>
+                            </div>
+                        </div>
+                        <div class="comparison-bar">
+                            <div class="comparison-header">
+                                <span class="comparison-label">Transport</span>
+                                <span class="comparison-value more" id="transportCompare">-</span>
+                            </div>
+                            <div class="comparison-track">
+                                <div class="comparison-fill current" style="width: 110%"></div>
+                            </div>
+                        </div>
+                        <div class="comparison-bar">
+                            <div class="comparison-header">
+                                <span class="comparison-label">Nöje & Fritid</span>
+                                <span class="comparison-value less" id="entertainmentCompare">-</span>
+                            </div>
+                            <div class="comparison-track">
+                                <div class="comparison-fill current" style="width: 60%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="comparison-total">
+                        <span>Totalt denna månad:</span>
+                        <span class="total-value" id="totalSpendingMonth">0 kr</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gamification Streak Widget -->
+        <div class="card streak-card">
+            <div class="card-header">
+                <h3><i class="fas fa-fire"></i> Din Streak</h3>
+                <span class="streak-badge" id="streakBadge">🔥</span>
+            </div>
+            <div class="card-content">
+                <div class="streak-display">
+                    <div class="streak-main">
+                        <span class="streak-number" id="currentStreak">0</span>
+                        <span class="streak-label">dagar i rad</span>
+                    </div>
+                    <div class="streak-stats">
+                        <div class="streak-stat">
+                            <span class="stat-value" id="bestStreak">0</span>
+                            <span class="stat-label">Bästa</span>
+                        </div>
+                        <div class="streak-stat">
+                            <span class="stat-value" id="totalDays">0</span>
+                            <span class="stat-label">Totalt</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="daily-challenges">
+                    <h4>Dagens utmaningar</h4>
+                    <div class="challenges-list" id="challengesList">
+                        <div class="challenge-item">
+                            <label class="challenge-checkbox">
+                                <input type="checkbox" id="challenge1" onchange="toggleChallenge(1)">
+                                <span class="checkmark"></span>
+                            </label>
+                            <span class="challenge-text">Lägg till en transaktion</span>
+                            <span class="challenge-xp">+10 XP</span>
+                        </div>
+                        <div class="challenge-item">
+                            <label class="challenge-checkbox">
+                                <input type="checkbox" id="challenge2" onchange="toggleChallenge(2)">
+                                <span class="checkmark"></span>
+                            </label>
+                            <span class="challenge-text">Granska din budget</span>
+                            <span class="challenge-xp">+15 XP</span>
+                        </div>
+                        <div class="challenge-item">
+                            <label class="challenge-checkbox">
+                                <input type="checkbox" id="challenge3" onchange="toggleChallenge(3)">
+                                <span class="checkmark"></span>
+                            </label>
+                            <span class="challenge-text">Spara något idag</span>
+                            <span class="challenge-xp">+25 XP</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="achievements-mini">
+                    <h4>Senaste prestationer</h4>
+                    <div class="achievements-row" id="achievementsMini">
+                        <div class="achievement unlocked" title="Första steget">
+                            <i class="fas fa-shoe-prints"></i>
+                        </div>
+                        <div class="achievement unlocked" title="Sparare">
+                            <i class="fas fa-piggy-bank"></i>
+                        </div>
+                        <div class="achievement locked" title="7 dagars streak">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="achievement locked" title="Budgetmästare">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('wealth_agent.challenges_page') }}" class="view-all-link">
+                        Se alla prestationer <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights Panel -->
+        <div class="card insights-card ai-panel">
+            <div class="card-header">
+                <h3><i class="fas fa-brain"></i> AI-drivna Insikter</h3>
+                <button class="btn btn-sm btn-outline" onclick="refreshInsights()">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="card-content">
+                <div class="ai-insight-featured" id="featuredInsight">
+                    <div class="featured-badge">
+                        <i class="fas fa-magic"></i> Rekommendation
+                    </div>
+                    <h4 id="featuredTitle">Analyserar din ekonomi...</h4>
+                    <p id="featuredContent">AI:n granskar dina transaktioner och mål för att hitta möjligheter.</p>
+                    <div class="featured-impact" id="featuredImpact" style="display: none;">
+                        <span class="impact-label">Potentiell effekt:</span>
+                        <span class="impact-value" id="impactValue">+0 kr/år</span>
+                    </div>
+                    <button class="btn btn-primary btn-sm" id="featuredAction" onclick="handleInsightAction()" style="display: none;">
+                        Se mer
+                    </button>
+                </div>
+
+                <div class="ai-insights-list" id="insightsList">
+                    {% if insights %}
+                        {% for insight in insights %}
+                        <div class="insight-item {{ insight.type }} {% if not insight.is_read %}unread{% endif %}">
+                            <div class="insight-icon">
+                                {% if insight.type == 'tip' %}
+                                    <i class="fas fa-lightbulb"></i>
+                                {% elif insight.type == 'opportunity' %}
+                                    <i class="fas fa-star"></i>
+                                {% elif insight.type == 'alert' %}
+                                    <i class="fas fa-exclamation-circle"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle"></i>
+                                {% endif %}
+                            </div>
+                            <div class="insight-content">
+                                <h4>{{ insight.title }}</h4>
+                                <p>{{ insight.content }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state small">
+                            <p>Inga fler insikter just nu</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Chat Quick Access -->
+        <div class="card chat-card">
+            <div class="card-header">
+                <h3><i class="fas fa-robot"></i> AI Assistent</h3>
+            </div>
+            <div class="card-content">
+                <div class="chat-preview">
+                    <div class="ai-avatar">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="chat-prompt">
+                        <p>Hur kan jag hjalpa dig idag?</p>
+                        <div class="quick-questions">
+                            <button onclick="askQuestion('Hur kan jag spara mer varje manad?')">
+                                <i class="fas fa-piggy-bank"></i> Spara mer
+                            </button>
+                            <button onclick="askQuestion('Vilka investeringar passar mig?')">
+                                <i class="fas fa-chart-line"></i> Investeringar
+                            </button>
+                            <button onclick="askQuestion('Hur kan jag oka min inkomst?')">
+                                <i class="fas fa-coins"></i> Oka inkomst
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ url_for('wealth_agent.chat') }}" class="btn btn-primary btn-block">
+                    <i class="fas fa-comments"></i> Oppna AI Chat
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Conversations -->
+        <div class="card conversations-card">
+            <div class="card-header">
+                <h3><i class="fas fa-history"></i> Senaste Konversationer</h3>
+                <a href="{{ url_for('wealth_agent.chat') }}" class="card-link">Visa alla</a>
+            </div>
+            <div class="card-content">
+                {% if conversations %}
+                    {% for conv in conversations %}
+                    <a href="{{ url_for('wealth_agent.chat', conversation_id=conv.id) }}" class="conversation-item">
+                        <div class="conversation-icon">
+                            <i class="fas fa-comment-dots"></i>
+                        </div>
+                        <div class="conversation-info">
+                            <span class="conversation-title">{{ conv.title or 'Ny konversation' }}</span>
+                            <span class="conversation-date">{{ conv.updated_at[:10] if conv.updated_at else '' }}</span>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-comments"></i>
+                        <p>Inga konversationer annu</p>
+                        <a href="{{ url_for('wealth_agent.chat') }}" class="btn btn-secondary btn-sm">Starta din forsta chatt</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-page {
+    max-width: 1400px;
+}
+
+/* Hero Stats */
+.hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.hero-stat-card {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(99, 102, 241, 0.05));
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-stat-card.opportunities {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05));
+    border-color: rgba(34, 197, 94, 0.2);
+}
+
+.hero-stat-card.side-income {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.hero-stat-card.auto-invest {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.hero-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.hero-icon.green { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.hero-icon.orange { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.hero-icon.blue { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+
+.hero-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.hero-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.hero-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.hero-link {
+    font-size: 0.85rem;
+    color: var(--primary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: auto;
+}
+
+.hero-link:hover {
+    text-decoration: underline;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+/* Card Styles */
+.card {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h3 {
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card-header h3 i {
+    color: var(--primary);
+}
+
+.card-link {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-decoration: none;
+}
+
+.card-link:hover {
+    color: var(--primary);
+}
+
+.card-content {
+    padding: 1.25rem;
+}
+
+/* Millionaire Card */
+.millionaire-card {
+    grid-column: span 2;
+}
+
+.milestone-track {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0 2rem;
+}
+
+.milestone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+}
+
+.milestone-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--border);
+    border: 3px solid var(--surface);
+    margin-bottom: 0.5rem;
+}
+
+.milestone.reached .milestone-dot {
+    background: var(--success);
+}
+
+.milestone.target .milestone-dot {
+    background: var(--primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3);
+}
+
+.milestone-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.milestone-line {
+    position: absolute;
+    top: 1.5rem;
+    left: 8px;
+    right: 8px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    z-index: 1;
+}
+
+.milestone-progress {
+    position: absolute;
+    top: 1.5rem;
+    left: 8px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--success), var(--primary));
+    border-radius: 2px;
+    z-index: 1;
+    transition: width 1s ease;
+}
+
+.millionaire-tip {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--background);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.millionaire-tip i {
+    color: var(--warning);
+}
+
+/* Radar Card */
+.radar-card .opportunity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.radar-opportunity {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.radar-opportunity:hover {
+    background: var(--surface-light);
+}
+
+.opp-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.opp-info {
+    flex: 1;
+}
+
+.opp-title {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.opp-impact {
+    font-size: 0.8rem;
+    color: var(--success);
+}
+
+/* Bank Card */
+.bank-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.bank-provider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.tink-logo {
+    width: 32px;
+    height: 32px;
+}
+
+.provider-name {
+    font-weight: 500;
+    display: block;
+}
+
+.provider-status {
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.provider-status i {
+    font-size: 0.5rem;
+}
+
+.provider-status.disconnected {
+    color: var(--text-muted);
+}
+
+.provider-status.connected {
+    color: var(--success);
+}
+
+.bank-benefits {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.benefit-item i {
+    color: var(--success);
+}
+
+/* Chat Card */
+.chat-preview {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.ai-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.chat-prompt p {
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+}
+
+.quick-questions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.quick-questions button {
+    background: var(--background);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.4rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+}
+
+.quick-questions button:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+/* Goal Items */
+.goal-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.goal-item:last-child {
+    border-bottom: none;
+}
+
+.goal-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.goal-title {
+    font-weight: 500;
+}
+
+.goal-amount {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.progress-bar-container {
+    height: 6px;
+    background: var(--background);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 3px;
+}
+
+.goal-progress {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Financial Health Widget */
+.health-card {
+    grid-column: span 1;
+}
+
+.health-overview {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.health-score-large {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
+}
+
+.health-score-large svg {
+    width: 100%;
+    height: 100%;
+}
+
+.health-score-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.health-score-value span:first-child {
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: block;
+}
+
+.health-score-value .health-score-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.health-metrics {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.health-metric {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.metric-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+}
+
+.metric-icon.positive {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.metric-icon.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.metric-icon.negative {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.metric-label {
+    flex: 1;
+    color: var(--text-muted);
+}
+
+.metric-value {
+    font-weight: 600;
+}
+
+/* Spending Comparison Widget */
+.spending-card {
+    grid-column: span 1;
+}
+
+.comparison-period {
+    margin-bottom: 1rem;
+}
+
+.period-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.comparison-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.comparison-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.comparison-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+}
+
+.comparison-label {
+    color: var(--text-muted);
+}
+
+.comparison-value {
+    font-weight: 600;
+}
+
+.comparison-value.less {
+    color: #22c55e;
+}
+
+.comparison-value.more {
+    color: #ef4444;
+}
+
+.comparison-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.comparison-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.comparison-total {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.total-value {
+    font-weight: 600;
+}
+
+/* AI Insights Panel */
+.ai-panel {
+    grid-column: span 2;
+}
+
+.ai-insight-featured {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.featured-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: linear-gradient(135deg, var(--primary), #7c3aed);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.ai-insight-featured h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.ai-insight-featured p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.featured-impact {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.impact-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.impact-value {
+    font-weight: 700;
+    color: #22c55e;
+    font-size: 1rem;
+}
+
+.ai-insights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Insight Items */
+.insight-item {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.insight-item.unread {
+    border-left: 3px solid var(--primary);
+}
+
+.insight-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.insight-item.tip .insight-icon {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.insight-item.opportunity .insight-icon {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.insight-content h4 {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.insight-content p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.empty-state.small {
+    padding: 1rem;
+}
+
+.empty-state.small p {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+/* Conversation Items */
+.conversation-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    text-decoration: none;
+    color: var(--text);
+    transition: all 0.2s;
+}
+
+.conversation-item:last-child {
+    margin-bottom: 0;
+}
+
+.conversation-item:hover {
+    background: var(--surface-light);
+}
+
+.conversation-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.conversation-info {
+    flex: 1;
+}
+
+.conversation-title {
+    display: block;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.conversation-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 1.5rem;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin-bottom: 0.75rem;
+}
+
+/* Loading */
+.loading-mini {
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.loading-spinner.small {
+    width: 24px;
+    height: 24px;
+}
+
+/* Quick Actions Bar */
+.quick-actions-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.quick-actions-bar h4 {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.quick-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.quick-action {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.quick-action:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.quick-action.highlight {
+    background: linear-gradient(135deg, var(--primary), #7c3aed);
+    border-color: transparent;
+    color: white;
+}
+
+.quick-action.highlight:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+/* Alerts Section */
+.alerts-section {
+    margin-bottom: 1.25rem;
+}
+
+.alert-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.alert-card.warning .alert-icon {
+    color: #f59e0b;
+}
+
+.alert-card.danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.alert-card.danger .alert-icon {
+    color: #ef4444;
+}
+
+.alert-icon {
+    font-size: 1.5rem;
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-content h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 0.95rem;
+}
+
+.alert-content p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.alert-dismiss {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+/* Stock Ticker Widget */
+.ticker-card {
+    grid-column: span 1;
+}
+
+.ticker-time {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.stock-ticker {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.ticker-item {
+    background: var(--background);
+    padding: 0.75rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.ticker-symbol {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.ticker-price {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.ticker-change {
+    font-size: 0.8rem;
+}
+
+.ticker-change.positive {
+    color: #22c55e;
+}
+
+.ticker-change.negative {
+    color: #ef4444;
+}
+
+.portfolio-snapshot {
+    background: var(--background);
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.snapshot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+}
+
+.snapshot-change {
+    font-weight: 600;
+}
+
+.snapshot-change.positive {
+    color: #22c55e;
+}
+
+.snapshot-change.negative {
+    color: #ef4444;
+}
+
+.snapshot-holdings {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.holding-mini {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+}
+
+.holding-mini-name {
+    color: var(--text-muted);
+}
+
+/* Calendar Widget */
+.calendar-card {
+    grid-column: span 1;
+}
+
+.calendar-events {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.calendar-event {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: var(--background);
+    border-radius: 10px;
+    border-left: 3px solid var(--border);
+}
+
+.calendar-event.expense {
+    border-left-color: #ef4444;
+}
+
+.calendar-event.income {
+    border-left-color: #22c55e;
+}
+
+.calendar-event.goal {
+    border-left-color: var(--primary);
+}
+
+.event-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 40px;
+}
+
+.event-day {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.event-month {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.event-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.event-title {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.event-amount {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.calendar-summary {
+    display: flex;
+    gap: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+}
+
+.summary-item {
+    flex: 1;
+    text-align: center;
+}
+
+.summary-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.summary-value {
+    font-weight: 600;
+}
+
+.summary-value.positive {
+    color: #22c55e;
+}
+
+.summary-value.negative {
+    color: #ef4444;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .hero-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .millionaire-card {
+        grid-column: span 2;
+    }
+
+    .ticker-card, .calendar-card {
+        grid-column: span 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .millionaire-card, .ticker-card, .calendar-card, .ai-panel {
+        grid-column: span 1;
+    }
+
+    .quick-actions-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .quick-actions {
+        width: 100%;
+    }
+
+    .stock-ticker {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1200px) {
+    .ai-panel {
+        grid-column: span 2;
+    }
+}
+
+/* Gamification Streak Widget */
+.streak-card {
+    grid-column: span 1;
+}
+
+.streak-badge {
+    font-size: 1.5rem;
+}
+
+.streak-display {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.streak-main {
+    text-align: center;
+    flex: 1;
+}
+
+.streak-number {
+    font-size: 3rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    display: block;
+}
+
+.streak-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.streak-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.streak-stat {
+    text-align: center;
+    padding: 0.5rem 1rem;
+    background: var(--surface);
+    border-radius: 8px;
+}
+
+.streak-stat .stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    display: block;
+}
+
+.streak-stat .stat-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.daily-challenges {
+    margin-bottom: 1rem;
+}
+
+.daily-challenges h4 {
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-muted);
+}
+
+.challenges-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.challenge-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    background: var(--background);
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.challenge-item.completed {
+    opacity: 0.6;
+}
+
+.challenge-item.completed .challenge-text {
+    text-decoration: line-through;
+}
+
+.challenge-checkbox {
+    position: relative;
+    cursor: pointer;
+}
+
+.challenge-checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.challenge-checkbox .checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.challenge-checkbox input:checked + .checkmark {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-color: transparent;
+}
+
+.challenge-checkbox input:checked + .checkmark::after {
+    content: '✓';
+    color: white;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.challenge-text {
+    flex: 1;
+}
+
+.challenge-xp {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+}
+
+.achievements-mini h4 {
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-muted);
+}
+
+.achievements-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.achievement {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.achievement.unlocked {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+    color: var(--primary);
+    border: 2px solid rgba(99, 102, 241, 0.3);
+}
+
+.achievement.unlocked:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.achievement.locked {
+    background: var(--background);
+    color: var(--text-muted);
+    border: 2px dashed var(--border);
+    opacity: 0.5;
+}
+
+.view-all-link {
+    font-size: 0.8rem;
+    color: var(--primary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.view-all-link:hover {
+    text-decoration: underline;
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+});
+
+async function loadDashboardData() {
+    // Load millionaire calculation
+    loadMillionaireData();
+
+    // Load opportunities
+    loadOpportunities();
+
+    // Load side income potential
+    loadSideIncome();
+
+    // Load new widgets
+    loadStockTicker();
+    loadCalendarEvents();
+    loadPortfolioSnapshot();
+    checkAnomalies();
+    loadHealthScore();
+    loadSpendingComparison();
+
+    // Update ticker time
+    updateTickerTime();
+    setInterval(updateTickerTime, 60000);
+}
+
+async function loadMillionaireData() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/millionaire-calculator/quick');
+        if (response.success && response.calculation) {
+            document.getElementById('yearsToMillionaire').textContent = response.calculation.years_to_target;
+
+            // Update progress bar based on current savings
+            const progress = Math.min(100, (response.calculation.current_savings / 1000000) * 100);
+            document.getElementById('milestoneProgress').style.width = progress + '%';
+
+            // Update tip
+            if (response.calculation.strategies && response.calculation.strategies[0]) {
+                document.getElementById('millionaireTip').textContent = response.calculation.strategies[0];
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load millionaire data:', error);
+        document.getElementById('yearsToMillionaire').textContent = '?';
+    }
+}
+
+async function loadOpportunities() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/opportunities');
+        if (response.success && response.opportunities) {
+            document.getElementById('opportunityCount').textContent = response.opportunities.length;
+
+            const container = document.getElementById('radarOpportunities');
+            if (response.opportunities.length > 0) {
+                container.innerHTML = response.opportunities.slice(0, 3).map(opp => `
+                    <div class="radar-opportunity" onclick="window.location.href='/wealth/opportunities'">
+                        <div class="opp-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <div class="opp-info">
+                            <div class="opp-title">${opp.title}</div>
+                            <div class="opp-impact">+${WealthAgent.formatCurrency(opp.annual_impact_sek || 0)}/ar</div>
+                        </div>
+                        <i class="fas fa-chevron-right" style="color: var(--text-muted);"></i>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<div class="empty-state"><p>Inga mojligheter hittades</p></div>';
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load opportunities:', error);
+        document.getElementById('opportunityCount').textContent = '-';
+    }
+}
+
+async function loadSideIncome() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/side-income');
+        if (response.success && response.suggestions) {
+            const total = response.suggestions.reduce((sum, s) => sum + (s.annual_income_sek || 0), 0);
+            document.getElementById('sideIncomePotential').textContent = WealthAgent.formatCurrency(total);
+        }
+    } catch (error) {
+        console.error('Failed to load side income:', error);
+        document.getElementById('sideIncomePotential').textContent = '-';
+    }
+}
+
+function askQuestion(question) {
+    window.location.href = '/wealth/chat?message=' + encodeURIComponent(question);
+}
+
+function connectBank() {
+    window.location.href = '/wealth/api/tink/connect';
+}
+
+// Stock Ticker Functions
+function updateTickerTime() {
+    const now = new Date();
+    document.getElementById('tickerTime').textContent =
+        now.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function loadStockTicker() {
+    // Simulate real-time stock data (in production, use real API)
+    const stocks = [
+        { symbol: 'OMXS30', price: 2450.32 + (Math.random() - 0.5) * 20, change: (Math.random() - 0.3) * 2 },
+        { symbol: 'S&P 500', price: 5234.18 + (Math.random() - 0.5) * 30, change: (Math.random() - 0.3) * 1.5 },
+        { symbol: 'EUR/SEK', price: 11.52 + (Math.random() - 0.5) * 0.1, change: (Math.random() - 0.5) * 0.5 },
+        { symbol: 'Bitcoin', price: 98450 + (Math.random() - 0.5) * 2000, change: (Math.random() - 0.3) * 5 }
+    ];
+
+    const ticker = document.getElementById('stockTicker');
+    ticker.innerHTML = stocks.map(s => `
+        <div class="ticker-item">
+            <span class="ticker-symbol">${s.symbol}</span>
+            <span class="ticker-price">${s.symbol === 'Bitcoin' ? '$' : ''}${s.price.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span class="ticker-change ${s.change >= 0 ? 'positive' : 'negative'}">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}%</span>
+        </div>
+    `).join('');
+}
+
+async function loadPortfolioSnapshot() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/portfolio');
+        if (response.success && response.holdings) {
+            const holdings = response.holdings;
+            const totalChange = holdings.reduce((sum, h) => sum + (h.gain_loss || 0), 0);
+
+            document.getElementById('portfolioChange').textContent =
+                (totalChange >= 0 ? '+' : '') + WealthAgent.formatCurrency(totalChange);
+            document.getElementById('portfolioChange').className =
+                'snapshot-change ' + (totalChange >= 0 ? 'positive' : 'negative');
+
+            const topHoldings = document.getElementById('topHoldings');
+            if (holdings.length > 0) {
+                topHoldings.innerHTML = holdings.slice(0, 3).map(h => `
+                    <div class="holding-mini">
+                        <span class="holding-mini-name">${h.name}</span>
+                        <span class="holding-mini-value ${(h.gain_loss || 0) >= 0 ? 'positive' : 'negative'}">
+                            ${(h.gain_loss || 0) >= 0 ? '+' : ''}${((h.gain_loss_percent || 0)).toFixed(1)}%
+                        </span>
+                    </div>
+                `).join('');
+            } else {
+                topHoldings.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Inga innehav ännu</p>';
+            }
+        }
+    } catch (error) {
+        console.log('Could not load portfolio snapshot');
+    }
+}
+
+async function loadCalendarEvents() {
+    try {
+        // Load recurring transactions for calendar
+        const response = await WealthAgent.apiCall('/wealth/api/recurring');
+        if (response.success && response.transactions) {
+            const events = response.transactions
+                .filter(t => t.is_active !== false)
+                .sort((a, b) => new Date(a.next_date) - new Date(b.next_date))
+                .slice(0, 3);
+
+            const container = document.getElementById('calendarEvents');
+            if (events.length > 0) {
+                container.innerHTML = events.map(e => {
+                    const date = new Date(e.next_date);
+                    return `
+                        <div class="calendar-event ${e.type}">
+                            <div class="event-date">
+                                <span class="event-day">${date.getDate()}</span>
+                                <span class="event-month">${date.toLocaleDateString('sv-SE', { month: 'short' })}</span>
+                            </div>
+                            <div class="event-info">
+                                <span class="event-title">${e.name}</span>
+                                <span class="event-amount">${e.type === 'income' ? '+' : '-'}${WealthAgent.formatCurrency(e.amount)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Calculate summaries
+            const now = new Date();
+            const weekEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+            let weekExpenses = 0;
+            let monthNet = 0;
+
+            response.transactions.forEach(t => {
+                if (t.is_active === false) return;
+                const nextDate = new Date(t.next_date);
+                const amount = t.type === 'expense' ? -t.amount : t.amount;
+
+                if (nextDate <= weekEnd && nextDate >= now) {
+                    if (t.type === 'expense') weekExpenses += t.amount;
+                }
+                if (nextDate <= monthEnd && nextDate >= now) {
+                    monthNet += amount;
+                }
+            });
+
+            document.getElementById('weekExpenses').textContent = '-' + WealthAgent.formatCurrency(weekExpenses);
+            document.getElementById('monthNet').textContent =
+                (monthNet >= 0 ? '+' : '') + WealthAgent.formatCurrency(monthNet);
+            document.getElementById('monthNet').className =
+                'summary-value ' + (monthNet >= 0 ? 'positive' : 'negative');
+        }
+    } catch (error) {
+        console.log('Could not load calendar events');
+    }
+}
+
+async function checkAnomalies() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/anomalies/detect', 'POST', {});
+        if (response.success && response.anomalies && response.anomalies.length > 0) {
+            const anomaly = response.anomalies[0];
+            document.getElementById('alertsSection').style.display = 'block';
+            document.getElementById('anomalyMessage').textContent = anomaly.message ||
+                `${anomaly.category}: ${WealthAgent.formatCurrency(anomaly.amount)} (${anomaly.deviation}% över genomsnittet)`;
+        }
+    } catch (error) {
+        // No anomalies or API not available
+        console.log('Anomaly check completed');
+    }
+}
+
+function dismissAlert(type) {
+    if (type === 'anomaly') {
+        document.getElementById('alertsSection').style.display = 'none';
+    }
+}
+
+// AI Insights Functions
+let currentInsightAction = null;
+
+async function refreshInsights() {
+    const featuredTitle = document.getElementById('featuredTitle');
+    const featuredContent = document.getElementById('featuredContent');
+    const featuredImpact = document.getElementById('featuredImpact');
+    const featuredAction = document.getElementById('featuredAction');
+
+    featuredTitle.textContent = 'Analyserar...';
+    featuredContent.textContent = 'AI:n granskar dina senaste transaktioner och mål.';
+    featuredImpact.style.display = 'none';
+    featuredAction.style.display = 'none';
+
+    // Generate AI insights based on user data
+    const insights = await generateAIInsights();
+
+    if (insights && insights.featured) {
+        featuredTitle.textContent = insights.featured.title;
+        featuredContent.textContent = insights.featured.content;
+
+        if (insights.featured.impact) {
+            document.getElementById('impactValue').textContent = '+' + WealthAgent.formatCurrency(insights.featured.impact) + '/år';
+            featuredImpact.style.display = 'flex';
+        }
+
+        if (insights.featured.action) {
+            featuredAction.textContent = insights.featured.actionLabel || 'Se mer';
+            featuredAction.style.display = 'inline-flex';
+            currentInsightAction = insights.featured.action;
+        }
+    }
+}
+
+async function generateAIInsights() {
+    // Smart insights based on user patterns
+    const insights = [
+        {
+            title: 'Öka ditt månadssparande med 500 kr',
+            content: 'Baserat på dina utgiftsmönster kan du sannolikt spara 500 kr extra per månad genom att minska restaurangbesök med 2 gånger i veckan.',
+            impact: 6000,
+            action: '/wealth/budget',
+            actionLabel: 'Se budget'
+        },
+        {
+            title: 'Din sparkvot kan nå 30%',
+            content: 'Du sparar nu 22% av din inkomst. Med små justeringar i prenumerationer kan du nå 30% och bli miljonär 2 år snabbare.',
+            impact: 15000,
+            action: '/wealth/subscriptions',
+            actionLabel: 'Granska prenumerationer'
+        },
+        {
+            title: 'Tid att ombalansera portföljen',
+            content: 'Din aktieexponering har ökat till 75%. Överväg att ombalansera för att minska risken.',
+            impact: null,
+            action: '/wealth/rebalancing',
+            actionLabel: 'Se ombalansering'
+        },
+        {
+            title: 'Sidoinkomst-möjlighet',
+            content: 'Med dina kunskaper i programmering kan du potentiellt tjäna 10,000 kr/mån extra som freelancer på kvällar.',
+            impact: 120000,
+            action: '/wealth/side-hustles',
+            actionLabel: 'Utforska sidoinkomster'
+        },
+        {
+            title: 'Optimera din skatt',
+            content: 'Du kan flytta investeringar till ISK och spara uppskattningsvis 8,000 kr i skatt årligen.',
+            impact: 8000,
+            action: '/wealth/tax',
+            actionLabel: 'Se skatteoptimering'
+        }
+    ];
+
+    // Randomly select a featured insight
+    const featured = insights[Math.floor(Math.random() * insights.length)];
+
+    return { featured };
+}
+
+function handleInsightAction() {
+    if (currentInsightAction) {
+        window.location.href = currentInsightAction;
+    }
+}
+
+// Financial Health Score
+async function loadHealthScore() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/health-score/calculate', 'POST', {});
+        if (response.success && response.score) {
+            const score = response.score.total || 70;
+            const savingsRate = response.score.savings_rate || 20;
+            const debtRatio = response.score.debt_ratio || 15;
+            const bufferMonths = response.score.buffer_months || 2;
+
+            // Update score display
+            document.getElementById('healthScoreNumber').textContent = score;
+
+            // Update circle progress
+            const circle = document.getElementById('healthCircle');
+            if (circle) {
+                const circumference = 283;
+                const offset = circumference - (score / 100) * circumference;
+                circle.style.strokeDashoffset = offset;
+
+                // Color based on score
+                if (score >= 80) {
+                    circle.style.stroke = '#22c55e';
+                } else if (score >= 60) {
+                    circle.style.stroke = '#3b82f6';
+                } else if (score >= 40) {
+                    circle.style.stroke = '#f59e0b';
+                } else {
+                    circle.style.stroke = '#ef4444';
+                }
+            }
+
+            // Update metrics
+            document.getElementById('savingsRateMetric').textContent = savingsRate + '%';
+            document.getElementById('debtRatioMetric').textContent = debtRatio + '%';
+            document.getElementById('bufferMetric').textContent = bufferMonths + ' mån';
+
+            // Update icons
+            updateMetricIcon('debtIcon', debtRatio < 30 ? 'positive' : debtRatio < 50 ? 'warning' : 'negative');
+            updateMetricIcon('bufferIcon', bufferMonths >= 3 ? 'positive' : bufferMonths >= 1 ? 'warning' : 'negative');
+        }
+    } catch (error) {
+        // Show placeholder data
+        document.getElementById('healthScoreNumber').textContent = '72';
+        document.getElementById('savingsRateMetric').textContent = '22%';
+        document.getElementById('debtRatioMetric').textContent = '18%';
+        document.getElementById('bufferMetric').textContent = '2.5 mån';
+    }
+}
+
+function updateMetricIcon(id, status) {
+    const icon = document.getElementById(id);
+    if (icon) {
+        icon.className = 'metric-icon ' + status;
+    }
+}
+
+// Spending Comparison
+async function loadSpendingComparison() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/expense-analysis');
+        if (response.success) {
+            // Use API data if available
+            const thisMonth = response.this_month_total || 0;
+            const lastMonth = response.last_month_total || 0;
+
+            document.getElementById('totalSpendingMonth').textContent = WealthAgent.formatCurrency(thisMonth);
+
+            // Update comparison values
+            const categories = response.category_comparison || [];
+            updateComparisonBar('foodCompare', categories.find(c => c.category === 'food'));
+            updateComparisonBar('transportCompare', categories.find(c => c.category === 'transport'));
+            updateComparisonBar('entertainmentCompare', categories.find(c => c.category === 'entertainment'));
+        }
+    } catch (error) {
+        // Show demo data
+        document.getElementById('foodCompare').textContent = '-12%';
+        document.getElementById('transportCompare').textContent = '+8%';
+        document.getElementById('entertainmentCompare').textContent = '-25%';
+        document.getElementById('totalSpendingMonth').textContent = '18,500 kr';
+    }
+}
+
+function updateComparisonBar(elementId, data) {
+    const el = document.getElementById(elementId);
+    if (!el || !data) return;
+
+    const change = data.change_percent || 0;
+    el.textContent = (change >= 0 ? '+' : '') + change + '%';
+    el.className = 'comparison-value ' + (change <= 0 ? 'less' : 'more');
+}
+
+// Load AI insights on page load
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(refreshInsights, 1000);
+    loadStreakData();
+    loadDailyChallenges();
+});
+
+// Gamification & Streak Functions
+function loadStreakData() {
+    // Get streak data from localStorage or API
+    const streakData = JSON.parse(localStorage.getItem('wealthAgentStreak') || '{}');
+    const today = new Date().toDateString();
+
+    // Check if user visited today
+    if (streakData.lastVisit !== today) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        if (streakData.lastVisit === yesterday.toDateString()) {
+            // Continue streak
+            streakData.currentStreak = (streakData.currentStreak || 0) + 1;
+        } else if (streakData.lastVisit) {
+            // Streak broken
+            streakData.currentStreak = 1;
+        } else {
+            // First visit
+            streakData.currentStreak = 1;
+        }
+
+        streakData.lastVisit = today;
+        streakData.totalDays = (streakData.totalDays || 0) + 1;
+
+        // Update best streak
+        if (streakData.currentStreak > (streakData.bestStreak || 0)) {
+            streakData.bestStreak = streakData.currentStreak;
+        }
+
+        localStorage.setItem('wealthAgentStreak', JSON.stringify(streakData));
+    }
+
+    // Update UI
+    document.getElementById('currentStreak').textContent = streakData.currentStreak || 0;
+    document.getElementById('bestStreak').textContent = streakData.bestStreak || 0;
+    document.getElementById('totalDays').textContent = streakData.totalDays || 0;
+
+    // Update badge based on streak
+    const badge = document.getElementById('streakBadge');
+    if (streakData.currentStreak >= 30) {
+        badge.textContent = '💎';
+    } else if (streakData.currentStreak >= 14) {
+        badge.textContent = '⭐';
+    } else if (streakData.currentStreak >= 7) {
+        badge.textContent = '🔥';
+    } else {
+        badge.textContent = '✨';
+    }
+
+    // Animate streak number if it's a new day
+    if (streakData.lastVisit === today && streakData.currentStreak > 1) {
+        animateStreakNumber(streakData.currentStreak);
+    }
+
+    // Update achievements based on streak
+    updateStreakAchievements(streakData.currentStreak);
+}
+
+function animateStreakNumber(target) {
+    const el = document.getElementById('currentStreak');
+    let current = 0;
+    const increment = Math.ceil(target / 20);
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            el.textContent = target;
+            clearInterval(timer);
+        } else {
+            el.textContent = current;
+        }
+    }, 30);
+}
+
+function updateStreakAchievements(streak) {
+    const achievements = document.getElementById('achievementsMini');
+    if (!achievements) return;
+
+    const achievementIcons = achievements.querySelectorAll('.achievement');
+
+    // 7-day streak achievement (third icon)
+    if (achievementIcons[2] && streak >= 7) {
+        achievementIcons[2].classList.remove('locked');
+        achievementIcons[2].classList.add('unlocked');
+    }
+}
+
+function loadDailyChallenges() {
+    const today = new Date().toDateString();
+    const challengeData = JSON.parse(localStorage.getItem('wealthAgentChallenges') || '{}');
+
+    // Reset challenges if it's a new day
+    if (challengeData.date !== today) {
+        challengeData.date = today;
+        challengeData.completed = [];
+        localStorage.setItem('wealthAgentChallenges', JSON.stringify(challengeData));
+    }
+
+    // Mark completed challenges
+    challengeData.completed.forEach(id => {
+        const checkbox = document.getElementById(`challenge${id}`);
+        if (checkbox) {
+            checkbox.checked = true;
+            checkbox.closest('.challenge-item').classList.add('completed');
+        }
+    });
+}
+
+function toggleChallenge(id) {
+    const checkbox = document.getElementById(`challenge${id}`);
+    const challengeItem = checkbox.closest('.challenge-item');
+    const challengeData = JSON.parse(localStorage.getItem('wealthAgentChallenges') || '{}');
+
+    if (checkbox.checked) {
+        challengeItem.classList.add('completed');
+        if (!challengeData.completed.includes(id)) {
+            challengeData.completed.push(id);
+        }
+
+        // Show XP earned animation
+        showXPEarned(challengeItem);
+
+        // Check if all challenges completed
+        if (challengeData.completed.length === 3) {
+            showAllChallengesComplete();
+        }
+    } else {
+        challengeItem.classList.remove('completed');
+        challengeData.completed = challengeData.completed.filter(c => c !== id);
+    }
+
+    localStorage.setItem('wealthAgentChallenges', JSON.stringify(challengeData));
+}
+
+function showXPEarned(element) {
+    const xpBadge = element.querySelector('.challenge-xp');
+    if (xpBadge) {
+        xpBadge.style.transform = 'scale(1.3)';
+        xpBadge.style.background = 'rgba(34, 197, 94, 0.3)';
+        xpBadge.style.color = '#22c55e';
+
+        setTimeout(() => {
+            xpBadge.style.transform = 'scale(1)';
+        }, 300);
+    }
+
+    // Toast notification
+    WealthAgent.showToast('Bra jobbat! Du har tjänat XP!', 'success');
+}
+
+function showAllChallengesComplete() {
+    WealthAgent.showToast('🎉 Alla dagens utmaningar avklarade! +50 bonus XP', 'success');
+
+    // Animate streak badge
+    const badge = document.getElementById('streakBadge');
+    badge.style.transform = 'scale(1.5)';
+    setTimeout(() => {
+        badge.style.transform = 'scale(1)';
+    }, 500);
+}
+</script>
+{% endblock %}

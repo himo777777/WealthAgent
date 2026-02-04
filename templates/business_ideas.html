@@ -1,0 +1,920 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Affarside-generator - AI Wealth Agent{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1><i class="fas fa-lightbulb"></i> Affarside-generator</h1>
+        <p>Hitta din nasta affarside baserat pa dina kunskaper och intressen</p>
+    </div>
+</div>
+
+<!-- Idea Generator -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-magic"></i> Generera affarsideer</h3>
+    </div>
+    <div class="card-body">
+        <div class="generator-form">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Dina kunskaper & erfarenheter</label>
+                        <div class="skill-tags" id="skillTags">
+                            <span class="skill-tag" data-skill="programmering">Programmering <i class="fas fa-times"></i></span>
+                            <span class="skill-tag" data-skill="marknadsföring">Marknadsforing <i class="fas fa-times"></i></span>
+                        </div>
+                        <div class="input-group mt-2">
+                            <input type="text" id="newSkill" class="form-control" placeholder="Lagg till kunskap...">
+                            <button class="btn btn-outline-primary" onclick="addSkill()">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label">Intressen & passioner</label>
+                        <div class="interest-grid">
+                            <label class="interest-chip">
+                                <input type="checkbox" value="tech"> <span>Teknik</span>
+                            </label>
+                            <label class="interest-chip">
+                                <input type="checkbox" value="health"> <span>Halsa</span>
+                            </label>
+                            <label class="interest-chip">
+                                <input type="checkbox" value="finance"> <span>Ekonomi</span>
+                            </label>
+                            <label class="interest-chip">
+                                <input type="checkbox" value="education"> <span>Utbildning</span>
+                            </label>
+                            <label class="interest-chip">
+                                <input type="checkbox" value="food"> <span>Mat</span>
+                            </label>
+                            <label class="interest-chip">
+                                <input type="checkbox" value="travel"> <span>Resor</span>
+                            </label>
+                            <label class="interest-chip">
+                                <input type="checkbox" value="gaming"> <span>Gaming</span>
+                            </label>
+                            <label class="interest-chip">
+                                <input type="checkbox" value="sustainability"> <span>Hallbarhet</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Tillganglig tid per vecka</label>
+                        <select class="form-select" id="timeAvailable">
+                            <option value="5">5 timmar (sidoprojekt)</option>
+                            <option value="15">15 timmar (seriost sidoarbete)</option>
+                            <option value="30">30 timmar (deltid)</option>
+                            <option value="40">40+ timmar (heltid)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label">Startkapital</label>
+                        <select class="form-select" id="startCapital">
+                            <option value="0">0 kr (bootstrapping)</option>
+                            <option value="5000">Under 5 000 kr</option>
+                            <option value="25000">5 000 - 25 000 kr</option>
+                            <option value="100000">25 000 - 100 000 kr</option>
+                            <option value="500000">100 000+ kr</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label">Riskvilja</label>
+                        <input type="range" id="riskLevel" class="form-range" min="1" max="5" value="3">
+                        <div class="d-flex justify-content-between">
+                            <span>Lag risk</span>
+                            <span>Hog risk</span>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-lg w-100" onclick="generateIdeas()">
+                        <i class="fas fa-magic"></i> Generera ideer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Generated Ideas -->
+<div class="card mb-4" id="ideasSection" style="display: none;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3><i class="fas fa-rocket"></i> Dina affarsideer</h3>
+        <button class="btn btn-outline-primary btn-sm" onclick="generateIdeas()">
+            <i class="fas fa-sync"></i> Generera fler
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="ideas-grid" id="ideasGrid">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Business Idea Library -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3><i class="fas fa-book"></i> Affarside-bibliotek</h3>
+    </div>
+    <div class="card-body">
+        <div class="idea-filters mb-3">
+            <button class="filter-btn active" onclick="filterIdeas('all')">Alla</button>
+            <button class="filter-btn" onclick="filterIdeas('online')">Online</button>
+            <button class="filter-btn" onclick="filterIdeas('service')">Tjanster</button>
+            <button class="filter-btn" onclick="filterIdeas('product')">Produkter</button>
+            <button class="filter-btn" onclick="filterIdeas('passive')">Passiv inkomst</button>
+        </div>
+
+        <div class="library-grid" id="libraryGrid">
+            <!-- Online Business Ideas -->
+            <div class="library-card" data-category="online">
+                <div class="library-icon bg-primary">
+                    <i class="fas fa-laptop-code"></i>
+                </div>
+                <div class="library-content">
+                    <h4>SaaS-produkt</h4>
+                    <p>Bygg mjukvara som loser ett specifikt problem</p>
+                    <div class="library-meta">
+                        <span class="meta-item"><i class="fas fa-clock"></i> 6-12 man</span>
+                        <span class="meta-item"><i class="fas fa-coins"></i> 10-50k kr</span>
+                        <span class="meta-item income"><i class="fas fa-chart-line"></i> 50k-500k+/man</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="showIdeaDetails('saas')">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="library-card" data-category="online">
+                <div class="library-icon bg-success">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="library-content">
+                    <h4>E-handel / Dropshipping</h4>
+                    <p>Salj produkter online utan eget lager</p>
+                    <div class="library-meta">
+                        <span class="meta-item"><i class="fas fa-clock"></i> 1-3 man</span>
+                        <span class="meta-item"><i class="fas fa-coins"></i> 5-20k kr</span>
+                        <span class="meta-item income"><i class="fas fa-chart-line"></i> 10k-100k/man</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="showIdeaDetails('ecommerce')">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="library-card" data-category="online passive">
+                <div class="library-icon bg-warning">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="library-content">
+                    <h4>YouTube-kanal</h4>
+                    <p>Skapa innehall och tjan pa annonser</p>
+                    <div class="library-meta">
+                        <span class="meta-item"><i class="fas fa-clock"></i> 6-24 man</span>
+                        <span class="meta-item"><i class="fas fa-coins"></i> 5-15k kr</span>
+                        <span class="meta-item income"><i class="fas fa-chart-line"></i> 5k-200k/man</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="showIdeaDetails('youtube')">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="library-card" data-category="online passive">
+                <div class="library-icon bg-info">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <div class="library-content">
+                    <h4>Online-kurs</h4>
+                    <p>Lar ut din expertis digitalt</p>
+                    <div class="library-meta">
+                        <span class="meta-item"><i class="fas fa-clock"></i> 1-3 man</span>
+                        <span class="meta-item"><i class="fas fa-coins"></i> 2-10k kr</span>
+                        <span class="meta-item income"><i class="fas fa-chart-line"></i> 10k-100k/man</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="showIdeaDetails('course')">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="library-card" data-category="service">
+                <div class="library-icon bg-purple">
+                    <i class="fas fa-pen-fancy"></i>
+                </div>
+                <div class="library-content">
+                    <h4>Frilanstjanster</h4>
+                    <p>Salj dina kunskaper till foretag</p>
+                    <div class="library-meta">
+                        <span class="meta-item"><i class="fas fa-clock"></i> 1-2 veckor</span>
+                        <span class="meta-item"><i class="fas fa-coins"></i> 0 kr</span>
+                        <span class="meta-item income"><i class="fas fa-chart-line"></i> 20k-80k/man</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="showIdeaDetails('freelance')">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="library-card" data-category="service">
+                <div class="library-icon bg-orange">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="library-content">
+                    <h4>Konsulttjanster</h4>
+                    <p>Radgivning inom ditt expertomrade</p>
+                    <div class="library-meta">
+                        <span class="meta-item"><i class="fas fa-clock"></i> 1-4 veckor</span>
+                        <span class="meta-item"><i class="fas fa-coins"></i> 0-5k kr</span>
+                        <span class="meta-item income"><i class="fas fa-chart-line"></i> 50k-200k/man</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="showIdeaDetails('consulting')">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="library-card" data-category="service">
+                <div class="library-icon bg-pink">
+                    <i class="fas fa-bullhorn"></i>
+                </div>
+                <div class="library-content">
+                    <h4>Digital marknadsforingsbyrå</h4>
+                    <p>Hjalp foretag med online-marknadsföring</p>
+                    <div class="library-meta">
+                        <span class="meta-item"><i class="fas fa-clock"></i> 1-3 man</span>
+                        <span class="meta-item"><i class="fas fa-coins"></i> 5-20k kr</span>
+                        <span class="meta-item income"><i class="fas fa-chart-line"></i> 30k-150k/man</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="showIdeaDetails('agency')">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="library-card" data-category="product">
+                <div class="library-icon bg-teal">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <div class="library-content">
+                    <h4>Mobilapp</h4>
+                    <p>Skapa en app som loser ett problem</p>
+                    <div class="library-meta">
+                        <span class="meta-item"><i class="fas fa-clock"></i> 3-12 man</span>
+                        <span class="meta-item"><i class="fas fa-coins"></i> 20-100k kr</span>
+                        <span class="meta-item income"><i class="fas fa-chart-line"></i> 10k-500k/man</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="showIdeaDetails('app')">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="library-card" data-category="passive">
+                <div class="library-icon bg-success">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="library-content">
+                    <h4>Uthyrning (Airbnb etc)</h4>
+                    <p>Hyr ut bostad eller rum</p>
+                    <div class="library-meta">
+                        <span class="meta-item"><i class="fas fa-clock"></i> 1 vecka</span>
+                        <span class="meta-item"><i class="fas fa-coins"></i> Varierande</span>
+                        <span class="meta-item income"><i class="fas fa-chart-line"></i> 5k-30k/man</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="showIdeaDetails('rental')">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="library-card" data-category="passive online">
+                <div class="library-icon bg-primary">
+                    <i class="fas fa-link"></i>
+                </div>
+                <div class="library-content">
+                    <h4>Affiliate-marknadsföring</h4>
+                    <p>Tjan provision pa produktrekommendationer</p>
+                    <div class="library-meta">
+                        <span class="meta-item"><i class="fas fa-clock"></i> 3-12 man</span>
+                        <span class="meta-item"><i class="fas fa-coins"></i> 1-5k kr</span>
+                        <span class="meta-item income"><i class="fas fa-chart-line"></i> 5k-50k/man</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="showIdeaDetails('affiliate')">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="library-card" data-category="product">
+                <div class="library-icon bg-warning">
+                    <i class="fas fa-print"></i>
+                </div>
+                <div class="library-content">
+                    <h4>Print-on-Demand</h4>
+                    <p>Salj tryckta produkter utan lager</p>
+                    <div class="library-meta">
+                        <span class="meta-item"><i class="fas fa-clock"></i> 1-2 man</span>
+                        <span class="meta-item"><i class="fas fa-coins"></i> 1-5k kr</span>
+                        <span class="meta-item income"><i class="fas fa-chart-line"></i> 5k-30k/man</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="showIdeaDetails('pod')">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="library-card" data-category="passive online">
+                <div class="library-icon bg-info">
+                    <i class="fas fa-pen"></i>
+                </div>
+                <div class="library-content">
+                    <h4>E-bok / Digital produkt</h4>
+                    <p>Skriv och salj digitala produkter</p>
+                    <div class="library-meta">
+                        <span class="meta-item"><i class="fas fa-clock"></i> 1-6 man</span>
+                        <span class="meta-item"><i class="fas fa-coins"></i> 0-2k kr</span>
+                        <span class="meta-item income"><i class="fas fa-chart-line"></i> 2k-20k/man</span>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="showIdeaDetails('ebook')">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Start Guide -->
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-play"></i> Snabbstartsguide</h3>
+    </div>
+    <div class="card-body">
+        <div class="quickstart-steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>Valj din ide</h4>
+                    <p>Baserat pa dina kunskaper, tid och kapital</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>Validera marknaden</h4>
+                    <p>Finns det kunder som vill betala? Testa billigt forst!</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>MVP - Minimum Viable Product</h4>
+                    <p>Bygg enklaste versionen och fa feedback</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h4>Forsta kunden</h4>
+                    <p>Fokusera pa att fa din forsta betalande kund</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <h4>Skala upp</h4>
+                    <p>Nar det fungerar - investera mer tid och pengar</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.skill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.skill-tag i {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.skill-tag:hover i {
+    opacity: 1;
+}
+
+.interest-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.interest-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.interest-chip:has(input:checked) {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.interest-chip input {
+    display: none;
+}
+
+.ideas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.idea-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.idea-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-4px);
+}
+
+.idea-card.recommended {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), transparent);
+}
+
+.idea-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.idea-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.idea-title {
+    flex: 1;
+}
+
+.idea-title h4 {
+    margin: 0;
+}
+
+.idea-match {
+    font-size: 0.85rem;
+    color: var(--success);
+}
+
+.idea-description {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.idea-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.metric {
+    text-align: center;
+    padding: 0.5rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.metric-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.metric-value {
+    font-weight: 600;
+}
+
+.idea-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.idea-filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 0.5rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.library-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1rem;
+}
+
+.library-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.library-card:hover {
+    border-color: var(--primary);
+}
+
+.library-card.hidden {
+    display: none;
+}
+
+.library-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.bg-purple { background: #8b5cf6; }
+.bg-orange { background: #f97316; }
+.bg-pink { background: #ec4899; }
+.bg-teal { background: #14b8a6; }
+
+.library-content {
+    flex: 1;
+}
+
+.library-content h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+}
+
+.library-content p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.library-meta {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.meta-item {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.meta-item.income {
+    color: var(--success);
+    font-weight: 500;
+}
+
+.quickstart-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.step-content h4 {
+    margin: 0;
+}
+
+.step-content p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .library-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .library-meta {
+        flex-wrap: wrap;
+    }
+}
+</style>
+
+<script>
+const businessIdeas = [
+    {
+        id: 'freelance-dev',
+        title: 'Frilansande utvecklare',
+        icon: 'fas fa-code',
+        color: 'primary',
+        description: 'Bygg webbsidor och appar at foretag',
+        skills: ['programmering', 'webbutveckling'],
+        capital: 0,
+        timeToProfit: '1-4 veckor',
+        potentialIncome: '30k-100k/man',
+        risk: 1
+    },
+    {
+        id: 'digital-agency',
+        title: 'Digital marknadsforingsbyrå',
+        icon: 'fas fa-bullhorn',
+        color: 'pink',
+        description: 'Hjalp foretag med sociala medier och annonser',
+        skills: ['marknadsföring', 'sociala medier'],
+        capital: 5000,
+        timeToProfit: '1-3 manader',
+        potentialIncome: '30k-150k/man',
+        risk: 2
+    },
+    {
+        id: 'online-course',
+        title: 'Online-kurs',
+        icon: 'fas fa-graduation-cap',
+        color: 'success',
+        description: 'Lar ut det du kan till andra online',
+        skills: ['undervisning', 'expertis'],
+        capital: 2000,
+        timeToProfit: '1-3 manader',
+        potentialIncome: '10k-100k/man',
+        risk: 2
+    },
+    {
+        id: 'consulting',
+        title: 'Konsulttjanster',
+        icon: 'fas fa-user-tie',
+        color: 'warning',
+        description: 'Ge radgivning inom ditt expertomrade',
+        skills: ['expertis', 'kommunikation'],
+        capital: 0,
+        timeToProfit: '2-8 veckor',
+        potentialIncome: '50k-200k/man',
+        risk: 1
+    },
+    {
+        id: 'ecommerce',
+        title: 'E-handelsbutik',
+        icon: 'fas fa-store',
+        color: 'info',
+        description: 'Salj produkter online med dropshipping',
+        skills: ['marknadsföring', 'forsaljning'],
+        capital: 10000,
+        timeToProfit: '2-6 manader',
+        potentialIncome: '20k-200k/man',
+        risk: 3
+    },
+    {
+        id: 'content-creator',
+        title: 'Content Creator',
+        icon: 'fas fa-video',
+        color: 'danger',
+        description: 'Skapa innehall pa YouTube/TikTok',
+        skills: ['kreativitet', 'video'],
+        capital: 5000,
+        timeToProfit: '6-18 manader',
+        potentialIncome: '10k-500k/man',
+        risk: 4
+    },
+    {
+        id: 'saas',
+        title: 'SaaS-produkt',
+        icon: 'fas fa-cloud',
+        color: 'purple',
+        description: 'Bygg mjukvara som tjanst',
+        skills: ['programmering', 'produktutveckling'],
+        capital: 20000,
+        timeToProfit: '6-18 manader',
+        potentialIncome: '50k-1M+/man',
+        risk: 4
+    },
+    {
+        id: 'coaching',
+        title: 'Coaching/Mentorskap',
+        icon: 'fas fa-hands-helping',
+        color: 'teal',
+        description: 'Hjalp andra na sina mal',
+        skills: ['kommunikation', 'ledarskap'],
+        capital: 0,
+        timeToProfit: '1-4 veckor',
+        potentialIncome: '30k-100k/man',
+        risk: 1
+    }
+];
+
+function addSkill() {
+    const input = document.getElementById('newSkill');
+    const skill = input.value.trim();
+
+    if (skill) {
+        const container = document.getElementById('skillTags');
+        const tag = document.createElement('span');
+        tag.className = 'skill-tag';
+        tag.dataset.skill = skill.toLowerCase();
+        tag.innerHTML = `${skill} <i class="fas fa-times"></i>`;
+        tag.onclick = () => tag.remove();
+        container.appendChild(tag);
+        input.value = '';
+    }
+}
+
+function generateIdeas() {
+    const skills = Array.from(document.querySelectorAll('.skill-tag')).map(t => t.dataset.skill);
+    const interests = Array.from(document.querySelectorAll('.interest-chip input:checked')).map(i => i.value);
+    const capital = parseInt(document.getElementById('startCapital').value);
+    const risk = parseInt(document.getElementById('riskLevel').value);
+
+    // Score and rank ideas
+    const scoredIdeas = businessIdeas.map(idea => {
+        let score = 0;
+
+        // Skill match
+        idea.skills.forEach(s => {
+            if (skills.some(sk => sk.includes(s) || s.includes(sk))) {
+                score += 30;
+            }
+        });
+
+        // Capital match
+        if (idea.capital <= capital) {
+            score += 20;
+        }
+
+        // Risk match
+        if (Math.abs(idea.risk - risk) <= 1) {
+            score += 15;
+        }
+
+        return { ...idea, score, match: Math.min(100, score + 40) };
+    });
+
+    // Sort by score
+    scoredIdeas.sort((a, b) => b.score - a.score);
+
+    // Display top ideas
+    const grid = document.getElementById('ideasGrid');
+    grid.innerHTML = '';
+
+    scoredIdeas.slice(0, 6).forEach((idea, index) => {
+        const card = document.createElement('div');
+        card.className = 'idea-card' + (index === 0 ? ' recommended' : '');
+
+        card.innerHTML = `
+            <div class="idea-header">
+                <div class="idea-icon bg-${idea.color}">
+                    <i class="${idea.icon}"></i>
+                </div>
+                <div class="idea-title">
+                    <h4>${idea.title}</h4>
+                    <span class="idea-match">${idea.match}% match</span>
+                </div>
+                ${index === 0 ? '<span class="badge bg-warning">Rekommenderad</span>' : ''}
+            </div>
+            <p class="idea-description">${idea.description}</p>
+            <div class="idea-metrics">
+                <div class="metric">
+                    <span class="metric-label">Startkapital</span>
+                    <span class="metric-value">${idea.capital.toLocaleString()} kr</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Tid till vinst</span>
+                    <span class="metric-value">${idea.timeToProfit}</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Potential</span>
+                    <span class="metric-value text-success">${idea.potentialIncome}</span>
+                </div>
+            </div>
+            <div class="idea-actions">
+                <button class="btn btn-primary btn-sm" onclick="startIdea('${idea.id}')">
+                    <i class="fas fa-rocket"></i> Starta nu
+                </button>
+                <button class="btn btn-outline-primary btn-sm" onclick="showIdeaDetails('${idea.id}')">
+                    <i class="fas fa-info-circle"></i> Mer info
+                </button>
+            </div>
+        `;
+
+        grid.appendChild(card);
+    });
+
+    document.getElementById('ideasSection').style.display = 'block';
+    document.getElementById('ideasSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+function filterIdeas(category) {
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    document.querySelectorAll('.library-card').forEach(card => {
+        if (category === 'all' || card.dataset.category.includes(category)) {
+            card.classList.remove('hidden');
+        } else {
+            card.classList.add('hidden');
+        }
+    });
+}
+
+function showIdeaDetails(ideaId) {
+    alert('Visa detaljer for: ' + ideaId + ' - Implementeras med fullstandig guide');
+}
+
+function startIdea(ideaId) {
+    alert('Starta ' + ideaId + ' - Skapar projektplan och checklista');
+}
+
+document.getElementById('newSkill').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        addSkill();
+    }
+});
+</script>
+{% endblock %}

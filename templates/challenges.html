@@ -1,0 +1,883 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Sparutmaningar - AI Wealth Agent{% endblock %}
+{% block page_title %}Sparutmaningar{% endblock %}
+
+{% block content %}
+<div class="challenges-page">
+    <!-- Hero Section -->
+    <div class="challenges-hero">
+        <div class="hero-content">
+            <h2><i class="fas fa-trophy"></i> Gor sparande roligt!</h2>
+            <p>Valj en utmaning och se hur mycket du kan spara. Varje avklarad utmaning ger dig XP och badges!</p>
+        </div>
+        <div class="hero-stats">
+            <div class="stat">
+                <span class="stat-value" id="completedCount">0</span>
+                <span class="stat-label">Avklarade</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="totalSaved">0 kr</span>
+                <span class="stat-label">Totalt sparat</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="xpEarned">0</span>
+                <span class="stat-label">XP tjant</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Challenges -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-play-circle"></i> Aktiva utmaningar</h3>
+        </div>
+        <div id="activeChallenges" class="challenges-list">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Available Challenges -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-list"></i> Tillgangliga utmaningar</h3>
+        </div>
+        <div id="availableChallenges" class="challenges-grid">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Completed Challenges -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-check-circle"></i> Avklarade utmaningar</h3>
+        </div>
+        <div id="completedChallenges" class="challenges-list completed">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Join Challenge Modal -->
+<div class="modal-overlay" id="joinModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="joinTitle">Starta utmaning</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="joinBody">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Log Progress Modal -->
+<div class="modal-overlay" id="progressModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Logga framsteg</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="progressForm">
+            <input type="hidden" id="progressChallengeId">
+            <div class="form-group">
+                <label>Belopp sparat (kr)</label>
+                <input type="number" id="progressAmount" required min="1" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Notering (valfritt)</label>
+                <input type="text" id="progressNote" placeholder="t.ex. Skippade fika">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Avbryt</button>
+                <button type="submit" class="btn btn-primary">Logga</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.challenges-page { max-width: 1100px; }
+
+.challenges-hero {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.1));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 24px;
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.hero-content h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.hero-content h2 i { color: var(--warning); }
+
+.hero-content p {
+    color: var(--text-muted);
+    max-width: 500px;
+}
+
+.hero-stats {
+    display: flex;
+    gap: 2rem;
+}
+
+.hero-stats .stat {
+    text-align: center;
+}
+
+.hero-stats .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    display: block;
+    color: var(--primary);
+}
+
+.hero-stats .stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.section-header h3 i { color: var(--primary); }
+
+.challenges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+    padding: 1.25rem;
+}
+
+.challenge-card {
+    background: var(--background);
+    border-radius: 16px;
+    padding: 1.5rem;
+    position: relative;
+    transition: all 0.3s;
+}
+
+.challenge-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+}
+
+.challenge-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.challenge-badge.easy { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+.challenge-badge.medium { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+.challenge-badge.hard { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+.challenge-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+}
+
+.challenge-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.challenge-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.challenge-meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.challenge-meta i { margin-right: 0.25rem; }
+
+.challenge-reward {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(99, 102, 241, 0.15);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.challenge-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.challenge-actions .btn {
+    flex: 1;
+}
+
+/* Active challenge styles */
+.challenges-list {
+    padding: 0;
+}
+
+.active-challenge {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.active-challenge:last-child { border-bottom: none; }
+
+.active-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.active-info {
+    flex: 1;
+}
+
+.active-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.active-progress {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 10px;
+    background: var(--border);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #a855f7);
+    border-radius: 5px;
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 50px;
+}
+
+.active-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.active-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Completed challenges */
+.challenges-list.completed .active-challenge {
+    opacity: 0.7;
+}
+
+.completed-badge {
+    background: var(--success);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Empty state */
+.empty-state {
+    padding: 3rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.modal-body, form {
+    padding: 1.25rem;
+}
+
+.join-preview {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.join-preview .challenge-icon {
+    margin: 0 auto 1rem;
+}
+
+.join-preview h4 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.join-preview p {
+    color: var(--text-muted);
+}
+
+.join-details {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.join-detail {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.join-detail:last-child { border-bottom: none; }
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .challenges-hero { flex-direction: column; text-align: center; gap: 1.5rem; }
+    .hero-stats { justify-content: center; }
+    .active-challenge { flex-direction: column; text-align: center; }
+    .active-actions { width: 100%; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let challenges = {
+    available: [],
+    active: [],
+    completed: []
+};
+
+const challengeTypes = [
+    {
+        id: 'fifty_two_week',
+        name: '52-veckors sparutmaning',
+        desc: 'Spara 1 kr vecka 1, 2 kr vecka 2... osv. Efter 52 veckor har du sparat 1 378 kr!',
+        icon: 'calendar-week',
+        color: '#6366f1',
+        duration: '52 veckor',
+        target: 1378,
+        difficulty: 'easy',
+        xp: 500
+    },
+    {
+        id: 'no_spend_week',
+        name: 'No-Spend vecka',
+        desc: 'Spendera bara pa nodvandigheter i en hel vecka. Klarar du det?',
+        icon: 'hand-holding-usd',
+        color: '#22c55e',
+        duration: '1 vecka',
+        target: null,
+        difficulty: 'medium',
+        xp: 200
+    },
+    {
+        id: 'round_up',
+        name: 'Avrundningsutmaning',
+        desc: 'Avrunda varje kop uppat och spara mellanskillnaden i 30 dagar.',
+        icon: 'coins',
+        color: '#f59e0b',
+        duration: '30 dagar',
+        target: null,
+        difficulty: 'easy',
+        xp: 150
+    },
+    {
+        id: 'coffee_challenge',
+        name: 'Kaffeutmaningen',
+        desc: 'Skippa take-away-kaffe i 30 dagar och spara pengarna istallet.',
+        icon: 'mug-hot',
+        color: '#ec4899',
+        duration: '30 dagar',
+        target: 1500,
+        difficulty: 'medium',
+        xp: 300
+    },
+    {
+        id: 'pantry_week',
+        name: 'Skafferiveckan',
+        desc: 'At bara det du redan har hemma i en vecka. Inga matinkon!',
+        icon: 'utensils',
+        color: '#10b981',
+        duration: '1 vecka',
+        target: 1000,
+        difficulty: 'hard',
+        xp: 400
+    },
+    {
+        id: 'subscription_purge',
+        name: 'Prenumerationsrensning',
+        desc: 'Avsluta minst 2 prenumerationer du inte anvander aktivt.',
+        icon: 'tv',
+        color: '#8b5cf6',
+        duration: '1 vecka',
+        target: null,
+        difficulty: 'easy',
+        xp: 250
+    },
+    {
+        id: 'savings_match',
+        name: 'Matchande sparande',
+        desc: 'For varje 100 kr du spenderar pa nojen, lagg undan samma belopp i sparande.',
+        icon: 'balance-scale',
+        color: '#0ea5e9',
+        duration: '1 manad',
+        target: null,
+        difficulty: 'medium',
+        xp: 350
+    },
+    {
+        id: 'emergency_fund',
+        name: 'Buffert-boost',
+        desc: 'Lagg till 5 000 kr till din buffert pa 30 dagar genom extra sparande.',
+        icon: 'shield-alt',
+        color: '#ef4444',
+        duration: '30 dagar',
+        target: 5000,
+        difficulty: 'hard',
+        xp: 600
+    }
+];
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadChallenges();
+    document.getElementById('progressForm').addEventListener('submit', logProgress);
+});
+
+async function loadChallenges() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/challenges');
+        if (response.success) {
+            challenges = response;
+            renderAll();
+        }
+    } catch (error) {
+        challenges = getSampleChallenges();
+        renderAll();
+    }
+}
+
+function getSampleChallenges() {
+    return {
+        available: challengeTypes,
+        active: [
+            { ...challengeTypes[0], progress: 425, started: '2024-12-01', week: 22 },
+            { ...challengeTypes[3], progress: 750, started: '2025-01-01', days_completed: 15 }
+        ],
+        completed: [
+            { ...challengeTypes[5], completed_date: '2024-11-15', saved: 358 }
+        ],
+        stats: {
+            completed_count: 3,
+            total_saved: 4500,
+            xp_earned: 1050
+        }
+    };
+}
+
+function renderAll() {
+    updateStats();
+    renderActive();
+    renderAvailable();
+    renderCompleted();
+}
+
+function updateStats() {
+    document.getElementById('completedCount').textContent = challenges.stats?.completed_count || 0;
+    document.getElementById('totalSaved').textContent = WealthAgent.formatCurrency(challenges.stats?.total_saved || 0);
+    document.getElementById('xpEarned').textContent = challenges.stats?.xp_earned || 0;
+}
+
+function renderActive() {
+    const container = document.getElementById('activeChallenges');
+
+    if (!challenges.active || challenges.active.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-play-circle"></i>
+                <p>Inga aktiva utmaningar. Starta en nedan!</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = challenges.active.map(c => {
+        const progressPercent = c.target ? Math.min(100, (c.progress / c.target) * 100) : 50;
+
+        return `
+            <div class="active-challenge">
+                <div class="active-icon" style="background: ${c.color}20; color: ${c.color}">
+                    <i class="fas fa-${c.icon}"></i>
+                </div>
+                <div class="active-info">
+                    <div class="active-title">${c.name}</div>
+                    <div class="active-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progressPercent}%"></div>
+                        </div>
+                        <span class="progress-text">${Math.round(progressPercent)}%</span>
+                    </div>
+                    <div class="active-meta">
+                        ${c.target ? `${WealthAgent.formatCurrency(c.progress)} av ${WealthAgent.formatCurrency(c.target)}` : 'Pagaende'}
+                        &bull; Startad ${formatDate(c.started)}
+                    </div>
+                </div>
+                <div class="active-actions">
+                    <button class="btn btn-primary btn-sm" onclick="showProgressModal('${c.id}')">
+                        <i class="fas fa-plus"></i> Logga
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="completeChallenge('${c.id}')">
+                        <i class="fas fa-check"></i> Klar
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderAvailable() {
+    const container = document.getElementById('availableChallenges');
+    const activeIds = challenges.active?.map(c => c.id) || [];
+    const available = challengeTypes.filter(c => !activeIds.includes(c.id));
+
+    if (available.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-check-double"></i>
+                <p>Du har redan alla utmaningar aktiva!</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = available.map(c => `
+        <div class="challenge-card">
+            <span class="challenge-badge ${c.difficulty}">${getDifficultyLabel(c.difficulty)}</span>
+            <div class="challenge-icon" style="background: ${c.color}20; color: ${c.color}">
+                <i class="fas fa-${c.icon}"></i>
+            </div>
+            <div class="challenge-title">${c.name}</div>
+            <div class="challenge-desc">${c.desc}</div>
+            <div class="challenge-meta">
+                <span><i class="fas fa-clock"></i> ${c.duration}</span>
+                ${c.target ? `<span><i class="fas fa-bullseye"></i> ${WealthAgent.formatCurrency(c.target)}</span>` : ''}
+            </div>
+            <div class="challenge-reward">
+                <i class="fas fa-star"></i> +${c.xp} XP vid avklarad
+            </div>
+            <div class="challenge-actions">
+                <button class="btn btn-primary" onclick="showJoinModal('${c.id}')">
+                    <i class="fas fa-play"></i> Starta
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderCompleted() {
+    const container = document.getElementById('completedChallenges');
+
+    if (!challenges.completed || challenges.completed.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-trophy"></i>
+                <p>Inga avklarade utmaningar an. Fortsatt kampa!</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = challenges.completed.map(c => `
+        <div class="active-challenge">
+            <div class="active-icon" style="background: ${c.color}20; color: ${c.color}">
+                <i class="fas fa-${c.icon}"></i>
+            </div>
+            <div class="active-info">
+                <div class="active-title">${c.name}</div>
+                <div class="active-meta">
+                    Avklarad ${formatDate(c.completed_date)}
+                    ${c.saved ? ` &bull; Sparade ${WealthAgent.formatCurrency(c.saved)}` : ''}
+                </div>
+            </div>
+            <span class="completed-badge">
+                <i class="fas fa-check"></i> +${c.xp} XP
+            </span>
+        </div>
+    `).join('');
+}
+
+function getDifficultyLabel(diff) {
+    const labels = { easy: 'Latt', medium: 'Medel', hard: 'Svar' };
+    return labels[diff] || diff;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
+}
+
+function showJoinModal(challengeId) {
+    const challenge = challengeTypes.find(c => c.id === challengeId);
+    if (!challenge) return;
+
+    document.getElementById('joinTitle').textContent = 'Starta utmaning';
+    document.getElementById('joinBody').innerHTML = `
+        <div class="join-preview">
+            <div class="challenge-icon" style="background: ${challenge.color}20; color: ${challenge.color}">
+                <i class="fas fa-${challenge.icon}"></i>
+            </div>
+            <h4>${challenge.name}</h4>
+            <p>${challenge.desc}</p>
+        </div>
+        <div class="join-details">
+            <div class="join-detail">
+                <span>Varaktighet</span>
+                <strong>${challenge.duration}</strong>
+            </div>
+            ${challenge.target ? `
+            <div class="join-detail">
+                <span>Mal</span>
+                <strong>${WealthAgent.formatCurrency(challenge.target)}</strong>
+            </div>
+            ` : ''}
+            <div class="join-detail">
+                <span>Belooning</span>
+                <strong>+${challenge.xp} XP</strong>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Avbryt</button>
+            <button class="btn btn-primary" onclick="joinChallenge('${challengeId}')">
+                <i class="fas fa-play"></i> Starta nu
+            </button>
+        </div>
+    `;
+
+    document.getElementById('joinModal').classList.add('active');
+}
+
+function showProgressModal(challengeId) {
+    document.getElementById('progressChallengeId').value = challengeId;
+    document.getElementById('progressForm').reset();
+    document.getElementById('progressModal').classList.add('active');
+}
+
+function closeModal() {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+}
+
+async function joinChallenge(challengeId) {
+    const challenge = challengeTypes.find(c => c.id === challengeId);
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/challenges/join', 'POST', { challenge_id: challengeId });
+        if (response.success) {
+            WealthAgent.showToast(`Du har startat "${challenge.name}"!`, 'success');
+            closeModal();
+            loadChallenges();
+        }
+    } catch (error) {
+        challenges.active = challenges.active || [];
+        challenges.active.push({
+            ...challenge,
+            progress: 0,
+            started: new Date().toISOString().split('T')[0]
+        });
+        WealthAgent.showToast(`Du har startat "${challenge.name}"!`, 'success');
+        closeModal();
+        renderAll();
+    }
+}
+
+async function logProgress(e) {
+    e.preventDefault();
+
+    const challengeId = document.getElementById('progressChallengeId').value;
+    const amount = parseFloat(document.getElementById('progressAmount').value);
+    const note = document.getElementById('progressNote').value;
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/challenges/progress', 'POST', {
+            challenge_id: challengeId,
+            amount,
+            note
+        });
+        if (response.success) {
+            WealthAgent.showToast(`+${WealthAgent.formatCurrency(amount)} loggat!`, 'success');
+            closeModal();
+            loadChallenges();
+        }
+    } catch (error) {
+        const idx = challenges.active.findIndex(c => c.id === challengeId);
+        if (idx >= 0) {
+            challenges.active[idx].progress = (challenges.active[idx].progress || 0) + amount;
+        }
+        WealthAgent.showToast(`+${WealthAgent.formatCurrency(amount)} loggat!`, 'success');
+        closeModal();
+        renderAll();
+    }
+}
+
+async function completeChallenge(challengeId) {
+    if (!confirm('Ar du saker pa att du har avklarat denna utmaning?')) return;
+
+    try {
+        const response = await WealthAgent.apiCall(`/wealth/api/challenges/${challengeId}/complete`, 'POST');
+        if (response.success) {
+            WealthAgent.showToast('Grattis! Utmaning avklarad!', 'success');
+            if (window.confetti) {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            }
+            loadChallenges();
+        }
+    } catch (error) {
+        const idx = challenges.active.findIndex(c => c.id === challengeId);
+        if (idx >= 0) {
+            const completed = challenges.active.splice(idx, 1)[0];
+            completed.completed_date = new Date().toISOString().split('T')[0];
+            challenges.completed = challenges.completed || [];
+            challenges.completed.unshift(completed);
+            challenges.stats.completed_count = (challenges.stats.completed_count || 0) + 1;
+            challenges.stats.xp_earned = (challenges.stats.xp_earned || 0) + completed.xp;
+        }
+        WealthAgent.showToast('Grattis! Utmaning avklarad!', 'success');
+        if (window.confetti) {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+        renderAll();
+    }
+}
+</script>
+{% endblock %}

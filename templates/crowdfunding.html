@@ -1,0 +1,1163 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Crowdfunding Planner - Wealth Agent{% endblock %}
+
+{% block extra_css %}
+<style>
+    .crowdfunding-hero {
+        background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .crowdfunding-hero h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Platform Comparison */
+    .platform-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .platform-card {
+        background: var(--surface);
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .platform-card:hover {
+        border-color: var(--primary);
+    }
+
+    .platform-card.selected {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    .platform-logo {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .platform-name {
+        font-weight: 600;
+        font-size: 1.125rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .platform-type {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+
+    .platform-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .platform-stat {
+        text-align: center;
+        padding: 0.5rem;
+        background: var(--background);
+        border-radius: 6px;
+    }
+
+    .platform-stat-value {
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .platform-stat-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+    }
+
+    /* Campaign Planner */
+    .planner-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .planner-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1rem;
+    }
+
+    .planner-tab {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .planner-tab.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    .planner-tab .badge {
+        font-size: 0.7rem;
+        padding: 0.125rem 0.375rem;
+    }
+
+    .planner-content {
+        display: none;
+    }
+
+    .planner-content.active {
+        display: block;
+    }
+
+    /* Budget Calculator */
+    .budget-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .budget-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .budget-results {
+        background: var(--background);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    .budget-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .budget-item:last-child {
+        border-bottom: none;
+    }
+
+    .budget-item.total {
+        font-weight: 600;
+        font-size: 1.125rem;
+        border-top: 2px solid var(--border);
+        margin-top: 0.5rem;
+        padding-top: 1rem;
+    }
+
+    .budget-item .value.positive { color: var(--success); }
+    .budget-item .value.negative { color: var(--danger); }
+
+    /* Reward Tiers */
+    .rewards-builder {
+        margin-bottom: 1.5rem;
+    }
+
+    .reward-tier {
+        background: var(--background);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .reward-tier-price {
+        background: var(--primary);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
+        min-width: 80px;
+        text-align: center;
+    }
+
+    .reward-tier-content {
+        flex: 1;
+    }
+
+    .reward-tier-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .reward-tier-desc {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .reward-tier-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .add-reward-btn {
+        width: 100%;
+        padding: 1rem;
+        border: 2px dashed var(--border);
+        background: transparent;
+        border-radius: 8px;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .add-reward-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    /* Checklist */
+    .checklist-section {
+        background: var(--background);
+        border-radius: 8px;
+        padding: 1.25rem;
+    }
+
+    .checklist-category {
+        margin-bottom: 1.5rem;
+    }
+
+    .checklist-category:last-child {
+        margin-bottom: 0;
+    }
+
+    .checklist-category-title {
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .checklist-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+    }
+
+    .checklist-checkbox {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border);
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 2px;
+        transition: all 0.2s ease;
+    }
+
+    .checklist-checkbox.checked {
+        background: var(--success);
+        border-color: var(--success);
+        color: white;
+    }
+
+    .checklist-text {
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    /* Timeline */
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 8px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--border);
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+
+    .timeline-dot {
+        position: absolute;
+        left: -2rem;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--surface);
+        border: 2px solid var(--primary);
+    }
+
+    .timeline-dot.completed {
+        background: var(--success);
+        border-color: var(--success);
+    }
+
+    .timeline-item.current .timeline-dot {
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+    }
+
+    .timeline-date {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .timeline-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .timeline-desc {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    /* Success Factors */
+    .factors-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .factor-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+    }
+
+    .factor-icon {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .factor-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .factor-text {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    .factor-stat {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.875rem;
+    }
+
+    .factor-stat strong {
+        color: var(--success);
+    }
+
+    /* Progress Tracker */
+    .campaign-progress {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .progress-amount {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .progress-goal {
+        color: var(--text-muted);
+    }
+
+    .progress-bar-bg {
+        height: 24px;
+        background: var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ec4899, #be185d);
+        border-radius: 12px;
+        transition: width 0.3s ease;
+    }
+
+    .progress-stats {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Hero Section -->
+    <div class="crowdfunding-hero">
+        <h1>Crowdfunding Planner</h1>
+        <p class="mb-0 opacity-75">Planera och genomför en framgångsrik crowdfunding-kampanj</p>
+    </div>
+
+    <!-- Campaign Progress (Simulated) -->
+    <div class="campaign-progress">
+        <div class="progress-header">
+            <div>
+                <div class="progress-amount" id="raisedAmount">0 kr</div>
+                <div class="progress-goal">av <span id="goalAmount">100 000</span> kr mål</div>
+            </div>
+            <div class="text-end">
+                <div class="h4 mb-0" id="backerCount">0</div>
+                <div class="text-muted small">backers</div>
+            </div>
+        </div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+        <div class="progress-stats">
+            <span><span id="progressPercent">0</span>% finansierat</span>
+            <span><span id="daysLeft">30</span> dagar kvar</span>
+        </div>
+    </div>
+
+    <!-- Platform Selection -->
+    <h5 class="mb-3">🎯 Välj plattform</h5>
+    <div class="platform-grid">
+        <div class="platform-card" onclick="selectPlatform('kickstarter')" data-platform="kickstarter">
+            <div class="platform-logo">🚀</div>
+            <div class="platform-name">Kickstarter</div>
+            <div class="platform-type">Kreativa projekt, produkter</div>
+            <div class="platform-stats">
+                <div class="platform-stat">
+                    <div class="platform-stat-value">5-10%</div>
+                    <div class="platform-stat-label">Avgift</div>
+                </div>
+                <div class="platform-stat">
+                    <div class="platform-stat-value">38%</div>
+                    <div class="platform-stat-label">Success rate</div>
+                </div>
+                <div class="platform-stat">
+                    <div class="platform-stat-value">Global</div>
+                    <div class="platform-stat-label">Räckvidd</div>
+                </div>
+                <div class="platform-stat">
+                    <div class="platform-stat-value">Allt-eller-inget</div>
+                    <div class="platform-stat-label">Modell</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="platform-card" onclick="selectPlatform('indiegogo')" data-platform="indiegogo">
+            <div class="platform-logo">💡</div>
+            <div class="platform-name">Indiegogo</div>
+            <div class="platform-type">Tech, innovation, flexibel</div>
+            <div class="platform-stats">
+                <div class="platform-stat">
+                    <div class="platform-stat-value">5%</div>
+                    <div class="platform-stat-label">Avgift</div>
+                </div>
+                <div class="platform-stat">
+                    <div class="platform-stat-value">17%</div>
+                    <div class="platform-stat-label">Success rate</div>
+                </div>
+                <div class="platform-stat">
+                    <div class="platform-stat-value">Global</div>
+                    <div class="platform-stat-label">Räckvidd</div>
+                </div>
+                <div class="platform-stat">
+                    <div class="platform-stat-value">Flexibel</div>
+                    <div class="platform-stat-label">Modell</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="platform-card" onclick="selectPlatform('fundedbyme')" data-platform="fundedbyme">
+            <div class="platform-logo">🇸🇪</div>
+            <div class="platform-name">FundedByMe</div>
+            <div class="platform-type">Equity, lån, rewards (Norden)</div>
+            <div class="platform-stats">
+                <div class="platform-stat">
+                    <div class="platform-stat-value">6-8%</div>
+                    <div class="platform-stat-label">Avgift</div>
+                </div>
+                <div class="platform-stat">
+                    <div class="platform-stat-value">Varierar</div>
+                    <div class="platform-stat-label">Success rate</div>
+                </div>
+                <div class="platform-stat">
+                    <div class="platform-stat-value">Norden</div>
+                    <div class="platform-stat-label">Räckvidd</div>
+                </div>
+                <div class="platform-stat">
+                    <div class="platform-stat-value">Flera</div>
+                    <div class="platform-stat-label">Modell</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="platform-card" onclick="selectPlatform('pepins')" data-platform="pepins">
+            <div class="platform-logo">📈</div>
+            <div class="platform-name">Pepins</div>
+            <div class="platform-type">Equity crowdfunding (Sverige)</div>
+            <div class="platform-stats">
+                <div class="platform-stat">
+                    <div class="platform-stat-value">6%</div>
+                    <div class="platform-stat-label">Avgift</div>
+                </div>
+                <div class="platform-stat">
+                    <div class="platform-stat-value">80%+</div>
+                    <div class="platform-stat-label">Success rate</div>
+                </div>
+                <div class="platform-stat">
+                    <div class="platform-stat-value">Sverige</div>
+                    <div class="platform-stat-label">Räckvidd</div>
+                </div>
+                <div class="platform-stat">
+                    <div class="platform-stat-value">Equity</div>
+                    <div class="platform-stat-label">Modell</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaign Planner -->
+    <div class="planner-section">
+        <h5 class="mb-3">📋 Kampanjplanering</h5>
+
+        <div class="planner-tabs">
+            <button class="planner-tab active" onclick="showPlannerTab('budget')">
+                💰 Budget
+            </button>
+            <button class="planner-tab" onclick="showPlannerTab('rewards')">
+                🎁 Belöningar
+            </button>
+            <button class="planner-tab" onclick="showPlannerTab('timeline')">
+                📅 Tidslinje
+            </button>
+            <button class="planner-tab" onclick="showPlannerTab('checklist')">
+                ✅ Checklista
+            </button>
+            <button class="planner-tab" onclick="showPlannerTab('marketing')">
+                📣 Marknadsföring
+            </button>
+        </div>
+
+        <!-- Budget Tab -->
+        <div class="planner-content active" id="tab-budget">
+            <h6 class="mb-3">Kampanjbudget</h6>
+            <div class="budget-grid">
+                <div>
+                    <div class="mb-3">
+                        <label class="form-label">Finansieringsmål (kr)</label>
+                        <input type="number" class="form-control" id="budget-goal" value="100000" onchange="calculateBudget()">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Plattformsavgift (%)</label>
+                        <input type="number" class="form-control" id="budget-platform-fee" value="5" onchange="calculateBudget()">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Betalningsavgift (%)</label>
+                        <input type="number" class="form-control" id="budget-payment-fee" value="3" onchange="calculateBudget()">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Produktionskostnad per enhet (kr)</label>
+                        <input type="number" class="form-control" id="budget-unit-cost" value="200" onchange="calculateBudget()">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Uppskattat antal backers</label>
+                        <input type="number" class="form-control" id="budget-backers" value="200" onchange="calculateBudget()">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fraktkostnad per backer (kr)</label>
+                        <input type="number" class="form-control" id="budget-shipping" value="50" onchange="calculateBudget()">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Marknadsföringsbudget (kr)</label>
+                        <input type="number" class="form-control" id="budget-marketing" value="10000" onchange="calculateBudget()">
+                    </div>
+                </div>
+                <div class="budget-results">
+                    <h6 class="mb-3">Beräknad ekonomi</h6>
+                    <div class="budget-item">
+                        <span>Finansieringsmål</span>
+                        <span class="value" id="result-goal">100 000 kr</span>
+                    </div>
+                    <div class="budget-item">
+                        <span>Plattformsavgift</span>
+                        <span class="value negative" id="result-platform">-5 000 kr</span>
+                    </div>
+                    <div class="budget-item">
+                        <span>Betalningsavgift</span>
+                        <span class="value negative" id="result-payment">-3 000 kr</span>
+                    </div>
+                    <div class="budget-item">
+                        <span>Produktionskostnad</span>
+                        <span class="value negative" id="result-production">-40 000 kr</span>
+                    </div>
+                    <div class="budget-item">
+                        <span>Frakt</span>
+                        <span class="value negative" id="result-shipping">-10 000 kr</span>
+                    </div>
+                    <div class="budget-item">
+                        <span>Marknadsföring</span>
+                        <span class="value negative" id="result-marketing">-10 000 kr</span>
+                    </div>
+                    <div class="budget-item total">
+                        <span>Kvar efter kostnader</span>
+                        <span class="value positive" id="result-net">32 000 kr</span>
+                    </div>
+                    <div class="mt-3 p-3 rounded" style="background: rgba(16, 185, 129, 0.1);">
+                        <small class="text-muted">💡 Tips: Sikta på att minst 30% blir kvar efter kostnader för oförutsedda utgifter.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rewards Tab -->
+        <div class="planner-content" id="tab-rewards">
+            <h6 class="mb-3">Belöningsnivåer</h6>
+            <p class="text-muted mb-3">Rekommendation: Ha 5-8 nivåer med tydlig värdeprogression.</p>
+
+            <div class="rewards-builder" id="rewardsBuilder">
+                <div class="reward-tier">
+                    <div class="reward-tier-price">99 kr</div>
+                    <div class="reward-tier-content">
+                        <div class="reward-tier-title">Early Bird Supporter</div>
+                        <div class="reward-tier-desc">Tackmeddelande + namn på hemsidan</div>
+                    </div>
+                    <div class="reward-tier-actions">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="editReward(0)">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="reward-tier">
+                    <div class="reward-tier-price">299 kr</div>
+                    <div class="reward-tier-content">
+                        <div class="reward-tier-title">Standard</div>
+                        <div class="reward-tier-desc">1x produkt + digitalt innehåll</div>
+                    </div>
+                    <div class="reward-tier-actions">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="editReward(1)">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="reward-tier">
+                    <div class="reward-tier-price">499 kr</div>
+                    <div class="reward-tier-content">
+                        <div class="reward-tier-title">Premium</div>
+                        <div class="reward-tier-desc">2x produkt + exklusiva bonusar</div>
+                    </div>
+                    <div class="reward-tier-actions">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="editReward(2)">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="reward-tier">
+                    <div class="reward-tier-price">999 kr</div>
+                    <div class="reward-tier-content">
+                        <div class="reward-tier-title">VIP</div>
+                        <div class="reward-tier-desc">5x produkt + personlig video + behind the scenes</div>
+                    </div>
+                    <div class="reward-tier-actions">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="editReward(3)">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="add-reward-btn" onclick="addReward()">
+                <i class="fas fa-plus me-2"></i> Lägg till belöningsnivå
+            </button>
+
+            <div class="mt-4 p-3 rounded" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2);">
+                <h6 style="color: #f59e0b;">💡 Tips för belöningar</h6>
+                <ul class="mb-0 small text-muted">
+                    <li>Ha alltid en "tack"-nivå under 100 kr</li>
+                    <li>Din huvudprodukt ska vara 30-40% rabatterad</li>
+                    <li>Erbjud begränsade "Early Bird"-versioner</li>
+                    <li>Ha en dyr "superfan"-nivå (10-20 st)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Timeline Tab -->
+        <div class="planner-content" id="tab-timeline">
+            <h6 class="mb-3">Kampanjtidslinje</h6>
+            <p class="text-muted mb-4">Typisk kampanj: 30 dagar + 2-4 veckor förberedelse</p>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot completed"></div>
+                    <div class="timeline-date">4 veckor före lansering</div>
+                    <div class="timeline-title">Förberedelse börjar</div>
+                    <div class="timeline-desc">Skapa kampanjsida, video, bilder, pressmaterial</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot completed"></div>
+                    <div class="timeline-date">2 veckor före</div>
+                    <div class="timeline-title">Bygg email-lista</div>
+                    <div class="timeline-desc">Landing page för pre-launch signup. Mål: 500+ subscribers</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot completed"></div>
+                    <div class="timeline-date">1 vecka före</div>
+                    <div class="timeline-title">PR & influencer outreach</div>
+                    <div class="timeline-desc">Kontakta press, bloggare, YouTubers</div>
+                </div>
+                <div class="timeline-item current">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">Dag 1</div>
+                    <div class="timeline-title">🚀 LANSERING</div>
+                    <div class="timeline-desc">Skicka till email-lista, dela på sociala medier, aktivera nätverk</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">Dag 1-3</div>
+                    <div class="timeline-title">Kritisk period</div>
+                    <div class="timeline-desc">Nå 30% av målet för att hamna på "trending"</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">Dag 4-25</div>
+                    <div class="timeline-title">Mid-campaign</div>
+                    <div class="timeline-desc">Kontinuerliga uppdateringar, stretch goals, PR-push</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">Dag 26-30</div>
+                    <div class="timeline-title">Final push</div>
+                    <div class="timeline-desc">"Sista chansen"-kommunikation, extra press</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">Efter kampanj</div>
+                    <div class="timeline-title">Fulfillment</div>
+                    <div class="timeline-desc">Produktion, leverans, kommunikation med backers</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checklist Tab -->
+        <div class="planner-content" id="tab-checklist">
+            <h6 class="mb-3">Lanseringschecklista</h6>
+
+            <div class="checklist-section">
+                <div class="checklist-category">
+                    <div class="checklist-category-title">📝 Kampanjsida</div>
+                    <div class="checklist-item">
+                        <div class="checklist-checkbox" onclick="toggleCheck(this)"></div>
+                        <div class="checklist-text">Professionell kampanjvideo (2-3 min)</div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-checkbox" onclick="toggleCheck(this)"></div>
+                        <div class="checklist-text">Högkvalitativa produktbilder</div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-checkbox" onclick="toggleCheck(this)"></div>
+                        <div class="checklist-text">Tydlig problemformulering i första stycket</div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-checkbox" onclick="toggleCheck(this)"></div>
+                        <div class="checklist-text">Detaljerade belöningsbeskrivningar</div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-checkbox" onclick="toggleCheck(this)"></div>
+                        <div class="checklist-text">Team-presentation med foton</div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-checkbox" onclick="toggleCheck(this)"></div>
+                        <div class="checklist-text">Risker och utmaningar (ärlig sektion)</div>
+                    </div>
+                </div>
+
+                <div class="checklist-category">
+                    <div class="checklist-category-title">📧 Pre-launch</div>
+                    <div class="checklist-item">
+                        <div class="checklist-checkbox" onclick="toggleCheck(this)"></div>
+                        <div class="checklist-text">Landing page för email-signups</div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-checkbox" onclick="toggleCheck(this)"></div>
+                        <div class="checklist-text">Minst 500 email-subscribers</div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-checkbox" onclick="toggleCheck(this)"></div>
+                        <div class="checklist-text">Sociala medie-konton redo</div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-checkbox" onclick="toggleCheck(this)"></div>
+                        <div class="checklist-text">Pressmaterial (pressrelease, bilder, facts)</div>
+                    </div>
+                </div>
+
+                <div class="checklist-category">
+                    <div class="checklist-category-title">🚀 Lansering</div>
+                    <div class="checklist-item">
+                        <div class="checklist-checkbox" onclick="toggleCheck(this)"></div>
+                        <div class="checklist-text">Email till hela listan dag 1</div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-checkbox" onclick="toggleCheck(this)"></div>
+                        <div class="checklist-text">Personal reach-out till 50+ personer</div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-checkbox" onclick="toggleCheck(this)"></div>
+                        <div class="checklist-text">Sociala medier-posts schemalagda</div>
+                    </div>
+                    <div class="checklist-item">
+                        <div class="checklist-checkbox" onclick="toggleCheck(this)"></div>
+                        <div class="checklist-text">Facebook/Instagram ads redo</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Marketing Tab -->
+        <div class="planner-content" id="tab-marketing">
+            <h6 class="mb-3">Marknadsföringsplan</h6>
+
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="p-3 border rounded">
+                        <h6>📧 Email Marketing</h6>
+                        <ul class="small text-muted mb-0">
+                            <li>Pre-launch teaser (1 vecka före)</li>
+                            <li>Lanseringsmail (dag 1)</li>
+                            <li>48h update (dag 2)</li>
+                            <li>Milstone-uppdateringar</li>
+                            <li>"Sista chansen" (dag 28-30)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="p-3 border rounded">
+                        <h6>📱 Sociala Medier</h6>
+                        <ul class="small text-muted mb-0">
+                            <li>Daily posts under kampanjen</li>
+                            <li>Behind-the-scenes content</li>
+                            <li>User-generated content</li>
+                            <li>Live Q&A sessions</li>
+                            <li>Countdown till deadline</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="p-3 border rounded">
+                        <h6>📰 PR & Press</h6>
+                        <ul class="small text-muted mb-0">
+                            <li>Pressrelease till 20+ journalister</li>
+                            <li>Personliga pitchar till nischbloggar</li>
+                            <li>Podcast-intervjuer</li>
+                            <li>Product Hunt lansering</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="p-3 border rounded">
+                        <h6>💰 Betald Annonsering</h6>
+                        <ul class="small text-muted mb-0">
+                            <li>Facebook/Instagram retargeting</li>
+                            <li>Google Ads (varumärke)</li>
+                            <li>YouTube pre-roll</li>
+                            <li>Influencer samarbeten</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Factors -->
+    <h5 class="mb-3">🏆 Framgångsfaktorer</h5>
+    <div class="factors-grid">
+        <div class="factor-card">
+            <div class="factor-icon">🎬</div>
+            <div class="factor-title">Professionell video</div>
+            <div class="factor-text">Kampanjer med video har 50% högre chans att nå sitt mål.</div>
+            <div class="factor-stat"><strong>50%</strong> högre success rate</div>
+        </div>
+        <div class="factor-card">
+            <div class="factor-icon">⚡</div>
+            <div class="factor-title">Snabb start</div>
+            <div class="factor-text">Nå 30% av målet inom 48 timmar för att hamna på "trending".</div>
+            <div class="factor-stat"><strong>30%</strong> inom 48h = trending</div>
+        </div>
+        <div class="factor-card">
+            <div class="factor-icon">📧</div>
+            <div class="factor-title">Email-lista</div>
+            <div class="factor-text">Dina första backers kommer från din email-lista. Bygg den innan lansering.</div>
+            <div class="factor-stat"><strong>500+</strong> subscribers rekommenderat</div>
+        </div>
+        <div class="factor-card">
+            <div class="factor-icon">🔄</div>
+            <div class="factor-title">Regelbundna updates</div>
+            <div class="factor-text">Kampanjer med 3+ updates får 239% mer pengar.</div>
+            <div class="factor-stat"><strong>239%</strong> mer med updates</div>
+        </div>
+        <div class="factor-card">
+            <div class="factor-icon">👥</div>
+            <div class="factor-title">Socialt bevis</div>
+            <div class="factor-text">Testimonials, press mentions och early backers bygger förtroende.</div>
+            <div class="factor-stat"><strong>Kritiskt</strong> för konvertering</div>
+        </div>
+        <div class="factor-card">
+            <div class="factor-icon">🎯</div>
+            <div class="factor-title">Realistiskt mål</div>
+            <div class="factor-text">Sätt ett lägre mål du kan nå. Stretch goals driver ytterligare momentum.</div>
+            <div class="factor-stat"><strong>Lägre</strong> mål = högre success</div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Reward Modal -->
+<div class="modal fade" id="rewardModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Lägg till belöningsnivå</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Pris (kr)</label>
+                    <input type="number" class="form-control" id="reward-price" placeholder="299">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Titel</label>
+                    <input type="text" class="form-control" id="reward-title" placeholder="Early Bird Special">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Beskrivning</label>
+                    <textarea class="form-control" id="reward-desc" rows="3" placeholder="Beskriv vad backers får..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Antal tillgängliga (lämna tomt för obegränsat)</label>
+                    <input type="number" class="form-control" id="reward-limit" placeholder="100">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                <button type="button" class="btn btn-primary" onclick="saveReward()">Spara</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let selectedPlatform = '';
+    let rewards = [
+        { price: 99, title: 'Early Bird Supporter', desc: 'Tackmeddelande + namn på hemsidan' },
+        { price: 299, title: 'Standard', desc: '1x produkt + digitalt innehåll' },
+        { price: 499, title: 'Premium', desc: '2x produkt + exklusiva bonusar' },
+        { price: 999, title: 'VIP', desc: '5x produkt + personlig video + behind the scenes' }
+    ];
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        calculateBudget();
+        loadChecklist();
+    });
+
+    function selectPlatform(platform) {
+        selectedPlatform = platform;
+        document.querySelectorAll('.platform-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        document.querySelector(`[data-platform="${platform}"]`).classList.add('selected');
+
+        // Update platform fee
+        const fees = {
+            kickstarter: 5,
+            indiegogo: 5,
+            fundedbyme: 7,
+            pepins: 6
+        };
+        document.getElementById('budget-platform-fee').value = fees[platform] || 5;
+        calculateBudget();
+    }
+
+    function showPlannerTab(tabId) {
+        document.querySelectorAll('.planner-tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.planner-content').forEach(content => content.classList.remove('active'));
+
+        event.target.classList.add('active');
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+    }
+
+    function calculateBudget() {
+        const goal = parseFloat(document.getElementById('budget-goal').value) || 0;
+        const platformFee = parseFloat(document.getElementById('budget-platform-fee').value) || 0;
+        const paymentFee = parseFloat(document.getElementById('budget-payment-fee').value) || 0;
+        const unitCost = parseFloat(document.getElementById('budget-unit-cost').value) || 0;
+        const backers = parseFloat(document.getElementById('budget-backers').value) || 0;
+        const shipping = parseFloat(document.getElementById('budget-shipping').value) || 0;
+        const marketing = parseFloat(document.getElementById('budget-marketing').value) || 0;
+
+        const platformCost = goal * (platformFee / 100);
+        const paymentCost = goal * (paymentFee / 100);
+        const productionCost = unitCost * backers;
+        const shippingCost = shipping * backers;
+
+        const totalCosts = platformCost + paymentCost + productionCost + shippingCost + marketing;
+        const netAmount = goal - totalCosts;
+
+        document.getElementById('result-goal').textContent = formatCurrency(goal);
+        document.getElementById('result-platform').textContent = '-' + formatCurrency(platformCost);
+        document.getElementById('result-payment').textContent = '-' + formatCurrency(paymentCost);
+        document.getElementById('result-production').textContent = '-' + formatCurrency(productionCost);
+        document.getElementById('result-shipping').textContent = '-' + formatCurrency(shippingCost);
+        document.getElementById('result-marketing').textContent = '-' + formatCurrency(marketing);
+        document.getElementById('result-net').textContent = formatCurrency(netAmount);
+
+        const netEl = document.getElementById('result-net');
+        netEl.classList.remove('positive', 'negative');
+        netEl.classList.add(netAmount >= 0 ? 'positive' : 'negative');
+
+        // Update campaign progress display
+        document.getElementById('goalAmount').textContent = formatNumber(goal);
+    }
+
+    function addReward() {
+        document.getElementById('reward-price').value = '';
+        document.getElementById('reward-title').value = '';
+        document.getElementById('reward-desc').value = '';
+        document.getElementById('reward-limit').value = '';
+        new bootstrap.Modal(document.getElementById('rewardModal')).show();
+    }
+
+    function saveReward() {
+        const price = parseFloat(document.getElementById('reward-price').value) || 0;
+        const title = document.getElementById('reward-title').value;
+        const desc = document.getElementById('reward-desc').value;
+
+        if (!price || !title) {
+            alert('Ange pris och titel');
+            return;
+        }
+
+        rewards.push({ price, title, desc });
+        renderRewards();
+        bootstrap.Modal.getInstance(document.getElementById('rewardModal')).hide();
+    }
+
+    function renderRewards() {
+        const builder = document.getElementById('rewardsBuilder');
+        builder.innerHTML = rewards.map((reward, index) => `
+            <div class="reward-tier">
+                <div class="reward-tier-price">${reward.price} kr</div>
+                <div class="reward-tier-content">
+                    <div class="reward-tier-title">${reward.title}</div>
+                    <div class="reward-tier-desc">${reward.desc}</div>
+                </div>
+                <div class="reward-tier-actions">
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeReward(${index})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function removeReward(index) {
+        rewards.splice(index, 1);
+        renderRewards();
+    }
+
+    function toggleCheck(element) {
+        element.classList.toggle('checked');
+        if (element.classList.contains('checked')) {
+            element.innerHTML = '<i class="fas fa-check" style="font-size: 0.75rem;"></i>';
+        } else {
+            element.innerHTML = '';
+        }
+        saveChecklist();
+    }
+
+    function saveChecklist() {
+        const checkboxes = document.querySelectorAll('.checklist-checkbox');
+        const states = [];
+        checkboxes.forEach(cb => {
+            states.push(cb.classList.contains('checked'));
+        });
+        localStorage.setItem('crowdfunding_checklist', JSON.stringify(states));
+    }
+
+    function loadChecklist() {
+        const states = JSON.parse(localStorage.getItem('crowdfunding_checklist') || '[]');
+        const checkboxes = document.querySelectorAll('.checklist-checkbox');
+        checkboxes.forEach((cb, index) => {
+            if (states[index]) {
+                cb.classList.add('checked');
+                cb.innerHTML = '<i class="fas fa-check" style="font-size: 0.75rem;"></i>';
+            }
+        });
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('sv-SE', {
+            style: 'decimal',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount) + ' kr';
+    }
+
+    function formatNumber(num) {
+        return new Intl.NumberFormat('sv-SE').format(num);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,708 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Prenumerationer - AI Wealth Agent{% endblock %}
+{% block page_title %}Prenumerationshanterare{% endblock %}
+
+{% block content %}
+<div class="subscriptions-page">
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+        <div class="summary-card">
+            <div class="summary-icon">
+                <i class="fas fa-credit-card"></i>
+            </div>
+            <div class="summary-info">
+                <span class="summary-value" id="monthlyTotal">0 kr</span>
+                <span class="summary-label">Per manad</span>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-icon yearly">
+                <i class="fas fa-calendar"></i>
+            </div>
+            <div class="summary-info">
+                <span class="summary-value" id="yearlyTotal">0 kr</span>
+                <span class="summary-label">Per ar</span>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-icon count">
+                <i class="fas fa-list"></i>
+            </div>
+            <div class="summary-info">
+                <span class="summary-value" id="activeCount">0</span>
+                <span class="summary-label">Aktiva</span>
+            </div>
+        </div>
+        <div class="summary-card savings">
+            <div class="summary-icon warning">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="summary-info">
+                <span class="summary-value" id="potentialSavings">0 kr</span>
+                <span class="summary-label">Mojlig besparing</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="page-actions">
+        <button class="btn btn-primary" onclick="showAddModal()">
+            <i class="fas fa-plus"></i> Lagg till prenumeration
+        </button>
+        <button class="btn btn-secondary" onclick="analyzeSubscriptions()">
+            <i class="fas fa-magic"></i> AI-analys
+        </button>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="category-filter">
+        <button class="filter-btn active" data-category="all">Alla</button>
+        <button class="filter-btn" data-category="streaming">
+            <i class="fas fa-tv"></i> Streaming
+        </button>
+        <button class="filter-btn" data-category="software">
+            <i class="fas fa-laptop"></i> Mjukvara
+        </button>
+        <button class="filter-btn" data-category="gym">
+            <i class="fas fa-dumbbell"></i> Gym
+        </button>
+        <button class="filter-btn" data-category="telecom">
+            <i class="fas fa-phone"></i> Telecom
+        </button>
+        <button class="filter-btn" data-category="insurance">
+            <i class="fas fa-shield-alt"></i> Forsakring
+        </button>
+        <button class="filter-btn" data-category="other">
+            <i class="fas fa-ellipsis-h"></i> Ovrigt
+        </button>
+    </div>
+
+    <!-- Subscriptions List -->
+    <div id="subscriptionsList" class="subscriptions-list"></div>
+
+    <!-- Analysis Results -->
+    <div id="analysisResults" class="analysis-results" style="display: none;">
+        <h3><i class="fas fa-lightbulb"></i> AI-rekommendationer</h3>
+        <div id="analysisContent"></div>
+    </div>
+</div>
+
+<!-- Add Modal -->
+<div class="modal" id="addModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-plus"></i> Ny prenumeration</h3>
+            <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="subscriptionForm">
+                <div class="form-group">
+                    <label>Namn</label>
+                    <input type="text" id="subName" placeholder="Netflix" required>
+                </div>
+                <div class="form-group">
+                    <label>Leverantor</label>
+                    <input type="text" id="subProvider" placeholder="Netflix Inc">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Belopp (SEK)</label>
+                        <input type="number" id="subAmount" placeholder="169" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Faktureringsperiod</label>
+                        <select id="subCycle">
+                            <option value="monthly">Manatlig</option>
+                            <option value="yearly">Arlig</option>
+                            <option value="weekly">Veckovis</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select id="subCategory">
+                            <option value="streaming">Streaming</option>
+                            <option value="software">Mjukvara</option>
+                            <option value="gym">Gym/Halsa</option>
+                            <option value="telecom">Telecom</option>
+                            <option value="insurance">Forsakring</option>
+                            <option value="other">Ovrigt</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Hur ofta anvander du den?</label>
+                        <select id="subUsage">
+                            <option value="daily">Dagligen</option>
+                            <option value="weekly">Varje vecka</option>
+                            <option value="monthly">Varje manad</option>
+                            <option value="rarely">Sallan</option>
+                            <option value="never">Aldrig</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('addModal')">Avbryt</button>
+            <button class="btn btn-primary" onclick="addSubscription()">
+                <i class="fas fa-plus"></i> Lagg till
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.subscriptions-page { max-width: 1000px; }
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.summary-card.savings {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), transparent);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.summary-icon.yearly { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+.summary-icon.count { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.summary-icon.warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
+.summary-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: block;
+}
+
+.summary-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.page-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.category-filter {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.filter-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.filter-btn:hover { background: var(--surface-light); }
+.filter-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.subscriptions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.subscription-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s;
+}
+
+.subscription-item:hover {
+    border-color: var(--primary);
+}
+
+.subscription-item.rarely-used {
+    border-left: 4px solid var(--warning);
+}
+
+.subscription-item.never-used {
+    border-left: 4px solid var(--danger);
+}
+
+.sub-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.sub-icon.streaming { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.sub-icon.software { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+.sub-icon.gym { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.sub-icon.telecom { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+.sub-icon.insurance { background: rgba(99, 102, 241, 0.2); color: #6366f1; }
+.sub-icon.other { background: rgba(107, 114, 128, 0.2); color: #6b7280; }
+
+.sub-info { flex: 1; }
+
+.sub-name {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.sub-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.sub-usage {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    margin-left: 0.5rem;
+}
+
+.sub-usage.daily { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.sub-usage.weekly { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+.sub-usage.monthly { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+.sub-usage.rarely { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.sub-usage.never { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+.sub-cost {
+    text-align: right;
+}
+
+.sub-amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+    display: block;
+}
+
+.sub-period {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.sub-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.sub-actions button {
+    background: var(--background);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sub-actions button:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.sub-actions button.delete:hover {
+    background: var(--danger);
+    border-color: var(--danger);
+}
+
+.analysis-results {
+    margin-top: 2rem;
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+}
+
+.analysis-results h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.analysis-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+}
+
+.analysis-item.cancel {
+    border-left: 4px solid var(--danger);
+}
+
+.analysis-item.review {
+    border-left: 4px solid var(--warning);
+}
+
+.analysis-saving {
+    font-weight: 600;
+    color: var(--success);
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active { display: flex; }
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.modal-body { padding: 1.25rem; }
+.modal-footer {
+    padding: 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .summary-cards { grid-template-columns: repeat(2, 1fr); }
+    .form-row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let subscriptions = [];
+let currentCategory = 'all';
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadSubscriptions();
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentCategory = this.dataset.category;
+            renderSubscriptions();
+        });
+    });
+});
+
+async function loadSubscriptions() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/subscriptions');
+        if (response.success) {
+            subscriptions = response.subscriptions;
+            updateSummary(response.summary);
+            renderSubscriptions();
+        }
+    } catch (error) {
+        subscriptions = getSampleSubscriptions();
+        renderSubscriptions();
+    }
+}
+
+function getSampleSubscriptions() {
+    return [
+        { id: 1, name: 'Netflix', provider: 'Netflix', category: 'streaming', amount: 169, billing_cycle: 'monthly', usage_frequency: 'daily', status: 'active' },
+        { id: 2, name: 'Spotify', provider: 'Spotify', category: 'streaming', amount: 129, billing_cycle: 'monthly', usage_frequency: 'daily', status: 'active' },
+        { id: 3, name: 'HBO Max', provider: 'Warner Bros', category: 'streaming', amount: 109, billing_cycle: 'monthly', usage_frequency: 'rarely', status: 'active' },
+        { id: 4, name: 'SATS', provider: 'SATS', category: 'gym', amount: 599, billing_cycle: 'monthly', usage_frequency: 'weekly', status: 'active' },
+        { id: 5, name: 'Microsoft 365', provider: 'Microsoft', category: 'software', amount: 899, billing_cycle: 'yearly', usage_frequency: 'daily', status: 'active' },
+        { id: 6, name: 'Disney+', provider: 'Disney', category: 'streaming', amount: 89, billing_cycle: 'monthly', usage_frequency: 'never', status: 'active' },
+    ];
+}
+
+function updateSummary(summary) {
+    if (summary) {
+        document.getElementById('monthlyTotal').textContent = WealthAgent.formatCurrency(summary.monthly_cost);
+        document.getElementById('yearlyTotal').textContent = WealthAgent.formatCurrency(summary.yearly_cost);
+        document.getElementById('activeCount').textContent = summary.total_active;
+        document.getElementById('potentialSavings').textContent = WealthAgent.formatCurrency(summary.potential_monthly_savings) + '/man';
+    } else {
+        const monthlyTotal = subscriptions.reduce((sum, s) => {
+            return sum + (s.billing_cycle === 'monthly' ? s.amount : s.amount / 12);
+        }, 0);
+        document.getElementById('monthlyTotal').textContent = WealthAgent.formatCurrency(monthlyTotal);
+        document.getElementById('yearlyTotal').textContent = WealthAgent.formatCurrency(monthlyTotal * 12);
+        document.getElementById('activeCount').textContent = subscriptions.length;
+
+        const rareSubs = subscriptions.filter(s => ['rarely', 'never'].includes(s.usage_frequency));
+        const savings = rareSubs.reduce((sum, s) => sum + (s.billing_cycle === 'monthly' ? s.amount : s.amount / 12), 0);
+        document.getElementById('potentialSavings').textContent = WealthAgent.formatCurrency(savings) + '/man';
+    }
+}
+
+function renderSubscriptions() {
+    const list = document.getElementById('subscriptionsList');
+
+    let filtered = subscriptions;
+    if (currentCategory !== 'all') {
+        filtered = subscriptions.filter(s => s.category === currentCategory);
+    }
+
+    list.innerHTML = filtered.map(sub => {
+        const usageClass = sub.usage_frequency;
+        const itemClass = ['rarely', 'never'].includes(sub.usage_frequency) ?
+            (sub.usage_frequency === 'never' ? 'never-used' : 'rarely-used') : '';
+
+        return `
+            <div class="subscription-item ${itemClass}">
+                <div class="sub-icon ${sub.category}">
+                    <i class="fas fa-${getCategoryIcon(sub.category)}"></i>
+                </div>
+                <div class="sub-info">
+                    <span class="sub-name">${sub.name}</span>
+                    <span class="sub-meta">
+                        ${sub.provider || sub.category}
+                        <span class="sub-usage ${usageClass}">${getUsageLabel(sub.usage_frequency)}</span>
+                    </span>
+                </div>
+                <div class="sub-cost">
+                    <span class="sub-amount">${sub.amount} kr</span>
+                    <span class="sub-period">/${sub.billing_cycle === 'monthly' ? 'man' : sub.billing_cycle === 'yearly' ? 'ar' : 'v'}</span>
+                </div>
+                <div class="sub-actions">
+                    <button onclick="editSubscription(${sub.id})" title="Redigera">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete" onclick="deleteSubscription(${sub.id})" title="Ta bort">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getCategoryIcon(category) {
+    const icons = {
+        streaming: 'tv',
+        software: 'laptop',
+        gym: 'dumbbell',
+        telecom: 'phone',
+        insurance: 'shield-alt',
+        other: 'box'
+    };
+    return icons[category] || 'box';
+}
+
+function getUsageLabel(usage) {
+    const labels = {
+        daily: 'Dagligen',
+        weekly: 'Veckovis',
+        monthly: 'Manatlig',
+        rarely: 'Sallan',
+        never: 'Aldrig'
+    };
+    return labels[usage] || usage;
+}
+
+function showAddModal() {
+    document.getElementById('addModal').classList.add('active');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+async function addSubscription() {
+    const data = {
+        name: document.getElementById('subName').value,
+        provider: document.getElementById('subProvider').value,
+        amount: parseFloat(document.getElementById('subAmount').value),
+        billing_cycle: document.getElementById('subCycle').value,
+        category: document.getElementById('subCategory').value,
+        usage_frequency: document.getElementById('subUsage').value
+    };
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/subscriptions', 'POST', data);
+        if (response.success) {
+            subscriptions.push(response.subscription);
+            renderSubscriptions();
+            updateSummary();
+            closeModal('addModal');
+            WealthAgent.showToast('Prenumeration tillagd!', 'success');
+        }
+    } catch (error) {
+        // Add locally
+        data.id = Date.now();
+        subscriptions.push(data);
+        renderSubscriptions();
+        updateSummary();
+        closeModal('addModal');
+        WealthAgent.showToast('Prenumeration tillagd!', 'success');
+    }
+}
+
+async function deleteSubscription(id) {
+    if (!confirm('Ta bort denna prenumeration?')) return;
+
+    try {
+        await WealthAgent.apiCall(`/wealth/api/subscriptions/${id}`, 'DELETE');
+    } catch (e) {}
+
+    subscriptions = subscriptions.filter(s => s.id !== id);
+    renderSubscriptions();
+    updateSummary();
+    WealthAgent.showToast('Prenumeration borttagen', 'success');
+}
+
+async function analyzeSubscriptions() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/subscriptions/analyze', 'POST');
+        if (response.success) {
+            displayAnalysis(response);
+        }
+    } catch (error) {
+        // Show local analysis
+        const rareSubs = subscriptions.filter(s => ['rarely', 'never'].includes(s.usage_frequency));
+        displayAnalysis({
+            recommendations: rareSubs.map(s => ({
+                name: s.name,
+                action: s.usage_frequency === 'never' ? 'cancel' : 'review',
+                reason: `Du anvander ${s.name} ${s.usage_frequency === 'never' ? 'aldrig' : 'sallan'}`,
+                monthly_savings: s.billing_cycle === 'monthly' ? s.amount : s.amount / 12
+            })),
+            total_monthly_savings: rareSubs.reduce((sum, s) => sum + (s.billing_cycle === 'monthly' ? s.amount : s.amount / 12), 0)
+        });
+    }
+}
+
+function displayAnalysis(data) {
+    const section = document.getElementById('analysisResults');
+    const content = document.getElementById('analysisContent');
+
+    if (data.recommendations.length === 0) {
+        content.innerHTML = '<p>Inga rekommendationer just nu - du anvander dina prenumerationer val!</p>';
+    } else {
+        content.innerHTML = data.recommendations.map(rec => `
+            <div class="analysis-item ${rec.action}">
+                <div>
+                    <strong>${rec.name}</strong>
+                    <p style="margin: 0.25rem 0; color: var(--text-muted);">${rec.reason}</p>
+                </div>
+                <span class="analysis-saving">Spara ${WealthAgent.formatCurrency(rec.monthly_savings)}/man</span>
+            </div>
+        `).join('');
+
+        content.innerHTML += `
+            <div style="margin-top: 1rem; padding: 1rem; background: rgba(34, 197, 94, 0.1); border-radius: 10px;">
+                <strong>Total mojlig besparing:</strong> ${WealthAgent.formatCurrency(data.total_monthly_savings)}/manad
+                (${WealthAgent.formatCurrency(data.total_yearly_savings || data.total_monthly_savings * 12)}/ar)
+            </div>
+        `;
+    }
+
+    section.style.display = 'block';
+}
+
+function editSubscription(id) {
+    // TODO: Implement edit modal
+    WealthAgent.showToast('Redigering kommer snart', 'info');
+}
+</script>
+{% endblock %}

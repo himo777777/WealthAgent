@@ -1,0 +1,1040 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Inkomstkallor - AI Wealth Agent{% endblock %}
+{% block page_title %}Inkomstkallor{% endblock %}
+
+{% block content %}
+<div class="income-sources-page">
+    <!-- Summary Section -->
+    <div class="income-summary">
+        <div class="summary-main">
+            <div class="summary-icon">
+                <i class="fas fa-coins"></i>
+            </div>
+            <div class="summary-content">
+                <span class="summary-label">Total manadsinkomst</span>
+                <span class="summary-value" id="totalIncome">0 kr</span>
+                <div class="income-breakdown">
+                    <span class="breakdown-item active">
+                        <i class="fas fa-briefcase"></i>
+                        <span id="activeIncome">0 kr</span> aktiv
+                    </span>
+                    <span class="breakdown-item passive">
+                        <i class="fas fa-seedling"></i>
+                        <span id="passiveIncome">0 kr</span> passiv
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="passive-goal">
+            <div class="goal-header">
+                <span>Mal: Passiv inkomst</span>
+                <span class="goal-target" id="passiveTarget">0 kr/manad</span>
+            </div>
+            <div class="goal-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="passiveProgress" style="width: 0%"></div>
+                </div>
+                <span class="progress-text" id="passivePercent">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-pie"></i> Inkomstfordelning</h3>
+            </div>
+            <div class="chart-body">
+                <canvas id="incomeDistChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-bar"></i> Inkomst per kalla</h3>
+            </div>
+            <div class="chart-body">
+                <canvas id="incomeBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Income Sources List -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-list"></i> Alla inkomstkallor</h3>
+            <button class="btn btn-primary" onclick="showAddModal()">
+                <i class="fas fa-plus"></i> Lagg till
+            </button>
+        </div>
+        <div id="incomeList" class="income-list">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Diversification Score -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-balance-scale"></i> Diversifieringsanalys</h3>
+        </div>
+        <div class="diversification-content">
+            <div class="diversity-score">
+                <div class="score-circle">
+                    <svg viewBox="0 0 100 100">
+                        <circle class="score-bg" cx="50" cy="50" r="45"></circle>
+                        <circle class="score-fill" cx="50" cy="50" r="45" id="diversityCircle"></circle>
+                    </svg>
+                    <div class="score-value" id="diversityScore">0</div>
+                </div>
+                <div class="score-label">Diversifieringspoang</div>
+            </div>
+            <div class="diversity-tips" id="diversityTips">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Passive Income Ideas -->
+    <div class="section-card ideas-section">
+        <div class="section-header">
+            <h3><i class="fas fa-lightbulb"></i> Passiva inkomstideer</h3>
+        </div>
+        <div id="incomeIdeas" class="ideas-grid">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="incomeModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Lagg till inkomstkalla</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="incomeForm">
+            <input type="hidden" id="incomeId">
+            <div class="form-group">
+                <label>Namn</label>
+                <input type="text" id="incomeName" required placeholder="t.ex. Lon fran Foretag AB">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Typ</label>
+                    <select id="incomeType" required>
+                        <option value="salary">Lon</option>
+                        <option value="freelance">Frilans/Konsult</option>
+                        <option value="business">Foretagsvinst</option>
+                        <option value="rental">Hyresinkomst</option>
+                        <option value="dividend">Utdelning</option>
+                        <option value="interest">Ranta</option>
+                        <option value="pension">Pension</option>
+                        <option value="royalty">Royalty</option>
+                        <option value="other">Ovrigt</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Frekvens</label>
+                    <select id="incomeFrequency" required>
+                        <option value="monthly" selected>Manadsvis</option>
+                        <option value="biweekly">Varannan vecka</option>
+                        <option value="weekly">Veckovis</option>
+                        <option value="quarterly">Kvartalsvis</option>
+                        <option value="yearly">Arsvis</option>
+                        <option value="irregular">Oregelbunden</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Belopp (kr)</label>
+                    <input type="number" id="incomeAmount" required min="0" step="0.01" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>Passiv inkomst?</label>
+                    <div class="toggle-group">
+                        <label class="toggle">
+                            <input type="checkbox" id="incomePassive">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Ja, detta ar passiv inkomst</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Notering (valfritt)</label>
+                <input type="text" id="incomeNote" placeholder="Extra information...">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Avbryt</button>
+                <button type="submit" class="btn btn-primary">Spara</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.income-sources-page { max-width: 1100px; }
+
+.income-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-main {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1));
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 20px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.summary-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+    background: rgba(34, 197, 94, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: var(--success);
+}
+
+.summary-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.summary-value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--success);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.income-breakdown {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.breakdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.breakdown-item.active i { color: #6366f1; }
+.breakdown-item.passive i { color: #22c55e; }
+
+.passive-goal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.5rem;
+}
+
+.goal-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.goal-target {
+    font-weight: 600;
+    color: var(--success);
+}
+
+.goal-progress {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.goal-progress .progress-bar {
+    flex: 1;
+    height: 12px;
+    background: var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.goal-progress .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success), #10b981);
+    border-radius: 6px;
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    font-weight: 600;
+    min-width: 40px;
+}
+
+.charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.chart-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.chart-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.chart-header h3 i { color: var(--primary); }
+
+.chart-body {
+    padding: 1.25rem;
+    height: 280px;
+}
+
+.section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.section-header h3 i { color: var(--primary); }
+
+.income-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.income-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+}
+
+.income-item:last-child { border-bottom: none; }
+.income-item:hover { background: var(--surface-light); }
+
+.income-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-right: 1rem;
+}
+
+.income-info {
+    flex: 1;
+}
+
+.income-name {
+    font-weight: 500;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.income-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.passive-badge {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.income-amount {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--success);
+    margin-right: 1rem;
+}
+
+.income-actions button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.income-actions button:hover {
+    background: var(--border);
+    color: var(--text);
+}
+
+.diversification-content {
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+    padding: 2rem;
+}
+
+.diversity-score {
+    text-align: center;
+}
+
+.score-circle {
+    width: 140px;
+    height: 140px;
+    position: relative;
+    margin: 0 auto 1rem;
+}
+
+.score-circle svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+}
+
+.score-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 10;
+}
+
+.score-fill {
+    fill: none;
+    stroke: var(--success);
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 283;
+    stroke-dashoffset: 283;
+    transition: stroke-dashoffset 1s ease;
+}
+
+.score-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.score-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.diversity-tips {
+    flex: 1;
+}
+
+.tip-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.tip-item:last-child { border-bottom: none; }
+
+.tip-item i {
+    color: var(--warning);
+    margin-top: 0.2rem;
+}
+
+.tip-item.success i { color: var(--success); }
+
+.ideas-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    padding: 1.25rem;
+}
+
+.idea-card {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.2s;
+}
+
+.idea-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.idea-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.idea-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.idea-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+}
+
+.idea-potential {
+    font-size: 0.8rem;
+    color: var(--success);
+    font-weight: 500;
+}
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+#incomeForm {
+    padding: 1.25rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle input { opacity: 0; width: 0; height: 0; }
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: var(--border);
+    border-radius: 24px;
+    transition: 0.3s;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.toggle input:checked + .toggle-slider { background: var(--success); }
+.toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+.toggle-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .income-summary { grid-template-columns: 1fr; }
+    .charts-row { grid-template-columns: 1fr; }
+    .ideas-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .diversification-content { flex-direction: column; }
+    .ideas-grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let incomeDistChart = null;
+let incomeBarChart = null;
+let allIncomeSources = [];
+let passiveGoal = 20000;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadIncomeSources();
+    document.getElementById('incomeForm').addEventListener('submit', saveIncome);
+});
+
+async function loadIncomeSources() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/income-sources');
+        if (response.success) {
+            allIncomeSources = response.sources;
+            passiveGoal = response.passive_goal || 20000;
+            renderAll();
+        }
+    } catch (error) {
+        allIncomeSources = getSampleSources();
+        renderAll();
+    }
+}
+
+function getSampleSources() {
+    return [
+        { id: 1, name: 'Lon fran Tech AB', type: 'salary', amount: 45000, frequency: 'monthly', is_passive: false },
+        { id: 2, name: 'Frilansuppdrag', type: 'freelance', amount: 8000, frequency: 'monthly', is_passive: false },
+        { id: 3, name: 'Uthyrning sommarstuga', type: 'rental', amount: 5000, frequency: 'monthly', is_passive: true },
+        { id: 4, name: 'Utdelning aktier', type: 'dividend', amount: 2500, frequency: 'quarterly', is_passive: true },
+        { id: 5, name: 'Ranta sparkonto', type: 'interest', amount: 450, frequency: 'monthly', is_passive: true }
+    ];
+}
+
+function renderAll() {
+    updateSummary();
+    renderIncomeList();
+    renderDistChart();
+    renderBarChart();
+    renderDiversification();
+    renderIdeas();
+}
+
+function normalizeToMonthly(amount, frequency) {
+    switch(frequency) {
+        case 'weekly': return amount * 4.33;
+        case 'biweekly': return amount * 2.17;
+        case 'monthly': return amount;
+        case 'quarterly': return amount / 3;
+        case 'yearly': return amount / 12;
+        default: return amount;
+    }
+}
+
+function updateSummary() {
+    const monthlyIncomes = allIncomeSources.map(s => ({
+        ...s,
+        monthly: normalizeToMonthly(s.amount, s.frequency)
+    }));
+
+    const total = monthlyIncomes.reduce((sum, s) => sum + s.monthly, 0);
+    const activeTotal = monthlyIncomes.filter(s => !s.is_passive).reduce((sum, s) => sum + s.monthly, 0);
+    const passiveTotal = monthlyIncomes.filter(s => s.is_passive).reduce((sum, s) => sum + s.monthly, 0);
+
+    document.getElementById('totalIncome').textContent = WealthAgent.formatCurrency(total);
+    document.getElementById('activeIncome').textContent = WealthAgent.formatCurrency(activeTotal);
+    document.getElementById('passiveIncome').textContent = WealthAgent.formatCurrency(passiveTotal);
+    document.getElementById('passiveTarget').textContent = WealthAgent.formatCurrency(passiveGoal) + '/manad';
+
+    const passivePercent = Math.min(100, (passiveTotal / passiveGoal) * 100);
+    document.getElementById('passiveProgress').style.width = passivePercent + '%';
+    document.getElementById('passivePercent').textContent = Math.round(passivePercent) + '%';
+}
+
+function renderIncomeList() {
+    const container = document.getElementById('incomeList');
+
+    if (allIncomeSources.length === 0) {
+        container.innerHTML = `
+            <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+                <i class="fas fa-coins" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <p>Inga inkomstkallor tillagda</p>
+            </div>
+        `;
+        return;
+    }
+
+    const icons = {
+        salary: { icon: 'briefcase', color: '#6366f1' },
+        freelance: { icon: 'laptop', color: '#8b5cf6' },
+        business: { icon: 'building', color: '#0ea5e9' },
+        rental: { icon: 'home', color: '#22c55e' },
+        dividend: { icon: 'chart-line', color: '#f59e0b' },
+        interest: { icon: 'percentage', color: '#10b981' },
+        pension: { icon: 'umbrella-beach', color: '#ec4899' },
+        royalty: { icon: 'music', color: '#a855f7' },
+        other: { icon: 'coins', color: '#64748b' }
+    };
+
+    const freqLabels = {
+        monthly: 'Manadsvis',
+        biweekly: 'Varannan vecka',
+        weekly: 'Veckovis',
+        quarterly: 'Kvartalsvis',
+        yearly: 'Arsvis',
+        irregular: 'Oregelbunden'
+    };
+
+    container.innerHTML = allIncomeSources.map(s => {
+        const { icon, color } = icons[s.type] || icons.other;
+        const monthly = normalizeToMonthly(s.amount, s.frequency);
+
+        return `
+            <div class="income-item">
+                <div class="income-icon" style="background: ${color}20; color: ${color}">
+                    <i class="fas fa-${icon}"></i>
+                </div>
+                <div class="income-info">
+                    <span class="income-name">${s.name}</span>
+                    <span class="income-meta">
+                        ${freqLabels[s.frequency] || s.frequency}
+                        ${s.is_passive ? '<span class="passive-badge">Passiv</span>' : ''}
+                    </span>
+                </div>
+                <span class="income-amount">+${WealthAgent.formatCurrency(monthly)}/man</span>
+                <div class="income-actions">
+                    <button onclick="editIncome(${s.id})" title="Redigera">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="deleteIncome(${s.id})" title="Ta bort">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderDistChart() {
+    const ctx = document.getElementById('incomeDistChart').getContext('2d');
+
+    if (incomeDistChart) incomeDistChart.destroy();
+
+    const activeTotal = allIncomeSources.filter(s => !s.is_passive).reduce((sum, s) => sum + normalizeToMonthly(s.amount, s.frequency), 0);
+    const passiveTotal = allIncomeSources.filter(s => s.is_passive).reduce((sum, s) => sum + normalizeToMonthly(s.amount, s.frequency), 0);
+
+    incomeDistChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Aktiv inkomst', 'Passiv inkomst'],
+            datasets: [{
+                data: [activeTotal, passiveTotal],
+                backgroundColor: ['#6366f1', '#22c55e'],
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: getComputedStyle(document.body).getPropertyValue('--text').trim() }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `${ctx.label}: ${WealthAgent.formatCurrency(ctx.raw)}`
+                    }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+}
+
+function renderBarChart() {
+    const ctx = document.getElementById('incomeBarChart').getContext('2d');
+
+    if (incomeBarChart) incomeBarChart.destroy();
+
+    const data = allIncomeSources.map(s => ({
+        name: s.name.substring(0, 15) + (s.name.length > 15 ? '...' : ''),
+        amount: normalizeToMonthly(s.amount, s.frequency),
+        color: s.is_passive ? '#22c55e' : '#6366f1'
+    }));
+
+    incomeBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(d => d.name),
+            datasets: [{
+                data: data.map(d => d.amount),
+                backgroundColor: data.map(d => d.color),
+                borderRadius: 8,
+                maxBarThickness: 40
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-muted').trim() }
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: {
+                        color: getComputedStyle(document.body).getPropertyValue('--text-muted').trim(),
+                        callback: val => (val / 1000) + 'k'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderDiversification() {
+    const sources = allIncomeSources.length;
+    const hasPassive = allIncomeSources.some(s => s.is_passive);
+    const passiveCount = allIncomeSources.filter(s => s.is_passive).length;
+
+    let score = 0;
+    score += Math.min(30, sources * 10);
+    score += hasPassive ? 20 : 0;
+    score += Math.min(30, passiveCount * 15);
+
+    const uniqueTypes = new Set(allIncomeSources.map(s => s.type)).size;
+    score += Math.min(20, uniqueTypes * 5);
+
+    score = Math.min(100, score);
+
+    // Update circle
+    const circumference = 2 * Math.PI * 45;
+    const offset = circumference - (score / 100 * circumference);
+    document.getElementById('diversityCircle').style.strokeDashoffset = offset;
+    document.getElementById('diversityScore').textContent = score;
+
+    // Tips
+    const tips = [];
+    if (sources < 3) tips.push({ success: false, text: 'Lagg till fler inkomstkallor for battre diversifiering' });
+    else tips.push({ success: true, text: 'Bra jobbat med ' + sources + ' olika inkomstkallor!' });
+
+    if (!hasPassive) tips.push({ success: false, text: 'Overväg att skapa passiva inkomstkallor' });
+    else tips.push({ success: true, text: 'Du har ' + passiveCount + ' passiva inkomstkallor' });
+
+    if (uniqueTypes < 3) tips.push({ success: false, text: 'Variera typerna av inkomst for battre skydd' });
+
+    document.getElementById('diversityTips').innerHTML = tips.map(tip => `
+        <div class="tip-item ${tip.success ? 'success' : ''}">
+            <i class="fas fa-${tip.success ? 'check-circle' : 'exclamation-circle'}"></i>
+            <span>${tip.text}</span>
+        </div>
+    `).join('');
+}
+
+function renderIdeas() {
+    const ideas = [
+        { icon: 'chart-line', color: '#6366f1', title: 'Utdelningsaktier', desc: 'Investera i stabila utdelningsaktier for kvartalsvis inkomst', potential: '500-5 000 kr/manad' },
+        { icon: 'home', color: '#22c55e', title: 'Fastighetsinvestering', desc: 'Kop en hyreslagenhet eller del i fastighetsfond', potential: '2 000-10 000 kr/manad' },
+        { icon: 'book', color: '#f59e0b', title: 'Digital produkt', desc: 'Skapa och salj e-bok, kurs eller mall online', potential: '1 000-20 000 kr/manad' },
+        { icon: 'percentage', color: '#10b981', title: 'Hograntekonto', desc: 'Placera sparkapital pa konto med hogre ranta', potential: '200-2 000 kr/manad' },
+        { icon: 'camera', color: '#ec4899', title: 'Stockfoton', desc: 'Salj dina foton pa stockbildsajter', potential: '500-3 000 kr/manad' },
+        { icon: 'code', color: '#8b5cf6', title: 'SaaS-produkt', desc: 'Bygg en enkel programvara med prenumerationsmodell', potential: '5 000-50 000 kr/manad' }
+    ];
+
+    document.getElementById('incomeIdeas').innerHTML = ideas.map(idea => `
+        <div class="idea-card">
+            <div class="idea-icon" style="background: ${idea.color}20; color: ${idea.color}">
+                <i class="fas fa-${idea.icon}"></i>
+            </div>
+            <div class="idea-title">${idea.title}</div>
+            <div class="idea-desc">${idea.desc}</div>
+            <div class="idea-potential"><i class="fas fa-arrow-trend-up"></i> ${idea.potential}</div>
+        </div>
+    `).join('');
+}
+
+function showAddModal() {
+    document.getElementById('modalTitle').textContent = 'Lagg till inkomstkalla';
+    document.getElementById('incomeForm').reset();
+    document.getElementById('incomeId').value = '';
+    document.getElementById('incomeModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('incomeModal').classList.remove('active');
+}
+
+function editIncome(id) {
+    const source = allIncomeSources.find(s => s.id === id);
+    if (!source) return;
+
+    document.getElementById('modalTitle').textContent = 'Redigera inkomstkalla';
+    document.getElementById('incomeId').value = id;
+    document.getElementById('incomeName').value = source.name;
+    document.getElementById('incomeType').value = source.type;
+    document.getElementById('incomeFrequency').value = source.frequency;
+    document.getElementById('incomeAmount').value = source.amount;
+    document.getElementById('incomePassive').checked = source.is_passive;
+    document.getElementById('incomeNote').value = source.note || '';
+
+    document.getElementById('incomeModal').classList.add('active');
+}
+
+async function saveIncome(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('incomeId').value;
+    const data = {
+        name: document.getElementById('incomeName').value,
+        type: document.getElementById('incomeType').value,
+        frequency: document.getElementById('incomeFrequency').value,
+        amount: parseFloat(document.getElementById('incomeAmount').value),
+        is_passive: document.getElementById('incomePassive').checked,
+        note: document.getElementById('incomeNote').value
+    };
+
+    try {
+        let response;
+        if (id) {
+            response = await WealthAgent.apiCall(`/wealth/api/income-sources/${id}`, 'PUT', data);
+        } else {
+            response = await WealthAgent.apiCall('/wealth/api/income-sources', 'POST', data);
+        }
+
+        if (response.success) {
+            WealthAgent.showToast(id ? 'Uppdaterad!' : 'Tillagd!', 'success');
+            closeModal();
+            loadIncomeSources();
+        }
+    } catch (error) {
+        // Local update
+        if (id) {
+            const idx = allIncomeSources.findIndex(s => s.id == id);
+            if (idx >= 0) allIncomeSources[idx] = { ...allIncomeSources[idx], ...data };
+        } else {
+            allIncomeSources.push({ id: Date.now(), ...data });
+        }
+        WealthAgent.showToast(id ? 'Uppdaterad!' : 'Tillagd!', 'success');
+        closeModal();
+        renderAll();
+    }
+}
+
+async function deleteIncome(id) {
+    if (!confirm('Ta bort denna inkomstkalla?')) return;
+
+    try {
+        const response = await WealthAgent.apiCall(`/wealth/api/income-sources/${id}`, 'DELETE');
+        if (response.success) {
+            WealthAgent.showToast('Borttagen!', 'success');
+            loadIncomeSources();
+        }
+    } catch (error) {
+        allIncomeSources = allIncomeSources.filter(s => s.id !== id);
+        WealthAgent.showToast('Borttagen!', 'success');
+        renderAll();
+    }
+}
+</script>
+{% endblock %}

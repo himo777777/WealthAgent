@@ -1,0 +1,633 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Opportunity Radar - AI Wealth Agent{% endblock %}
+{% block page_title %}Opportunity Radar{% endblock %}
+
+{% block content %}
+<div class="opportunities-page">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h2><i class="fas fa-satellite-dish"></i> Opportunity Radar</h2>
+            <p>AI-driven analys hittar de basta mojligheterna for dig baserat pa din bakgrund och situation</p>
+        </div>
+        <button class="btn btn-primary" onclick="refreshOpportunities()">
+            <i class="fas fa-sync-alt"></i> Skanna Nu
+        </button>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon purple">
+                <i class="fas fa-lightbulb"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="totalOpportunities">-</span>
+                <span class="stat-label">Mojligheter Hittade</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="potentialIncome">-</span>
+                <span class="stat-label">Potentiell Arsinkomst</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon orange">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="quickWins">-</span>
+                <span class="stat-label">Snabba Vinster</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon blue">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-value" id="personalizedScore">-</span>
+                <span class="stat-label">Personlig Match</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">Alla</button>
+        <button class="filter-tab" data-filter="income">Extra Inkomst</button>
+        <button class="filter-tab" data-filter="investment">Investeringar</button>
+        <button class="filter-tab" data-filter="tax">Skatteoptimering</button>
+        <button class="filter-tab" data-filter="career">Karriar</button>
+    </div>
+
+    <!-- Opportunities List -->
+    <div class="opportunities-container">
+        <div id="opportunitiesLoading" class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>AI skannar mojligheter...</p>
+        </div>
+
+        <div id="opportunitiesList" class="opportunities-grid" style="display: none;"></div>
+
+        <div id="noOpportunities" class="empty-state" style="display: none;">
+            <i class="fas fa-search"></i>
+            <h3>Inga mojligheter hittades</h3>
+            <p>Uppdatera din profil for battre matchning</p>
+        </div>
+    </div>
+</div>
+
+<!-- Opportunity Detail Modal -->
+<div id="opportunityModal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h3 id="modalTitle">Mojlighet</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <!-- Filled by JS -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Stang</button>
+            <button class="btn btn-primary" id="modalAction">Borja Nu</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.opportunities-page {
+    max-width: 1200px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-content h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.header-content h2 i {
+    color: var(--primary);
+}
+
+.header-content p {
+    color: var(--text-muted);
+    max-width: 600px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.stat-icon.purple { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+.stat-icon.green { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.stat-icon.orange { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.stat-icon.blue { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.filter-tab {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.filter-tab:hover {
+    background: var(--surface-light);
+}
+
+.filter-tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.opportunities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.25rem;
+}
+
+.opportunity-card {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.opportunity-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 40px rgba(99, 102, 241, 0.15);
+}
+
+.opportunity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.opportunity-category {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--primary-light);
+}
+
+.opportunity-match {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--success);
+}
+
+.opportunity-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.opportunity-description {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.opportunity-impact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.impact-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--success);
+}
+
+.impact-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.opportunity-effort {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.effort-dots {
+    display: flex;
+    gap: 3px;
+}
+
+.effort-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+}
+
+.effort-dot.filled {
+    background: var(--warning);
+}
+
+.effort-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.loading-state, .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--surface);
+    border-radius: 16px;
+}
+
+.loading-state p, .empty-state p {
+    color: var(--text-muted);
+    margin-top: 1rem;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--text-muted);
+}
+
+.empty-state h3 {
+    margin-top: 1rem;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-large {
+    max-width: 700px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.detail-section {
+    margin-bottom: 1.5rem;
+}
+
+.detail-section h4 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+}
+
+.detail-steps {
+    list-style: none;
+}
+
+.detail-steps li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.detail-steps li:last-child {
+    border-bottom: none;
+}
+
+.step-number {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+    }
+
+    .opportunities-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let opportunities = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadOpportunities();
+
+    // Filter tabs
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            filterOpportunities(this.dataset.filter);
+        });
+    });
+});
+
+async function loadOpportunities() {
+    document.getElementById('opportunitiesLoading').style.display = 'block';
+    document.getElementById('opportunitiesList').style.display = 'none';
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/opportunities');
+        opportunities = response.opportunities || [];
+        updateStats();
+        renderOpportunities(opportunities);
+    } catch (error) {
+        console.error('Failed to load opportunities:', error);
+        WealthAgent.showToast('Kunde inte ladda mojligheter', 'error');
+    }
+
+    document.getElementById('opportunitiesLoading').style.display = 'none';
+}
+
+async function refreshOpportunities() {
+    const btn = event.target.closest('button');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Skannar...';
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/opportunities/refresh', 'POST');
+        opportunities = response.opportunities || [];
+        updateStats();
+        renderOpportunities(opportunities);
+        WealthAgent.showToast(`Hittade ${opportunities.length} mojligheter!`, 'success');
+    } catch (error) {
+        console.error('Failed to refresh opportunities:', error);
+        WealthAgent.showToast('Kunde inte skanna mojligheter', 'error');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-sync-alt"></i> Skanna Nu';
+}
+
+function updateStats() {
+    document.getElementById('totalOpportunities').textContent = opportunities.length;
+
+    const totalIncome = opportunities.reduce((sum, o) => sum + (o.annual_impact_sek || 0), 0);
+    document.getElementById('potentialIncome').textContent = WealthAgent.formatCurrency(totalIncome);
+
+    const quickWins = opportunities.filter(o => o.effort_level <= 2).length;
+    document.getElementById('quickWins').textContent = quickWins;
+
+    const avgMatch = opportunities.length > 0
+        ? Math.round(opportunities.reduce((sum, o) => sum + (o.match_score || 80), 0) / opportunities.length)
+        : 0;
+    document.getElementById('personalizedScore').textContent = avgMatch + '%';
+}
+
+function renderOpportunities(opps) {
+    const container = document.getElementById('opportunitiesList');
+    const noResults = document.getElementById('noOpportunities');
+
+    if (opps.length === 0) {
+        container.style.display = 'none';
+        noResults.style.display = 'block';
+        return;
+    }
+
+    noResults.style.display = 'none';
+    container.style.display = 'grid';
+
+    container.innerHTML = opps.map((opp, index) => `
+        <div class="opportunity-card" onclick="showOpportunityDetail(${index})" data-category="${opp.category || 'general'}">
+            <div class="opportunity-header">
+                <span class="opportunity-category">${getCategoryLabel(opp.category)}</span>
+                <span class="opportunity-match">
+                    <i class="fas fa-check-circle"></i>
+                    ${opp.match_score || 85}% match
+                </span>
+            </div>
+            <h3 class="opportunity-title">${opp.title}</h3>
+            <p class="opportunity-description">${opp.description}</p>
+            <div class="opportunity-impact">
+                <div>
+                    <div class="impact-value">+${WealthAgent.formatCurrency(opp.annual_impact_sek || 0)}</div>
+                    <div class="impact-label">per ar</div>
+                </div>
+                <div class="opportunity-effort">
+                    <div class="effort-dots">
+                        ${[1,2,3,4,5].map(i => `<div class="effort-dot ${i <= (opp.effort_level || 2) ? 'filled' : ''}"></div>`).join('')}
+                    </div>
+                    <span class="effort-label">Insats</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getCategoryLabel(category) {
+    const labels = {
+        'income': 'Extra Inkomst',
+        'investment': 'Investering',
+        'tax': 'Skatteoptimering',
+        'career': 'Karriar',
+        'general': 'Allman'
+    };
+    return labels[category] || category || 'Mojlighet';
+}
+
+function filterOpportunities(filter) {
+    if (filter === 'all') {
+        renderOpportunities(opportunities);
+    } else {
+        const filtered = opportunities.filter(o => o.category === filter);
+        renderOpportunities(filtered);
+    }
+}
+
+function showOpportunityDetail(index) {
+    const opp = opportunities[index];
+
+    document.getElementById('modalTitle').textContent = opp.title;
+
+    const steps = opp.steps || [opp.first_step || 'Borja idag'];
+    const stepsHtml = Array.isArray(steps)
+        ? steps.map((step, i) => `<li><span class="step-number">${i + 1}</span><span>${step}</span></li>`).join('')
+        : `<li><span class="step-number">1</span><span>${steps}</span></li>`;
+
+    document.getElementById('modalBody').innerHTML = `
+        <div class="detail-section">
+            <h4>Beskrivning</h4>
+            <p>${opp.description}</p>
+        </div>
+
+        <div class="detail-section">
+            <h4>Potentiell Arsinkomst</h4>
+            <p style="font-size: 1.5rem; font-weight: 700; color: var(--success);">
+                +${WealthAgent.formatCurrency(opp.annual_impact_sek || 0)}
+            </p>
+        </div>
+
+        <div class="detail-section">
+            <h4>Steg for att borja</h4>
+            <ul class="detail-steps">
+                ${stepsHtml}
+            </ul>
+        </div>
+
+        ${opp.requirements ? `
+        <div class="detail-section">
+            <h4>Krav</h4>
+            <p>${opp.requirements}</p>
+        </div>
+        ` : ''}
+    `;
+
+    document.getElementById('modalAction').onclick = function() {
+        // Open chat with this opportunity
+        window.location.href = '/wealth/chat?message=' + encodeURIComponent('Berätta mer om: ' + opp.title);
+    };
+
+    document.getElementById('opportunityModal').classList.add('show');
+}
+
+function closeModal() {
+    document.getElementById('opportunityModal').classList.remove('show');
+}
+
+// Close modal on outside click
+document.getElementById('opportunityModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+</script>
+{% endblock %}

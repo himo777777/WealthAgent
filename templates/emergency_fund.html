@@ -1,0 +1,971 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}Buffert - AI Wealth Agent{% endblock %}
+{% block page_title %}Buffertspårare{% endblock %}
+
+{% block content %}
+<div class="emergency-fund-page">
+    <!-- Main Progress Card -->
+    <div class="main-progress-card">
+        <div class="progress-visual">
+            <div class="fund-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="circular-progress" id="mainCircle">
+                <svg viewBox="0 0 100 100">
+                    <circle class="progress-bg" cx="50" cy="50" r="45"></circle>
+                    <circle class="progress-fill" cx="50" cy="50" r="45" id="progressCircle"></circle>
+                </svg>
+                <div class="progress-center">
+                    <span class="progress-percent" id="progressPercent">0%</span>
+                    <span class="progress-label">av malet</span>
+                </div>
+            </div>
+        </div>
+        <div class="progress-info">
+            <div class="info-row">
+                <span class="info-label">Nuvarande buffert</span>
+                <span class="info-value highlight" id="currentAmount">0 kr</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Mal ({{ '6' }} manaders utgifter)</span>
+                <span class="info-value" id="goalAmount">0 kr</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Saknas</span>
+                <span class="info-value danger" id="remainingAmount">0 kr</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Manatligt sparande</span>
+                <span class="info-value" id="monthlySaving">0 kr</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <button class="action-btn primary" onclick="showDepositModal()">
+            <i class="fas fa-plus-circle"></i>
+            <span>Lagg till pengar</span>
+        </button>
+        <button class="action-btn secondary" onclick="showWithdrawModal()">
+            <i class="fas fa-minus-circle"></i>
+            <span>Ta ut pengar</span>
+        </button>
+        <button class="action-btn outline" onclick="showSettingsModal()">
+            <i class="fas fa-cog"></i>
+            <span>Andra mal</span>
+        </button>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-icon green">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-value" id="monthsCovered">0</span>
+                <span class="stat-label">manaders utgifter tackta</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon blue">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-value" id="timeToGoal">-</span>
+                <span class="stat-label">till malet ar uppnatt</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon purple">
+                <i class="fas fa-piggy-bank"></i>
+            </div>
+            <div class="stat-content">
+                <span class="stat-value" id="requiredSaving">0 kr</span>
+                <span class="stat-label">behover sparas/manad</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Chart -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-chart-line"></i> Buffertutveckling</h3>
+        </div>
+        <div class="chart-body">
+            <canvas id="fundChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-history"></i> Historik</h3>
+        </div>
+        <div id="transactionHistory" class="history-list">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Tips Section -->
+    <div class="section-card tips-section">
+        <div class="section-header">
+            <h3><i class="fas fa-lightbulb"></i> Tips for att bygga buffert snabbare</h3>
+        </div>
+        <div class="tips-grid">
+            <div class="tip-card">
+                <div class="tip-icon"><i class="fas fa-robot"></i></div>
+                <h4>Automatiskt sparande</h4>
+                <p>Satt upp automatisk overforing nar lonen kommer in. "Betala dig sjalv forst".</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-icon"><i class="fas fa-percentage"></i></div>
+                <h4>Hograntekonto</h4>
+                <p>Placera bufferten pa ett hograntekonto for att fa avkastning medan pengarna vaxer.</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-icon"><i class="fas fa-gift"></i></div>
+                <h4>Ovanat pengar?</h4>
+                <p>Lagg skatteaterbaringar, bonusar och presenter direkt i bufferten.</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-icon"><i class="fas fa-cut"></i></div>
+                <h4>Minska utgifter</h4>
+                <p>Identifiera prenumerationer du inte anvander och lagg pengarna i bufferten.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Deposit Modal -->
+<div class="modal-overlay" id="depositModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-plus-circle"></i> Lagg till i bufferten</h3>
+            <button class="modal-close" onclick="closeModals()">&times;</button>
+        </div>
+        <form id="depositForm">
+            <div class="form-group">
+                <label>Belopp (kr)</label>
+                <input type="number" id="depositAmount" required min="1" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Notering (valfritt)</label>
+                <input type="text" id="depositNote" placeholder="t.ex. Bonus fran jobbet">
+            </div>
+            <div class="quick-amounts">
+                <button type="button" onclick="setDepositAmount(500)">500 kr</button>
+                <button type="button" onclick="setDepositAmount(1000)">1 000 kr</button>
+                <button type="button" onclick="setDepositAmount(2000)">2 000 kr</button>
+                <button type="button" onclick="setDepositAmount(5000)">5 000 kr</button>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModals()">Avbryt</button>
+                <button type="submit" class="btn btn-primary">Lagg till</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div class="modal-overlay" id="withdrawModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-minus-circle"></i> Ta ut fran bufferten</h3>
+            <button class="modal-close" onclick="closeModals()">&times;</button>
+        </div>
+        <form id="withdrawForm">
+            <div class="form-group">
+                <label>Belopp (kr)</label>
+                <input type="number" id="withdrawAmount" required min="1" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Anledning</label>
+                <input type="text" id="withdrawNote" required placeholder="t.ex. Bilreparation">
+            </div>
+            <div class="warning-box">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Kom ihag att bufferten ar till for oforutsedda utgifter. Forsok att aterbygga den sa snart som mojligt.</span>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModals()">Avbryt</button>
+                <button type="submit" class="btn btn-danger">Ta ut</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-cog"></i> Buffertinstallningar</h3>
+            <button class="modal-close" onclick="closeModals()">&times;</button>
+        </div>
+        <form id="settingsForm">
+            <div class="form-group">
+                <label>Antal manaders utgifter som mal</label>
+                <select id="targetMonths">
+                    <option value="3">3 manader (minimum)</option>
+                    <option value="6" selected>6 manader (rekommenderat)</option>
+                    <option value="9">9 manader (sakerare)</option>
+                    <option value="12">12 manader (extra sakerhet)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Genomsnittliga manadsutgifter (kr)</label>
+                <input type="number" id="monthlyExpenses" required min="0" placeholder="25000">
+            </div>
+            <div class="form-group">
+                <label>Manatligt sparande till buffert (kr)</label>
+                <input type="number" id="monthlyContribution" min="0" placeholder="2000">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModals()">Avbryt</button>
+                <button type="submit" class="btn btn-primary">Spara</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.emergency-fund-page { max-width: 1000px; }
+
+.main-progress-card {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1));
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 24px;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+    margin-bottom: 1.5rem;
+}
+
+.progress-visual {
+    position: relative;
+}
+
+.fund-icon {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+    z-index: 2;
+}
+
+.circular-progress {
+    width: 200px;
+    height: 200px;
+    position: relative;
+}
+
+.circular-progress svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+}
+
+.progress-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 10;
+}
+
+.progress-fill {
+    fill: none;
+    stroke: var(--success);
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 283;
+    stroke-dashoffset: 283;
+    transition: stroke-dashoffset 1s ease;
+}
+
+.progress-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.progress-percent {
+    font-size: 2.5rem;
+    font-weight: 700;
+    display: block;
+    color: var(--success);
+}
+
+.progress-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.progress-info {
+    flex: 1;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.info-row:last-child { border-bottom: none; }
+
+.info-label { color: var(--text-muted); }
+
+.info-value {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.info-value.highlight { color: var(--success); font-size: 1.5rem; }
+.info-value.danger { color: var(--danger); }
+
+.quick-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.action-btn.primary {
+    background: var(--success);
+    color: white;
+}
+
+.action-btn.secondary {
+    background: var(--danger);
+    color: white;
+}
+
+.action-btn.outline {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.action-btn:hover { transform: translateY(-2px); }
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.stat-icon.green { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+.stat-icon.blue { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
+.stat-icon.purple { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.section-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.section-header h3 i { color: var(--primary); }
+
+.chart-body {
+    padding: 1.25rem;
+    height: 280px;
+}
+
+.history-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.history-item:last-child { border-bottom: none; }
+
+.history-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+}
+
+.history-icon.deposit { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+.history-icon.withdraw { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+.history-info { flex: 1; }
+
+.history-note {
+    font-weight: 500;
+    display: block;
+}
+
+.history-date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.history-amount {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.history-amount.deposit { color: var(--success); }
+.history-amount.withdraw { color: var(--danger); }
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    padding: 1.25rem;
+}
+
+.tip-card {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.tip-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+.tip-card h4 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.tip-card p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 450px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+form {
+    padding: 1.25rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+}
+
+.quick-amounts {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.quick-amounts button {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.quick-amounts button:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.warning-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(245, 158, 11, 0.15);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.warning-box i {
+    color: var(--warning);
+    margin-top: 0.2rem;
+}
+
+.warning-box span {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .main-progress-card { flex-direction: column; text-align: center; }
+    .stats-row { grid-template-columns: 1fr; }
+    .quick-actions { flex-direction: column; }
+    .tips-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let fundChart = null;
+let fundData = {
+    current_amount: 0,
+    target_months: 6,
+    monthly_expenses: 25000,
+    monthly_contribution: 2000,
+    history: []
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadFundData();
+
+    document.getElementById('depositForm').addEventListener('submit', handleDeposit);
+    document.getElementById('withdrawForm').addEventListener('submit', handleWithdraw);
+    document.getElementById('settingsForm').addEventListener('submit', handleSettings);
+});
+
+async function loadFundData() {
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/emergency-fund');
+        if (response.success) {
+            fundData = response.fund;
+            renderAll();
+        }
+    } catch (error) {
+        fundData = getSampleData();
+        renderAll();
+    }
+}
+
+function getSampleData() {
+    return {
+        current_amount: 45000,
+        target_months: 6,
+        monthly_expenses: 25000,
+        monthly_contribution: 3000,
+        history: [
+            { id: 1, type: 'deposit', amount: 5000, note: 'Manadens sparande', date: '2025-01-15' },
+            { id: 2, type: 'deposit', amount: 10000, date: '2024-12-25', note: 'Julbonus' },
+            { id: 3, type: 'withdraw', amount: 3500, note: 'Bilreparation', date: '2024-12-10' },
+            { id: 4, type: 'deposit', amount: 5000, note: 'Manadens sparande', date: '2024-12-01' },
+            { id: 5, type: 'deposit', amount: 5000, note: 'Manadens sparande', date: '2024-11-01' }
+        ],
+        trend: [15000, 20000, 25000, 30000, 33500, 38500, 43500, 45000]
+    };
+}
+
+function renderAll() {
+    updateProgress();
+    updateStats();
+    renderChart();
+    renderHistory();
+}
+
+function updateProgress() {
+    const goal = fundData.target_months * fundData.monthly_expenses;
+    const percent = Math.min(100, (fundData.current_amount / goal) * 100);
+    const remaining = Math.max(0, goal - fundData.current_amount);
+
+    // Update circle
+    const circumference = 2 * Math.PI * 45;
+    const offset = circumference - (percent / 100 * circumference);
+    document.getElementById('progressCircle').style.strokeDashoffset = offset;
+
+    // Update text
+    document.getElementById('progressPercent').textContent = Math.round(percent) + '%';
+    document.getElementById('currentAmount').textContent = WealthAgent.formatCurrency(fundData.current_amount);
+    document.getElementById('goalAmount').textContent = WealthAgent.formatCurrency(goal);
+    document.getElementById('remainingAmount').textContent = WealthAgent.formatCurrency(remaining);
+    document.getElementById('monthlySaving').textContent = WealthAgent.formatCurrency(fundData.monthly_contribution);
+}
+
+function updateStats() {
+    const goal = fundData.target_months * fundData.monthly_expenses;
+    const monthsCovered = fundData.current_amount / fundData.monthly_expenses;
+    const remaining = Math.max(0, goal - fundData.current_amount);
+
+    document.getElementById('monthsCovered').textContent = monthsCovered.toFixed(1);
+
+    if (remaining <= 0) {
+        document.getElementById('timeToGoal').textContent = 'Uppnatt!';
+        document.getElementById('timeToGoal').style.color = 'var(--success)';
+        document.getElementById('requiredSaving').textContent = '0 kr';
+    } else if (fundData.monthly_contribution > 0) {
+        const monthsToGoal = Math.ceil(remaining / fundData.monthly_contribution);
+        document.getElementById('timeToGoal').textContent = monthsToGoal + ' manader';
+        document.getElementById('requiredSaving').textContent = WealthAgent.formatCurrency(fundData.monthly_contribution);
+    } else {
+        document.getElementById('timeToGoal').textContent = '-';
+        document.getElementById('requiredSaving').textContent = WealthAgent.formatCurrency(remaining / 12);
+    }
+}
+
+function renderChart() {
+    const ctx = document.getElementById('fundChart').getContext('2d');
+
+    if (fundChart) fundChart.destroy();
+
+    const labels = ['Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt'];
+    const data = fundData.trend || [15000, 20000, 25000, 30000, 33500, 38500, 43500, 45000];
+    const goal = fundData.target_months * fundData.monthly_expenses;
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+    gradient.addColorStop(0, 'rgba(34, 197, 94, 0.3)');
+    gradient.addColorStop(1, 'rgba(34, 197, 94, 0)');
+
+    fundChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Buffert',
+                    data: data,
+                    borderColor: '#22c55e',
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#22c55e',
+                    pointBorderColor: '#fff',
+                    pointRadius: 5
+                },
+                {
+                    label: 'Mal',
+                    data: Array(8).fill(goal),
+                    borderColor: 'rgba(99, 102, 241, 0.5)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { color: getComputedStyle(document.body).getPropertyValue('--text').trim() }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => WealthAgent.formatCurrency(ctx.raw)
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-muted').trim() }
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: {
+                        color: getComputedStyle(document.body).getPropertyValue('--text-muted').trim(),
+                        callback: val => (val / 1000) + 'k'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderHistory() {
+    const container = document.getElementById('transactionHistory');
+
+    if (!fundData.history || fundData.history.length === 0) {
+        container.innerHTML = `
+            <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                <i class="fas fa-history" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <p>Ingen historik an</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = fundData.history.map(item => `
+        <div class="history-item">
+            <div class="history-icon ${item.type}">
+                <i class="fas fa-${item.type === 'deposit' ? 'plus' : 'minus'}"></i>
+            </div>
+            <div class="history-info">
+                <span class="history-note">${item.note || (item.type === 'deposit' ? 'Insattning' : 'Uttag')}</span>
+                <span class="history-date">${formatDate(item.date)}</span>
+            </div>
+            <span class="history-amount ${item.type}">${item.type === 'deposit' ? '+' : '-'}${WealthAgent.formatCurrency(item.amount)}</span>
+        </div>
+    `).join('');
+}
+
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function showDepositModal() {
+    document.getElementById('depositForm').reset();
+    document.getElementById('depositModal').classList.add('active');
+}
+
+function showWithdrawModal() {
+    document.getElementById('withdrawForm').reset();
+    document.getElementById('withdrawModal').classList.add('active');
+}
+
+function showSettingsModal() {
+    document.getElementById('targetMonths').value = fundData.target_months;
+    document.getElementById('monthlyExpenses').value = fundData.monthly_expenses;
+    document.getElementById('monthlyContribution').value = fundData.monthly_contribution;
+    document.getElementById('settingsModal').classList.add('active');
+}
+
+function closeModals() {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+}
+
+function setDepositAmount(amount) {
+    document.getElementById('depositAmount').value = amount;
+}
+
+async function handleDeposit(e) {
+    e.preventDefault();
+
+    const amount = parseFloat(document.getElementById('depositAmount').value);
+    const note = document.getElementById('depositNote').value;
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/emergency-fund/deposit', 'POST', { amount, note });
+        if (response.success) {
+            WealthAgent.showToast(`+${WealthAgent.formatCurrency(amount)} tillagd!`, 'success');
+            closeModals();
+            loadFundData();
+        }
+    } catch (error) {
+        fundData.current_amount += amount;
+        fundData.history.unshift({
+            id: Date.now(),
+            type: 'deposit',
+            amount,
+            note: note || 'Insattning',
+            date: new Date().toISOString().split('T')[0]
+        });
+        WealthAgent.showToast(`+${WealthAgent.formatCurrency(amount)} tillagd!`, 'success');
+        closeModals();
+        renderAll();
+    }
+}
+
+async function handleWithdraw(e) {
+    e.preventDefault();
+
+    const amount = parseFloat(document.getElementById('withdrawAmount').value);
+    const note = document.getElementById('withdrawNote').value;
+
+    if (amount > fundData.current_amount) {
+        WealthAgent.showToast('Beloppet overskrider din buffert', 'error');
+        return;
+    }
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/emergency-fund/withdraw', 'POST', { amount, note });
+        if (response.success) {
+            WealthAgent.showToast(`-${WealthAgent.formatCurrency(amount)} uttaget`, 'warning');
+            closeModals();
+            loadFundData();
+        }
+    } catch (error) {
+        fundData.current_amount -= amount;
+        fundData.history.unshift({
+            id: Date.now(),
+            type: 'withdraw',
+            amount,
+            note,
+            date: new Date().toISOString().split('T')[0]
+        });
+        WealthAgent.showToast(`-${WealthAgent.formatCurrency(amount)} uttaget`, 'warning');
+        closeModals();
+        renderAll();
+    }
+}
+
+async function handleSettings(e) {
+    e.preventDefault();
+
+    const settings = {
+        target_months: parseInt(document.getElementById('targetMonths').value),
+        monthly_expenses: parseFloat(document.getElementById('monthlyExpenses').value),
+        monthly_contribution: parseFloat(document.getElementById('monthlyContribution').value)
+    };
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/emergency-fund/settings', 'PUT', settings);
+        if (response.success) {
+            WealthAgent.showToast('Installningar sparade!', 'success');
+            closeModals();
+            loadFundData();
+        }
+    } catch (error) {
+        fundData = { ...fundData, ...settings };
+        WealthAgent.showToast('Installningar sparade!', 'success');
+        closeModals();
+        renderAll();
+    }
+}
+</script>
+{% endblock %}

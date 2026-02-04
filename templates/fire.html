@@ -1,0 +1,547 @@
+{% extends "wealth_agent/base.html" %}
+
+{% block title %}FIRE Kalkylator - AI Wealth Agent{% endblock %}
+{% block page_title %}FIRE Kalkylator{% endblock %}
+
+{% block content %}
+<div class="fire-page">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h2><i class="fas fa-fire"></i> FIRE Kalkylator</h2>
+            <p>Financial Independence, Retire Early - Nar kan du bli ekonomiskt fri?</p>
+        </div>
+    </div>
+
+    <!-- Result Hero -->
+    <div class="fire-hero" id="fireHero" style="display: none;">
+        <div class="hero-content">
+            <div class="fire-number-label">Ditt FIRE-nummer</div>
+            <div class="fire-number" id="fireNumber">0 SEK</div>
+            <div class="fire-timeline">
+                <span class="timeline-value" id="yearsToFire">? ar</span>
+                <span class="timeline-label">till ekonomisk frihet</span>
+            </div>
+            <div class="fire-date" id="fireDate">
+                <i class="fas fa-calendar"></i> Mal datum: -
+            </div>
+        </div>
+        <div class="fire-progress">
+            <div class="progress-circle">
+                <svg viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#334155" stroke-width="8"/>
+                    <circle id="progressCircle" cx="50" cy="50" r="45" fill="none" stroke="#22c55e" stroke-width="8"
+                            stroke-dasharray="283" stroke-dashoffset="283" transform="rotate(-90 50 50)"/>
+                </svg>
+                <div class="progress-text">
+                    <span id="progressPercent">0%</span>
+                    <span>av malet</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calculator Form -->
+    <div class="calculator-grid">
+        <div class="card calculator-card">
+            <div class="card-header">
+                <h3><i class="fas fa-calculator"></i> Berakna din FIRE</h3>
+            </div>
+            <div class="card-content">
+                <form id="fireForm">
+                    <div class="form-group">
+                        <label>Arliga utgifter (SEK)</label>
+                        <input type="number" name="annual_expenses" placeholder="300000" required>
+                        <span class="form-hint">Hur mycket du spenderar per ar</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nuvarande sparande (SEK)</label>
+                        <input type="number" name="current_savings" placeholder="500000" required>
+                        <span class="form-hint">Totalt i investeringar och sparande</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Arligt sparande (SEK)</label>
+                        <input type="number" name="annual_savings" placeholder="100000" required>
+                        <span class="form-hint">Hur mycket du sparar per ar</span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Forvantad avkastning (%)</label>
+                            <input type="number" name="expected_return" value="7" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Uttagsregel (%)</label>
+                            <input type="number" name="withdrawal_rate" value="4" step="0.1" required>
+                            <span class="form-hint">4% ar standard</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-fire"></i> Berakna FIRE
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Scenarios -->
+        <div class="card scenarios-card">
+            <div class="card-header">
+                <h3><i class="fas fa-chart-bar"></i> Scenarion</h3>
+            </div>
+            <div class="card-content">
+                <div id="scenariosList" class="scenarios-list">
+                    <div class="empty-state">
+                        <i class="fas fa-calculator"></i>
+                        <p>Fyll i formularet for att se scenarion</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FIRE Tips -->
+    <div class="tips-section">
+        <h3><i class="fas fa-lightbulb"></i> Tips for att na FIRE snabbare</h3>
+        <div class="tips-grid">
+            <div class="tip-card">
+                <div class="tip-icon">
+                    <i class="fas fa-piggy-bank"></i>
+                </div>
+                <h4>Oka sparkvoten</h4>
+                <p>Varje extra procent du sparar kan minska FIRE-tiden med ar.</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h4>Investera smart</h4>
+                <p>Lagkostnadsfonder med global spridning ger ofta bast avkastning.</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <h4>Oka inkomsten</h4>
+                <p>Sidoinkomster accelererar resan mot ekonomisk frihet.</p>
+            </div>
+            <div class="tip-card">
+                <div class="tip-icon">
+                    <i class="fas fa-cut"></i>
+                </div>
+                <h4>Minska utgifter</h4>
+                <p>Lagre utgifter betyder bade hogre sparande OCH lagre FIRE-nummer.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projection Chart -->
+    <div class="card chart-card" id="chartCard" style="display: none;">
+        <div class="card-header">
+            <h3>Prognos</h3>
+        </div>
+        <div class="card-content">
+            <canvas id="fireChart" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+<style>
+.fire-page { max-width: 1200px; }
+
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.header-content h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.header-content h2 i { color: #f59e0b; }
+.header-content p { color: var(--text-muted); }
+
+.fire-hero {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(239, 68, 68, 0.1));
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.fire-number-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.fire-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #f59e0b;
+    margin-bottom: 1rem;
+}
+
+.fire-timeline {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-value {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.timeline-label {
+    color: var(--text-muted);
+}
+
+.fire-date {
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fire-progress {
+    flex-shrink: 0;
+}
+
+.progress-circle {
+    position: relative;
+    width: 150px;
+    height: 150px;
+}
+
+.progress-circle svg {
+    width: 100%;
+    height: 100%;
+}
+
+.progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.progress-text span:first-child {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #22c55e;
+}
+
+.progress-text span:last-child {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.calculator-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.card {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+}
+
+.card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.card-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.card-content { padding: 1.5rem; }
+
+.form-group { margin-bottom: 1.25rem; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.form-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.btn-block {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.scenarios-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.scenario-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--background);
+    border-radius: 8px;
+}
+
+.scenario-name {
+    font-weight: 500;
+}
+
+.scenario-years {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.scenario-years span {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.tips-section {
+    margin-bottom: 2rem;
+}
+
+.tips-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.tips-section h3 i { color: #f59e0b; }
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.tip-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+}
+
+.tip-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+}
+
+.tip-card h4 {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+
+.tip-card p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.chart-card { margin-bottom: 2rem; }
+
+@media (max-width: 768px) {
+    .calculator-grid { grid-template-columns: 1fr; }
+    .tips-grid { grid-template-columns: repeat(2, 1fr); }
+    .fire-hero { flex-direction: column; text-align: center; }
+    .form-row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let fireChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('fireForm').addEventListener('submit', calculateFIRE);
+});
+
+async function calculateFIRE(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+
+    const data = {
+        annual_expenses: parseFloat(formData.get('annual_expenses')),
+        current_savings: parseFloat(formData.get('current_savings')),
+        annual_savings: parseFloat(formData.get('annual_savings')),
+        expected_return: parseFloat(formData.get('expected_return')) / 100,
+        withdrawal_rate: parseFloat(formData.get('withdrawal_rate')) / 100
+    };
+
+    try {
+        const response = await WealthAgent.apiCall('/wealth/api/fire/calculate', 'POST', data);
+
+        if (response.success) {
+            displayResults(response.calculation, data);
+        }
+    } catch (error) {
+        console.error('FIRE calculation failed:', error);
+        WealthAgent.showToast('Berakning misslyckades', 'error');
+    }
+}
+
+function displayResults(calc, inputs) {
+    // Show hero
+    document.getElementById('fireHero').style.display = 'flex';
+
+    // Update values
+    document.getElementById('fireNumber').textContent = WealthAgent.formatCurrency(calc.fire_number);
+    document.getElementById('yearsToFire').textContent = calc.years_to_fire ? `${calc.years_to_fire} ar` : 'Oandligt';
+
+    if (calc.fire_date) {
+        const date = new Date(calc.fire_date);
+        document.getElementById('fireDate').innerHTML = `<i class="fas fa-calendar"></i> Mal datum: ${date.toLocaleDateString('sv-SE')}`;
+    }
+
+    // Update progress circle
+    const progress = Math.min(100, (inputs.current_savings / calc.fire_number) * 100);
+    const circumference = 283;
+    const offset = circumference - (progress / 100) * circumference;
+    document.getElementById('progressCircle').style.strokeDashoffset = offset;
+    document.getElementById('progressPercent').textContent = Math.round(progress) + '%';
+
+    // Update scenarios
+    if (calc.scenarios) {
+        document.getElementById('scenariosList').innerHTML = calc.scenarios.map(s => `
+            <div class="scenario-item">
+                <span class="scenario-name">${s.name}</span>
+                <span class="scenario-years">${s.years || '?'} <span>ar</span></span>
+            </div>
+        `).join('');
+    }
+
+    // Show and update chart
+    document.getElementById('chartCard').style.display = 'block';
+    updateChart(inputs, calc);
+}
+
+function updateChart(inputs, calc) {
+    const ctx = document.getElementById('fireChart').getContext('2d');
+
+    if (fireChart) {
+        fireChart.destroy();
+    }
+
+    // Generate projection data
+    const years = Math.min(calc.years_to_fire || 30, 40);
+    const labels = [];
+    const savingsData = [];
+    const fireLineData = [];
+
+    let balance = inputs.current_savings;
+    for (let i = 0; i <= years; i++) {
+        labels.push(`Ar ${i}`);
+        savingsData.push(balance);
+        fireLineData.push(calc.fire_number);
+        balance = balance * (1 + inputs.expected_return) + inputs.annual_savings;
+    }
+
+    fireChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Ditt sparande',
+                    data: savingsData,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'FIRE-nummer',
+                    data: fireLineData,
+                    borderColor: '#f59e0b',
+                    borderDash: [5, 5],
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: {
+                        color: '#94a3b8',
+                        callback: value => WealthAgent.formatCurrency(value)
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8' }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

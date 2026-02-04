@@ -1,0 +1,784 @@
+/* =============================================================================
+   VR Studio Wizard - Step-by-step guide
+   ============================================================================= */
+
+/* Progress Bar */
+.wizard-progress {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.progress-track {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+    border-radius: 2px;
+    width: 20%;
+    transition: width 0.5s ease;
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.4;
+    transition: opacity 0.3s ease;
+}
+
+.progress-step.active,
+.progress-step.completed {
+    opacity: 1;
+}
+
+.step-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.progress-step.active .step-icon {
+    background: var(--primary);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+}
+
+.progress-step.completed .step-icon {
+    background: var(--success);
+}
+
+.progress-step span {
+    font-size: 0.75rem;
+    color: var(--gray-400);
+}
+
+.progress-step.active span {
+    color: white;
+    font-weight: 600;
+}
+
+/* Wizard Container */
+.wizard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: calc(100vh - 200px);
+}
+
+/* Wizard Steps */
+.wizard-step {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.wizard-step.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.step-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.step-header h2 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.step-header p {
+    color: var(--gray-400);
+}
+
+/* Step 1: Procedure Grid */
+.procedure-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.procedure-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.procedure-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+}
+
+.procedure-card.selected {
+    border-color: var(--primary);
+    background: rgba(139, 92, 246, 0.1);
+}
+
+.procedure-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 2rem;
+    color: white;
+}
+
+.procedure-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.procedure-card p {
+    color: var(--gray-400);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.procedure-meta {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--gray-500);
+}
+
+/* Step 2: Assets */
+.assets-container {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .assets-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.asset-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.category-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    color: var(--gray-300);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.category-btn:hover,
+.category-btn.active {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: var(--primary);
+    color: white;
+}
+
+.asset-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.asset-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius);
+    padding: 1rem;
+    transition: all 0.2s ease;
+}
+
+.asset-card:hover {
+    border-color: var(--primary);
+}
+
+.asset-card h5 {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.asset-card .asset-meta {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    margin-bottom: 0.75rem;
+}
+
+.asset-card .asset-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+}
+
+.asset-tag {
+    background: rgba(139, 92, 246, 0.2);
+    color: var(--primary-light);
+    padding: 0.125rem 0.5rem;
+    border-radius: 20px;
+    font-size: 0.65rem;
+}
+
+.asset-card a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--primary-light);
+    font-size: 0.8rem;
+    text-decoration: none;
+}
+
+.asset-card a:hover {
+    text-decoration: underline;
+}
+
+.asset-instructions {
+    grid-column: 1 / -1;
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.asset-instructions h4 {
+    color: var(--info);
+    margin-bottom: 0.5rem;
+}
+
+.asset-instructions ol {
+    padding-left: 1.25rem;
+    font-size: 0.875rem;
+    color: var(--gray-300);
+}
+
+/* Step 3: Code Generation */
+.code-generation {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .code-generation {
+        grid-template-columns: 1fr;
+    }
+}
+
+.customization-panel {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+}
+
+.customization-panel h4 {
+    margin-bottom: 1rem;
+}
+
+.option-group {
+    margin-bottom: 1.25rem;
+}
+
+.option-group label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--gray-400);
+    margin-bottom: 0.5rem;
+}
+
+.option-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.option-btn {
+    flex: 1;
+    min-width: 80px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius);
+    padding: 0.625rem;
+    color: var(--gray-400);
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.option-btn:hover {
+    border-color: var(--primary);
+}
+
+.option-btn.active {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: var(--primary);
+    color: white;
+}
+
+.option-btn i {
+    font-size: 1rem;
+}
+
+.checkbox-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.checkbox-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.checkbox-option input {
+    accent-color: var(--primary);
+}
+
+.customization-panel textarea {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    color: white;
+    font-family: inherit;
+    font-size: 0.875rem;
+    resize: vertical;
+    min-height: 80px;
+    margin-bottom: 1rem;
+}
+
+.code-preview {
+    background: var(--code-bg);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    min-height: 400px;
+}
+
+.code-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 400px;
+    color: var(--gray-500);
+    text-align: center;
+    padding: 2rem;
+}
+
+.code-placeholder i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+}
+
+/* Step 4: Download */
+.download-section {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.download-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid var(--primary);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.download-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 2rem;
+    color: white;
+}
+
+.download-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.download-card > p {
+    color: var(--gray-400);
+    margin-bottom: 1.5rem;
+}
+
+.download-contents {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.download-contents h4 {
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    color: var(--gray-400);
+}
+
+.download-contents ul {
+    list-style: none;
+    font-size: 0.875rem;
+}
+
+.download-contents li {
+    padding: 0.375rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.download-contents li i {
+    color: var(--primary-light);
+    width: 20px;
+}
+
+.download-btn {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border: none;
+    border-radius: var(--radius);
+    padding: 1rem 2rem;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.download-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+}
+
+.additional-downloads {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+}
+
+.additional-downloads h4 {
+    margin-bottom: 1rem;
+}
+
+.package-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.package-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+}
+
+.package-item span {
+    font-size: 0.875rem;
+}
+
+.package-item a {
+    color: var(--primary-light);
+    text-decoration: none;
+    font-size: 0.8rem;
+}
+
+/* Step 5: Setup Guide */
+.setup-guide {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.guide-timeline {
+    position: relative;
+    padding-left: 3rem;
+    margin-bottom: 2rem;
+}
+
+.guide-timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+}
+
+.timeline-number {
+    position: absolute;
+    left: -3rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.timeline-content {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+}
+
+.timeline-content h4 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.timeline-content p {
+    font-size: 0.875rem;
+    color: var(--gray-400);
+}
+
+.timeline-content a {
+    color: var(--primary-light);
+}
+
+.timeline-tip {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    color: var(--warning);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.timeline-action {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    color: var(--primary-light);
+}
+
+.timeline-success {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
+.video-tutorials {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.video-tutorials h4 {
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tutorial-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.tutorial-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius);
+}
+
+.tutorial-item .tutorial-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.tutorial-item .tutorial-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.tutorial-item .tutorial-meta {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+}
+
+.tutorial-item a {
+    color: var(--primary-light);
+    text-decoration: none;
+    font-size: 0.8rem;
+}
+
+.support-box {
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.support-box h4 {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.support-box p {
+    color: var(--gray-400);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.support-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary-light);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Navigation */
+.wizard-navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius);
+    padding: 0.875rem 1.5rem;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.nav-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.nav-btn.next-btn {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.nav-btn.next-btn:hover:not(:disabled) {
+    background: var(--primary-dark);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .wizard-progress {
+        padding: 1rem;
+    }
+
+    .progress-steps {
+        display: none;
+    }
+
+    .wizard-container {
+        padding: 1rem;
+    }
+
+    .procedure-grid {
+        grid-template-columns: 1fr;
+    }
+}
